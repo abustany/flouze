@@ -1,0 +1,44 @@
+# Data model
+
+Transaction:
+  - UUID: uuid
+  - Parent UUID: uuid
+  - Amount: u32
+  - PayedBy: List[(person UUID, Amount)]
+  - PayedFor: List[(person UUID, Amount)] (null = even ?)
+  - Label: String
+  - Date: String
+  - Deleted: bool
+  - Replaces: UUID
+
+Account:
+  - UUID: uuid
+  - Name: String
+  - LatestUUID: UUID
+  - Participants: List[(name, UUID)]
+
+# Storage
+  Objects stored in Protobuf, key is UUID
+  Key-value storage -> sled in Rust, LocalStorage on web ?
+
+# Synchronization protocol
+
+## Client side
+- Last synchronized UUID stored locally
+- Ask latest UUID from server
+- Fetch new transactions from server
+- "Rebase" unsynchronized transactions on top of latest UUID
+- Post unsynchronized transactions to server
+
+## Server side
+- Provide latest UUID
+- Provide the list of transactions after a given UUID
+- Accept new transactions only if on top of latest
+
+## Handling edits/deletions
+
+A new transaction replacing an old one can be added, by setting the Replaces
+field. How the client applies it is implementation defined. One option is to
+hide any transaction having a "Replaces" field set, and to apply the changes
+to the original transaction when the replacement gets added to the local
+repository.

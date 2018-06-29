@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package flouze.model;
+
+message PayedBy {
+	bytes person = 1; // UUID
+	uint32 amount = 2;
+}
+
+message PayedFor {
+	bytes person = 1; // UUID
+	uint32 amount = 2;
+}
+
+message Transaction {
+	bytes uuid = 1; // UUID
+	bytes parent = 2; // UUID
+	uint32 amount = 3;
+	repeated PayedBy payed_by = 4;
+	repeated PayedFor payed_for = 5;
+	string label = 6;
+	uint64 timestamp = 7;
+	bool deleted = 8;
+	bytes replaces = 9; // UUID
+}
+
+message Person {
+	bytes uuid = 1; // UUID
+	string name = 2; // UUID
+}
+
+message Account {
+	bytes uuid = 1; // UUID
+	string label = 2; // UUID
+	bytes latest_transaction = 3; // UUID
+	repeated Person members = 4;
+}
