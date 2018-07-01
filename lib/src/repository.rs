@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::errors;
 use super::model;
 
@@ -49,6 +51,25 @@ impl<'a> Iterator for TransactionChain<'a> {
 
 pub fn get_transaction_chain<'a>(repo: &'a Repository, account: &model::Account) -> TransactionChain<'a> {
     TransactionChain::new(repo, &account.uuid, &account.latest_transaction)
+}
+
+pub fn get_balance(repo: &Repository, account: &model::Account) -> errors::Result<HashMap<model::PersonId, i64>> {
+    let mut balance: HashMap<model::PersonId, i64> = account.members.iter().map(|m| (m.uuid.clone(), 0)).collect();
+    let chain = get_transaction_chain(repo, account);
+
+    for tx in chain {
+        let tx = tx?;
+
+        for p in tx.payed_by {
+            balance.get_mut(&p.person).map(|b| *b += p.amount as i64);
+        }
+
+        for p in tx.payed_for {
+            balance.get_mut(&p.person).map(|b| *b -= p.amount as i64);
+        }
+    }
+
+    Ok(balance)
 }
 
 #[cfg(test)]
@@ -127,7 +148,7 @@ pub mod tests {
             ),
             payed_for: vec!(
                 model::PayedFor{
-                    person: account.members[1].uuid.to_owned(),
+                    person: account.members[0].uuid.to_owned(),
                     amount: 10,
                 },
             ),
@@ -211,5 +232,20 @@ pub mod tests {
             assert_eq!(chain.next().unwrap().unwrap(), tx1);
             assert!(chain.next().is_none());
         }
+    }
+
+    pub fn test_balance(repo: &mut Repository) {
+        let mut account = make_test_account();
+        let tx1 = make_test_transaction_1(&account);
+        let tx2 = make_test_transaction_2(&account, &tx1.uuid);
+
+        repo.add_account(&account).unwrap();
+        repo.add_transaction(&account.uuid, &tx1).unwrap();
+        repo.add_transaction(&account.uuid, &tx2).unwrap();
+        account.latest_transaction = tx2.uuid.to_owned();
+
+        let balance = get_balance(repo, &account).unwrap();
+        assert_eq!(balance.get(&account.members[0].uuid).unwrap(), &8);
+        assert_eq!(balance.get(&account.members[1].uuid).unwrap(), &-8);
     }
 }

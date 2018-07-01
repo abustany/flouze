@@ -157,4 +157,10 @@ mod tests {
         let mut repo = SledRepository::temporary().unwrap();
         tests::test_transaction_chain(&mut repo);
     }
+
+    #[test]
+    fn test_balance() {
+        let mut repo = SledRepository::temporary().unwrap();
+        tests::test_balance(&mut repo);
+    }
 }
