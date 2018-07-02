@@ -1,9 +1,14 @@
 use prost;
 
+use super::model;
+
 error_chain! {
     errors {
-        NoSuchAccount
-        NoSuchTransaction
+        NoSuchAccount(id: model::AccountId)
+
+        NoSuchTransaction(id: model::TransactionId) {
+            display("No such transaction: {}", model::IdAsHex(&id))
+        }
 
         Storage(t: String) {
             description("Storage error"),
@@ -14,6 +19,14 @@ error_chain! {
             description("Invalid Protobuf data"),
             display("Invalid Protobuf data: {}", t)
         }
+
+        MustRebase
+
+        InconsistentChain
+
+        InconsistentServerResponse
+
+        DuplicateTransactionId(id: model::TransactionId)
     }
 }
 

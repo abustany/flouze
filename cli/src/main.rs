@@ -1,5 +1,7 @@
 #[macro_use]
 extern crate error_chain;
+extern crate log;
+extern crate env_logger;
 extern crate rand;
 extern crate structopt;
 #[macro_use]
@@ -123,6 +125,7 @@ fn run() -> Result<()> {
                 uuid: model::generate_account_id(),
                 label: label,
                 latest_transaction: vec!(),
+                latest_synchronized_transaction: vec!(),
                 members: members.into_iter().map(|name| model::Person{
                     uuid: model::generate_person_id(),
                     name: name,
@@ -231,6 +234,8 @@ fn run() -> Result<()> {
 }
 
 fn main() {
+    env_logger::init();
+
     if let Err(ref e) = run() {
         println!("error: {}", e);
 

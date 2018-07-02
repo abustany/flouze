@@ -5,6 +5,8 @@ authors = ["Adrien Bustany <adrien@bustany.org>"]
 
 [dependencies]
 bytes = "0.4"
+hex = "^0.3.0"
+log = "0.4"
 prost = "0.2"
 prost-derive = "0.2"
 uuid = {version = "0.6", features = ["v4"]}
@@ -13,3 +15,6 @@ sled = "^0.15.0"
 
 [build-dependencies]
 prost-build = "0.2"
+
+[dev-dependencies]
+env_logger = "0.5.10"

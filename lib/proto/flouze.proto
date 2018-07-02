@@ -33,5 +33,6 @@ message Account {
 	bytes uuid = 1; // UUID
 	string label = 2; // UUID
 	bytes latest_transaction = 3; // UUID
-	repeated Person members = 4;
+	bytes latest_synchronized_transaction = 4; // UUID
+	repeated Person members = 5;
 }

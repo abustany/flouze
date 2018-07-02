@@ -59,7 +59,7 @@ impl Repository for SledRepository {
         let buf = self.tree.get(&account_key(account_id))?;
 
         match buf {
-            None => Err(errors::ErrorKind::NoSuchAccount.into()),
+            None => Err(errors::ErrorKind::NoSuchAccount(account_id.clone()).into()),
             Some(ref data) => model::Account::decode(data).map_err(|e| e.into()),
         }
     }
@@ -67,7 +67,7 @@ impl Repository for SledRepository {
     fn delete_account(&mut self, account_id: &model::AccountId) -> errors::Result<()> {
         match self.tree.del(&account_key(account_id))? {
             Some(_) => Ok(()),
-            None => Err(errors::ErrorKind::NoSuchAccount.into()),
+            None => Err(errors::ErrorKind::NoSuchAccount(account_id.clone()).into()),
         }
     }
 
@@ -98,6 +98,12 @@ impl Repository for SledRepository {
         self.add_account(&account)
     }
 
+    fn set_latest_synchronized_transaction(&mut self, account_id: &model::AccountId, tx_id: &model::TransactionId) -> errors::Result<()> {
+        let mut account = self.get_account(account_id)?;
+        account.latest_synchronized_transaction = tx_id.to_owned();
+        self.add_account(&account)
+    }
+
     fn add_transaction(&mut self, account_uuid: &model::AccountId, transaction: &model::Transaction) -> errors::Result<()> {
         let mut buf = Vec::new();
         buf.reserve(transaction.encoded_len());
@@ -111,8 +117,15 @@ impl Repository for SledRepository {
         let buf = self.tree.get(&tx_key(&account_uuid, &transaction_id))?;
         
         match buf {
-            None => Err(errors::ErrorKind::NoSuchTransaction.into()),
+            None => Err(errors::ErrorKind::NoSuchTransaction(transaction_id.clone()).into()),
             Some(ref data) => model::Transaction::decode(data).map_err(|e| e.into()),
+        }
+    }
+
+    fn delete_transaction(&mut self, account_id: &model::AccountId, transaction_id: &model::TransactionId) -> errors::Result<()> {
+        match self.tree.del(&tx_key(account_id, transaction_id))? {
+            Some(_) => Ok(()),
+            None => Err(errors::ErrorKind::NoSuchTransaction(transaction_id.clone()).into()),
         }
     }
 }

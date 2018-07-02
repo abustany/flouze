@@ -9,9 +9,11 @@ pub trait Repository {
     fn delete_account(&mut self, account_id: &model::AccountId) -> errors::Result<()>;
     fn list_accounts(&self) -> errors::Result<Vec<model::Account>>;
     fn set_latest_transaction(&mut self, account_id: &model::AccountId, tx_id: &model::TransactionId) -> errors::Result<()>;
+    fn set_latest_synchronized_transaction(&mut self, account_id: &model::AccountId, tx_id: &model::TransactionId) -> errors::Result<()>;
 
     fn add_transaction(&mut self, account_uuid: &model::AccountId, transaction: &model::Transaction) -> errors::Result<()>;
     fn get_transaction(&self, account_uuid: &model::AccountId, transaction_id: &model::TransactionId) -> errors::Result<model::Transaction>;
+    fn delete_transaction(&mut self, account_uuid: &model::AccountId, transaction_id: &model::TransactionId) -> errors::Result<()>;
 }
 
 pub struct TransactionChain<'a> {
@@ -53,6 +55,24 @@ pub fn get_transaction_chain<'a>(repo: &'a Repository, account: &model::Account)
     TransactionChain::new(repo, &account.uuid, &account.latest_transaction)
 }
 
+pub fn check_chain_consistency(transactions: &[&model::Transaction]) -> bool {
+    if transactions.is_empty() {
+        return true;
+    }
+
+    let mut base = &transactions[0].parent;
+
+    for tx in transactions {
+        if &tx.parent != base {
+            return false;
+        }
+
+        base = &tx.uuid;
+    }
+
+    return true;
+}
+
 pub fn get_balance(repo: &Repository, account: &model::Account) -> errors::Result<HashMap<model::PersonId, i64>> {
     let mut balance: HashMap<model::PersonId, i64> = account.members.iter().map(|m| (m.uuid.clone(), 0)).collect();
     let chain = get_transaction_chain(repo, account);
@@ -80,14 +100,14 @@ pub mod tests {
 
     pub fn expect_no_such_account<T: Debug>(r: errors::Result<T>) {
         match r {
-            Err(errors::Error(errors::ErrorKind::NoSuchAccount, _)) => {},
+            Err(errors::Error(errors::ErrorKind::NoSuchAccount(_), _)) => {},
             _ => { panic!("Expected NoSuchAccount error, got {:?}", r); }
         }
     }
 
     pub fn expect_no_such_transaction<T: Debug>(r: errors::Result<T>) {
         match r {
-            Err(errors::Error(errors::ErrorKind::NoSuchTransaction, _)) => {},
+            Err(errors::Error(errors::ErrorKind::NoSuchTransaction(_), _)) => {},
             _ => { panic!("Expected NoSuchTransaction error, got {:?}", r); }
         }
     }
@@ -97,6 +117,7 @@ pub mod tests {
             uuid: model::generate_account_id(),
             label: "Test account".to_owned(),
             latest_transaction: vec!(),
+            latest_synchronized_transaction: vec!(),
             members: vec!(model::Person{
                 uuid: model::generate_person_id(),
                 name: "Member 1".to_owned(),
@@ -154,6 +175,20 @@ pub mod tests {
             ),
             label: "Book".to_owned(),
             timestamp: 1530289903,
+            deleted: false,
+            replaces: vec!(),
+        }
+    }
+
+    pub fn make_test_transaction_3(parent: &model::TransactionId) -> model::Transaction {
+         model::Transaction{
+            uuid: model::generate_transaction_id(),
+            parent: parent.to_owned(),
+            amount: 0,
+            payed_by: vec!(),
+            payed_for: vec!(),
+            label: "TX".to_owned(),
+            timestamp: 0,
             deleted: false,
             replaces: vec!(),
         }
@@ -232,6 +267,20 @@ pub mod tests {
             assert_eq!(chain.next().unwrap().unwrap(), tx1);
             assert!(chain.next().is_none());
         }
+    }
+
+    #[test]
+    fn test_check_chain_consistency() {
+        let account = make_test_account();
+        let tx1 = make_test_transaction_1(&account);
+        let tx2 = make_test_transaction_2(&account, &tx1.uuid);
+        let tx3 = make_test_transaction_3(&tx2.uuid);
+
+        assert_eq!(check_chain_consistency(&vec!()), true);
+        assert_eq!(check_chain_consistency(&vec!(&tx1, &tx2, &tx3)), true);
+        assert_eq!(check_chain_consistency(&vec!(&tx2, &tx3)), true);
+        assert_eq!(check_chain_consistency(&vec!(&tx1)), true);
+        assert_eq!(check_chain_consistency(&vec!(&tx1, &tx3)), false);
     }
 
     pub fn test_balance(repo: &mut Repository) {
