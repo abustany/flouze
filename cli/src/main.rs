@@ -164,7 +164,7 @@ fn run() -> Result<()> {
         Command::ListAccounts => {
             for account in store.list_accounts()? {
                 let member_names = account.members.iter().map(|m| m.name.as_str()).collect::<Vec<&str>>().join(", ");
-                println!("{} (members: {})", &account.label, member_names);
+                println!("{} (members: {}) - {}", &account.label, member_names, model::IdAsHex(&account.uuid));
             }
 
             Ok(())
