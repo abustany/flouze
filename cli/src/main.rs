@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate error_chain;
+#[macro_use]
 extern crate log;
 extern crate env_logger;
 extern crate rand;
@@ -20,8 +21,10 @@ use structopt::StructOpt;
 use uuid::Uuid;
 
 use flouze::model;
+use flouze::jsonrpcremote::{Client, Server};
 use flouze::repository::{Repository, get_transaction_chain};
 use flouze::sledrepository::SledRepository;
+use flouze::sync;
 
 mod errors {
     error_chain! {
@@ -82,6 +85,22 @@ enum Command {
     /// List the transactions in an account
     ListTransactions {
         account_name: String,
+    },
+
+    #[structopt(name="serve")]
+    /// Start the synchronization server
+    Serve {
+        #[structopt(default_value="127.0.0.1:3142")]
+        listen_address: String,
+    },
+
+    #[structopt(name="sync")]
+    /// Synchronize a local account with a remote peer
+    Sync {
+        /// Name of the account
+        account_name: String,
+        /// Address of the remote peer in the form IP:PORT
+        remote_address: String,
     }
 }
 
@@ -254,6 +273,28 @@ fn run() -> Result<()> {
 
                 println!("{}: {} (payed by {})", tx.label, tx.amount, payed_by);
             }
+
+            Ok(())
+        }
+
+        Command::Serve{listen_address} => {
+            info!("Listening on {}", listen_address);
+            Server::new(store, &listen_address)?.wait();
+            Ok(())
+        }
+
+        Command::Sync{account_name, remote_address} => {
+            let account = find_account_by_label(&store, &account_name)?;
+
+            if account.is_none() {
+                bail!("No such account in the file");
+            }
+
+            let account = account.unwrap();
+            let http_address = "http://".to_owned() + &remote_address;
+            let mut remote = Client::new(&http_address)?;
+
+            sync::sync(&mut store, &mut remote, &account.uuid)?;
 
             Ok(())
         }
