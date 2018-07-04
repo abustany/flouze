@@ -6,6 +6,7 @@ extern crate rand;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
+extern crate uuid;
 
 extern crate flouze;
 
@@ -16,6 +17,8 @@ use rand::Rng;
 
 use structopt::StructOpt;
 
+use uuid::Uuid;
+
 use flouze::model;
 use flouze::repository::{Repository, get_transaction_chain};
 use flouze::sledrepository::SledRepository;
@@ -24,6 +27,19 @@ mod errors {
     error_chain! {
         links {
             Lib(::flouze::errors::Error, ::flouze::errors::ErrorKind);
+        }
+
+        errors {
+            InvalidUuid(t: String) {
+                description("Invalid UUID"),
+                display("Invalid UUID: {}", t)
+            }
+        }
+    }
+
+    impl From<::uuid::ParseError> for Error {
+        fn from(err: ::uuid::ParseError) -> Self {
+            ErrorKind::InvalidUuid(format!("{}", err)).into()
         }
     }
 }
@@ -37,6 +53,9 @@ enum Command {
     AddAccount {
         /// Name of the account
         label: String,
+        /// UUID of the account (by default auto generated)
+        #[structopt(long="id")]
+        id: Option<String>,
         /// List of members of this account
         members: Vec<String>,
     },
@@ -111,7 +130,7 @@ fn run() -> Result<()> {
     let mut store = SledRepository::new(&opt.file)?;
     
     match opt.command {
-        Command::AddAccount{label, members} => {
+        Command::AddAccount{label, members, id} => {
             if members.len() == 0 {
                 bail!("We need at least one member in the account");
             }
@@ -121,8 +140,16 @@ fn run() -> Result<()> {
                 bail!("An account with this name already exists");
             }
 
+            let account_id = match id {
+                Some(s) => {
+                    let uuid = Uuid::parse_str(&s)?;
+                    uuid.as_bytes().to_vec()
+                },
+                None => model::generate_account_id(),
+            };
+
             let account = model::Account{
-                uuid: model::generate_account_id(),
+                uuid: account_id,
                 label: label,
                 latest_transaction: vec!(),
                 latest_synchronized_transaction: vec!(),
