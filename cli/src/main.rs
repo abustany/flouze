@@ -211,7 +211,7 @@ fn run() -> Result<()> {
 
             let tx = model::Transaction{
                 uuid: model::generate_transaction_id(),
-                parent: vec!(),
+                parent: account.latest_transaction.clone(),
                 amount: amount,
                 payed_by: vec!(model::PayedBy{
                     person: member,
