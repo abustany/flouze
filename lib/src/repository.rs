@@ -92,6 +92,56 @@ pub fn get_balance(repo: &Repository, account: &model::Account) -> errors::Resul
     Ok(balance)
 }
 
+pub fn receive_transactions(repo: &mut Repository, account_id: &model::AccountId, transactions: &[&model::Transaction]) -> errors::Result<()> {
+    let account = repo.get_account(account_id)?;
+
+    if transactions.is_empty() {
+        return Ok(());
+    }
+
+    if account.latest_transaction != transactions[0].parent {
+        return Err(errors::ErrorKind::MustRebase.into());
+    }
+
+    if !check_chain_consistency(transactions) {
+        return Err(errors::ErrorKind::InconsistentChain.into());
+    }
+
+    for tx in transactions {
+        repo.add_transaction(&account.uuid, tx.clone())?;
+    }
+
+    repo.set_latest_transaction(&account.uuid, &transactions.last().unwrap().uuid)?;
+
+    Ok(())
+}
+
+pub fn get_child_transactions(repo: &Repository, account_id: &model::AccountId, base: &model::TransactionId) -> errors::Result<Vec<model::Transaction>> {
+    // Check that the base transaction ID is valid, else we'll get a
+    // NoSuchTransaction error.
+    if !base.is_empty() {
+        repo.get_transaction(account_id, base)?;
+    }
+
+    let account = repo.get_account(account_id)?;
+    let mut transactions: Vec<model::Transaction> = Vec::new();
+
+    for tx in get_transaction_chain(repo, &account) {
+        let tx = tx?;
+
+        if &tx.uuid == base {
+            break;
+        }
+
+        transactions.push(tx);
+    }
+
+    // Put the oldest transaction first
+    transactions.reverse();
+
+    Ok(transactions)
+}
+
 #[cfg(test)]
 pub mod tests {
     use std::fmt::Debug;
