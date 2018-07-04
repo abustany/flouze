@@ -46,7 +46,7 @@ impl<'a> Remote for LocalRemote<'a> {
     fn get_child_transactions(&self, account_id: &model::AccountId, base: &model::TransactionId) -> errors::Result<Vec<model::Transaction>> {
         // Check that the base transaction ID is valid, else we'll get a
         // NoSuchTransaction error.
-        if base != &vec!() {
+        if !base.is_empty() {
             self.repo.get_transaction(account_id, base)?;
         }
 
