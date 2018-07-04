@@ -32,9 +32,8 @@ fn rebase_local_transactions(local: &mut Repository, remote: &Remote, account: &
         .map(|tx| tx.uuid.clone())
         .unwrap();
     let latest_synchronized_id = rebased_transactions.first()
-        .or(remote_transactions.last())
         .map(|tx| tx.parent.clone())
-        .unwrap();
+        .unwrap_or(remote_transactions.last().unwrap().uuid.clone());
 
     for tx in remote_transactions {
         debug!("Adding remote transaction {} (parent: {})", model::IdAsHex(&tx.uuid), model::IdAsHex(&tx.parent));
