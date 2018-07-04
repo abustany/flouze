@@ -302,7 +302,8 @@ fn run() -> Result<()> {
 }
 
 fn main() {
-    env_logger::init();
+    let log_env = env_logger::Env::default().filter_or("FLOUZE_LOG", "info");
+    env_logger::init_from_env(log_env);
 
     if let Err(ref e) = run() {
         println!("error: {}", e);
