@@ -109,6 +109,14 @@ pub fn sync(local: &mut Repository, remote: &mut Remote, account_id: &model::Acc
     Ok(())
 }
 
+pub fn clone_remote(local: &mut Repository, remote: &mut Remote, account_id: &model::AccountId) -> errors::Result<()> {
+    let mut account = remote.get_account_info(account_id)?;
+    account.latest_transaction = vec!();
+    account.latest_synchronized_transaction = vec!();
+    local.add_account(&account)?;
+    sync(local, remote, account_id)
+}
+
 fn rebase_transactions(repo: &Repository, account: &model::Account, new_base: &model::TransactionId) -> errors::Result<(Vec<model::Transaction>, Vec<model::TransactionId>)> {
     let mut to_rebase: Vec<model::Transaction> = Vec::new();
     let mut rebased: Vec<model::Transaction> = Vec::new();

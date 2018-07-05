@@ -14,6 +14,10 @@ impl<'a> LocalRemote<'a> {
 }
 
 impl<'a> Remote for LocalRemote<'a> {
+    fn get_account_info(&self, account_id: &model::AccountId) -> errors::Result<model::Account> {
+        self.repo.get_account(account_id)
+    }
+
     fn get_latest_transaction(&self, account_id: &model::AccountId) -> errors::Result<model::TransactionId> {
         let account = self.repo.get_account(account_id)?;
         Ok(account.latest_transaction.clone())

@@ -16,6 +16,7 @@ mod client {
     use super::super::model;
 
     jsonrpc_client!(pub struct Rpc {
+        pub fn get_account_info(&mut self, account_id: &model::AccountId) -> RpcRequest<model::Account>;
         pub fn get_latest_transaction(&mut self, account_id: &model::AccountId) -> RpcRequest<model::TransactionId>;
         pub fn receive_transactions(&mut self, account_id: &model::AccountId, transactions: &[&model::Transaction]) -> RpcRequest<()>;
         pub fn get_child_transactions(&mut self, account_id: &model::AccountId, base: &model::TransactionId) -> RpcRequest<Vec<model::Transaction>>;
@@ -38,6 +39,10 @@ impl Client {
 }
 
 impl Remote for Client {
+    fn get_account_info(&self, account_id: &model::AccountId) -> errors::Result<model::Account> {
+        self.client.borrow_mut().get_account_info(account_id).call().map_err(|e| e.into())
+    }
+
     fn get_latest_transaction(&self, account_id: &model::AccountId) -> errors::Result<model::TransactionId> {
         self.client.borrow_mut().get_latest_transaction(account_id).call().map_err(|e| e.into())
     }
@@ -57,6 +62,8 @@ mod server {
 
     build_rpc_trait!(
         pub trait Rpc {
+            #[rpc(name="get_account_info")]
+            fn get_account_info(&self, AccountId) -> Result<Account>;
             #[rpc(name="get_latest_transaction")]
             fn get_latest_transaction(&self, AccountId) -> Result<TransactionId>;
             #[rpc(name="receive_transactions")]
@@ -72,6 +79,12 @@ struct ServerRpcImpl<T: Repository> {
 }
 
 impl<T: Repository + Send + Sync + 'static> server::Rpc for ServerRpcImpl<T> {
+    fn get_account_info(&self, account_id: model::AccountId) -> jsonrpc_core::Result<model::Account> {
+        let lock = self.repo.read().unwrap();
+        let repo: &Repository = lock.deref();
+        repo.get_account(&account_id).map_err(|e| e.into())
+    }
+
     fn get_latest_transaction(&self, account_id: model::AccountId) -> jsonrpc_core::Result<model::TransactionId> {
         let lock = self.repo.read().unwrap();
         let repo: &Repository = lock.deref();

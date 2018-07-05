@@ -2,6 +2,7 @@ use super::errors;
 use super::model;
 
 pub trait Remote {
+    fn get_account_info(&self, account_id: &model::AccountId) -> errors::Result<model::Account>;
     fn get_latest_transaction(&self, account_id: &model::AccountId) -> errors::Result<model::TransactionId>;
     fn receive_transactions(&mut self, account_id: &model::AccountId, transactions: &[&model::Transaction]) -> errors::Result<()>;
     fn get_child_transactions(&self, account_id: &model::AccountId, base: &model::TransactionId) -> errors::Result<Vec<model::Transaction>>;
