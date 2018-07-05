@@ -94,6 +94,15 @@ enum Command {
         listen_address: String,
     },
 
+    #[structopt(name="clone")]
+    /// Clone an account and its transactions from a remote server
+    Clone {
+        /// Address of the remote peer in the form IP:PORT
+        remote_address: String,
+        /// Account ID
+        account_id: String,
+    },
+
     #[structopt(name="sync")]
     /// Synchronize a local account with a remote peer
     Sync {
@@ -281,7 +290,17 @@ fn run() -> Result<()> {
             info!("Listening on {}", listen_address);
             Server::new(store, &listen_address)?.wait();
             Ok(())
-        }
+        },
+
+        Command::Clone{remote_address, account_id} => {
+            let id = Uuid::parse_str(&account_id)?.as_bytes().to_vec();
+
+            let http_address = "http://".to_owned() + &remote_address;
+            let mut remote = Client::new(&http_address)?;
+
+            sync::clone_remote(&mut store, &mut remote, &id)?;
+            Ok(())
+        },
 
         Command::Sync{account_name, remote_address} => {
             let account = find_account_by_label(&store, &account_name)?;
