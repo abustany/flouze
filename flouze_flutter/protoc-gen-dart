@@ -1,0 +1,4 @@
+#!/bin/sh
+export PATH="/home/abustany/.local/flutter-0.5.1/bin/cache/dart-sdk/bin:$PATH"
+export DART_PACKAGE_ROOT="/home/abustany/.local/flutter-0.5.1/.pub-cache/hosted/pub.dartlang.org/protoc_plugin-0.8.0/lib"
+exec dart --packages=/home/abustany/code/flouze/flouze_flutter/.packages $DART_PACKAGE_ROOT/../bin/protoc_plugin.dart -c "$@"
