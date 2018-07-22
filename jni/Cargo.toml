@@ -1,0 +1,13 @@
+[package]
+name = "flouze-jni"
+version = "0.1.0"
+authors = ["Adrien Bustany <adrien@bustany.org>"]
+
+[lib]
+path = "src/main/rust/lib.rs"
+crate_type = ["cdylib"]
+
+[dependencies]
+jni = "0.10"
+prost = "0.4"
+flouze = { path = "../lib" }

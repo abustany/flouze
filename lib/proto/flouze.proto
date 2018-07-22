@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package flouze.model;
 
+option java_package = "flouze";
+option java_outer_classname = "Model";
+
 message PayedBy {
 	bytes person = 1; // UUID
 	uint32 amount = 2;
