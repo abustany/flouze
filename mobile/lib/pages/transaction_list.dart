@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flouze_flutter/flouze_flutter.dart';
 
 import 'package:flouze/pages/add_transaction.dart';
+import 'package:flouze/utils/config.dart';
 
 class TransactionListPage extends StatefulWidget {
   final SledRepository repository;
@@ -46,6 +47,16 @@ class TransactionListPageState extends State<TransactionListPage> {
     loadTransactions();
   }
 
+  static String formatAmount(int value) {
+    double res = value.toDouble();
+
+    for (int i = 0; i < AppConfig.currencyDecimals; i++) {
+      res /= 10;
+    }
+
+    return res.toStringAsFixed(AppConfig.currencyDecimals).replaceFirst('.', String.fromCharCode(AppConfig.decimalSeparator));
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Widget> transactionWidgets = (_transactions ?? []).map((tx) =>
@@ -53,7 +64,7 @@ class TransactionListPageState extends State<TransactionListPage> {
           title: Row(
             children: <Widget>[
               Expanded(child: Text(tx.label)),
-              Text(tx.amount.toString())
+              Text('${formatAmount(tx.amount)} ${AppConfig.currencySymbol}')
             ],
           ),
           onTap: () {

@@ -3,10 +3,13 @@ import 'package:flutter/services.dart';
 
 import 'package:fixnum/fixnum.dart';
 
+import 'package:charcode/ascii.dart';
+
 import 'package:intl/intl.dart';
 
 import 'package:flouze_flutter/flouze_flutter.dart';
 
+import 'package:flouze/utils/config.dart';
 import 'package:flouze/utils/uuid.dart';
 
 class AddTransactionPage extends StatefulWidget {
@@ -16,6 +19,78 @@ class AddTransactionPage extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => new AddTransactionPageState(members);
+}
+
+class CurrencyInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    return _selectionAwareTextManipulation(newValue, _filter);
+  }
+
+  static String _filter(String value) {
+    final StringBuffer filtered = new StringBuffer();
+    bool hasSeparator = false;
+    int nDecimals = 0;
+
+    for (int c in value.codeUnits) {
+      final bool isSeparator = (c == AppConfig.decimalSeparator);
+
+      if (nDecimals < AppConfig.currencyDecimals && c >= $0 && c <= $9 || (!hasSeparator && isSeparator)) {
+        filtered.writeCharCode(c);
+
+        if (hasSeparator && !isSeparator) {
+          nDecimals++;
+        }
+      }
+
+      hasSeparator = hasSeparator || isSeparator;
+    }
+
+    return filtered.toString();
+  }
+
+  // Copied from WhitelistingTextInputFormatter
+  static TextEditingValue _selectionAwareTextManipulation(
+      TextEditingValue value,
+      String substringManipulation(String substring),
+      ) {
+    final int selectionStartIndex = value.selection.start;
+    final int selectionEndIndex = value.selection.end;
+    String manipulatedText;
+    TextSelection manipulatedSelection;
+    if (selectionStartIndex < 0 || selectionEndIndex < 0) {
+      manipulatedText = substringManipulation(value.text);
+    } else {
+      final String beforeSelection = substringManipulation(
+          value.text.substring(0, selectionStartIndex)
+      );
+      final String inSelection = substringManipulation(
+          value.text.substring(selectionStartIndex, selectionEndIndex)
+      );
+      final String afterSelection = substringManipulation(
+          value.text.substring(selectionEndIndex)
+      );
+      manipulatedText = beforeSelection + inSelection + afterSelection;
+      if (value.selection.baseOffset > value.selection.extentOffset) {
+        manipulatedSelection = value.selection.copyWith(
+          baseOffset: beforeSelection.length + inSelection.length,
+          extentOffset: beforeSelection.length,
+        );
+      } else {
+        manipulatedSelection = value.selection.copyWith(
+          baseOffset: beforeSelection.length,
+          extentOffset: beforeSelection.length + inSelection.length,
+        );
+      }
+    }
+    return new TextEditingValue(
+      text: manipulatedText,
+      selection: manipulatedSelection ?? const TextSelection.collapsed(offset: -1),
+      composing: manipulatedText == value.text
+          ? value.composing
+          : TextRange.empty,
+    );
+  }
 }
 
 class AddTransactionPageState extends State<AddTransactionPage> {
@@ -35,25 +110,47 @@ class AddTransactionPageState extends State<AddTransactionPage> {
     _payedFor = Map.fromEntries(_members.map((person) => MapEntry<String, int>(person.uuid.toString(), 0)));
   }
 
-  static TextFormField amountField({Key key, String initialValue, FormFieldSetter<String> onSaved, bool notNull = false}) =>
-      TextFormField(
-        key: key,
-        initialValue: initialValue,
-        keyboardType: TextInputType.numberWithOptions(signed: false, decimal: false),
-        inputFormatters: <TextInputFormatter>[
-          WhitelistingTextInputFormatter(RegExp("[0-9]")),
-        ],
-        validator: (value) {
-          if (value.isEmpty) {
-            return 'Amount cannot be empty';
-          }
+  static Widget amountField({Key key, String initialValue, FormFieldSetter<int> onSaved, bool notNull = false}) =>
+    Row(
+      children: <Widget>[
+        Expanded(
+          child: TextFormField(
+            key: key,
+            initialValue: initialValue,
+            textAlign: TextAlign.end,
+            keyboardType: TextInputType.numberWithOptions(signed: false, decimal: false),
+            inputFormatters: <TextInputFormatter>[
+              CurrencyInputFormatter(),
+            ],
+            validator: (value) {
+              if (value.isEmpty) {
+                return 'Amount cannot be empty';
+              }
 
-          if (notNull && int.parse(value) == 0) {
-            return 'Amount should be greater than 0';
-          }
-        },
-        onSaved: onSaved,
-      );
+              final double numVal = double.tryParse(value.replaceFirst(String.fromCharCode(AppConfig.decimalSeparator), '.'));
+
+              if (numVal == null) {
+                return 'Amount is not a valid number';
+              }
+
+              if (notNull && numVal == 0) {
+                return 'Amount should be greater than 0';
+              }
+            },
+            onSaved: (String value) {
+              double numVal = double.parse(value.replaceFirst(String.fromCharCode(AppConfig.decimalSeparator), '.'));
+
+              for (int i = 0; i < AppConfig.currencyDecimals; i++) {
+                numVal *= 10;
+              }
+
+              onSaved(numVal.truncate());
+            },
+          )
+        ),
+        SizedBox(width: 12.0),
+        Text(AppConfig.currencySymbol)
+      ]);
 
   static List<TableRow> payedRows(List<Person> members, Map<String, int> amounts, String keyPrefix) =>
       members.map((person) {
@@ -65,7 +162,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
             amountField(
               key: Key(keyPrefix + person.uuid.toString()),
               initialValue: initialValue == 0 ? '' : initialValue.toString(),
-              onSaved: (value) => amounts[person.uuid.toString()] = int.parse(value),
+              onSaved: (value) => amounts[person.uuid.toString()] = value,
             )
           ]
       );
@@ -133,7 +230,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
                               formRow(
                                 context: context,
                                 label: 'Amount',
-                                child: amountField(onSaved: (value) => _amount = int.parse(value), notNull: true),
+                                child: amountField(onSaved: (value) => _amount = value, notNull: true),
                               ),
 
                               formRow(
