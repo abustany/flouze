@@ -9,6 +9,7 @@ dependencies:
     path: ../flouze_flutter/
 
   charcode: "1.1.1"
+  collection: "1.14.6"
   fixnum: ">=0.9.0 <0.11.0"
   intl: "^0.15.7"
   path_provider: "^0.4.1"

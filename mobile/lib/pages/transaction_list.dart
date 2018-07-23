@@ -3,6 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:collection/collection.dart';
+
+import 'package:intl/intl.dart';
+
 import 'package:flouze_flutter/flouze_flutter.dart';
 
 import 'package:flouze/pages/add_transaction.dart';
@@ -22,6 +26,9 @@ class TransactionListPageState extends State<TransactionListPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final SledRepository repository;
   final Account account;
+  final Function listEquality = ListEquality().equals;
+  final DateFormat dateFormat = DateFormat.yMMMd();
+
   List<Transaction> _transactions;
 
   TransactionListPageState({@required this.repository, @required this.account});
@@ -57,20 +64,38 @@ class TransactionListPageState extends State<TransactionListPage> {
     return res.toStringAsFixed(AppConfig.currencyDecimals).replaceFirst('.', String.fromCharCode(AppConfig.decimalSeparator));
   }
 
+  String personName(List<int> personId) {
+    for (Person p in account.members) {
+      if (listEquality(p.uuid, personId)) {
+        return p.name;
+      }
+    }
+
+    return null;
+  }
+
+  String formatPayedBy(List<PayedBy> payedBys) {
+    final names = payedBys.where((p) => p.amount > 0).map((p) => personName(p.person) ?? '??').toList();
+    names.sort();
+    return names.join(', ');
+  }
+
   @override
   Widget build(BuildContext context) {
-    final List<Widget> transactionWidgets = (_transactions ?? []).map((tx) =>
-        ListTile(
-          title: Row(
-            children: <Widget>[
-              Expanded(child: Text(tx.label)),
-              Text('${formatAmount(tx.amount)} ${AppConfig.currencySymbol}')
-            ],
-          ),
-          onTap: () {
-          },
-        )
-    ).toList();
+    final List<Widget> transactionWidgets = (_transactions ?? []).map((tx) {
+      final String payedBy = formatPayedBy(tx.payedBy);
+
+      return ListTile(
+        title: Row(
+          children: <Widget>[
+            Expanded(child: Text(tx.label)),
+            Text('${formatAmount(tx.amount)} ${AppConfig.currencySymbol}')
+          ],
+        ),
+        subtitle: Text('On ${dateFormat.format(DateTime.fromMillisecondsSinceEpoch(1000*tx.timestamp.toInt()))} by $payedBy'),
+        onTap: () {},
+      );
+    }).toList();
 
     return new Scaffold(
       key: _scaffoldKey,
