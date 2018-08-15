@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 
 import 'package:flouze_flutter/flouze_flutter.dart';
 
+import 'package:flouze/utils/amounts.dart';
 import 'package:flouze/utils/config.dart';
 import 'package:flouze/utils/uuid.dart';
 
@@ -93,24 +94,40 @@ class CurrencyInputFormatter extends TextInputFormatter {
   }
 }
 
+abstract class AbstractPayedBy{}
+
+class PayedByOne extends AbstractPayedBy {
+  final Person person;
+  PayedByOne(this.person);
+}
+
+class PayedByMany extends AbstractPayedBy {
+  final Map<Person, int> amounts;
+  PayedByMany(this.amounts);
+
+  void update(Person person, int amount) {
+    this.amounts[person] = amount;
+  }
+}
+
 class AddTransactionPageState extends State<AddTransactionPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _amountController = TextEditingController();
   final DateFormat _dateFormat = DateFormat.yMMMd();
   final List<Person> _members;
 
   String _description = '';
   int _amount = 0;
   DateTime _date = DateTime.now();
-  Map<String, int> _payedBy;
-  Map<String, int> _payedFor;
+  AbstractPayedBy _payedBy;
+  Map<Person, int> _payedFor;
 
   AddTransactionPageState(this._members) {
-    _payedBy = Map.fromEntries(_members.map((person) => MapEntry<String, int>(person.uuid.toString(), 0)));
-    _payedFor = Map.fromEntries(_members.map((person) => MapEntry<String, int>(person.uuid.toString(), 0)));
+    _payedFor = Map.fromEntries(_members.map((person) => MapEntry<Person, int>(person, 0)));
   }
 
-  static Widget amountField({Key key, String initialValue, FormFieldSetter<int> onSaved, bool notNull = false}) =>
+  static Widget amountField({Key key, String initialValue, FormFieldSetter<int> onSaved, bool notNull = false, TextEditingController controller}) =>
     Row(
       children: <Widget>[
         Expanded(
@@ -122,9 +139,10 @@ class AddTransactionPageState extends State<AddTransactionPage> {
             inputFormatters: <TextInputFormatter>[
               CurrencyInputFormatter(),
             ],
+            controller: controller,
             validator: (value) {
               if (value.isEmpty) {
-                return 'Amount cannot be empty';
+                return notNull ? 'Amount cannot be empty' : null;
               }
 
               final double numVal = double.tryParse(value.replaceFirst(String.fromCharCode(AppConfig.decimalSeparator), '.'));
@@ -138,13 +156,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
               }
             },
             onSaved: (String value) {
-              double numVal = double.parse(value.replaceFirst(String.fromCharCode(AppConfig.decimalSeparator), '.'));
-
-              for (int i = 0; i < AppConfig.currencyDecimals; i++) {
-                numVal *= 10;
-              }
-
-              onSaved(numVal.truncate());
+              onSaved(amountFromString(value));
             },
           )
         ),
@@ -152,21 +164,57 @@ class AddTransactionPageState extends State<AddTransactionPage> {
         Text(AppConfig.currencySymbol)
       ]);
 
-  static List<TableRow> payedRows(List<Person> members, Map<String, int> amounts, String keyPrefix) =>
+  static List<TableRow> payedRows(List<Person> members, Map<Person, int> amounts, String keyPrefix) =>
       members.map((person) {
-      final int initialValue = amounts[person.uuid.toString()];
+      final int initialValue = amounts[person];
 
       return TableRow(
           children: <Widget>[
             Text(person.name),
             amountField(
               key: Key(keyPrefix + person.uuid.toString()),
-              initialValue: initialValue == 0 ? '' : initialValue.toString(),
-              onSaved: (value) => amounts[person.uuid.toString()] = value,
+              initialValue: initialValue == 0 ? '' : amountToString(initialValue),
+              onSaved: (value) => amounts[person] = value,
             )
           ]
       );
     }).toList();
+
+  static Table payedTable(List<TableRow> rows) =>
+    Table(
+      children: rows,
+      columnWidths: {
+        0: IntrinsicColumnWidth(flex: 1.0),
+        1: IntrinsicColumnWidth(flex: 3.0),
+      },
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+    );
+
+  static Widget payedMemberList({@required List<Person> members, @required void Function(Person p) onSelected, @required void Function() onSplit, active: Person}) =>
+      Wrap(
+        spacing: 8.0,
+        runSpacing: 8.0,
+        children: members.map((person) =>
+          ChoiceChip(
+            selected: person == active,
+            onSelected: (selected) {
+              if (selected) {
+                onSelected(person);
+              }
+            },
+            avatar: Icon(Icons.account_circle),
+            label: Text(person.name),
+          ),
+        ).toList() + [
+          ChoiceChip(
+              selected: false,
+              onSelected: (selected) {
+                onSplit();
+              },
+              avatar: Icon(Icons.donut_small),
+              label: Text('Split...'))
+        ],
+      );
 
   static TableRow formRow({@required BuildContext context, @required String label, @required Widget child}) =>
       TableRow(
@@ -182,9 +230,37 @@ class AddTransactionPageState extends State<AddTransactionPage> {
         ],
       );
 
+  static PayedByMany convertToMany(AbstractPayedBy payed, List<Person> members, int amount) {
+    if (payed is PayedByMany) {
+      return payed;
+    }
+
+    var selectedPerson = (payed is PayedByOne ? payed.person : null);
+
+    return PayedByMany(Map.fromEntries(members.map((person) => MapEntry(person, (person == selectedPerson) ? amount : 0))));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final List<TableRow> payedByRows = payedRows(_members, _payedBy, 'payed-by-');
+    Widget payedByWidget = (_payedBy == null || _payedBy is PayedByOne) ?
+    Padding(
+      padding: EdgeInsets.only(top: 12.0),
+      child: payedMemberList(
+          members: _members,
+          onSelected: (Person p) {
+            setState(() {
+              _payedBy = PayedByOne(p);
+            });
+          },
+          onSplit: () {
+            setState(() {
+              _payedBy = convertToMany(_payedBy, _members, amountFromString(_amountController.text));
+            });
+          },
+          active: ((_payedBy != null) ? (_payedBy as PayedByOne).person : false)))
+      :
+      payedTable(payedRows(_members, (_payedBy as PayedByMany).amounts, 'payed-by-'));
+
     final List<TableRow> payedForRows = payedRows(_members, _payedFor, 'payed-for-');
 
     return new Scaffold(
@@ -230,7 +306,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
                               formRow(
                                 context: context,
                                 label: 'Amount',
-                                child: amountField(onSaved: (value) => _amount = value, notNull: true),
+                                child: amountField(onSaved: (value) => _amount = value, notNull: true, controller: _amountController),
                               ),
 
                               formRow(
@@ -254,14 +330,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
                               style: Theme.of(context).textTheme.title,
                             )
                         ),
-                        Table(
-                          children: payedByRows,
-                          columnWidths: {
-                            0: IntrinsicColumnWidth(flex: 1.0),
-                            1: IntrinsicColumnWidth(flex: 3.0),
-                          },
-                          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                        ),
+                        payedByWidget,
 
                         Container(
                             margin: EdgeInsets.only(top: 12.0),
@@ -295,15 +364,27 @@ class AddTransactionPageState extends State<AddTransactionPage> {
 
     formState.save();
 
-    final int payedByTotal = _payedBy.values.reduce((acc, v) => acc + v);
-    final int payedForTotal = _payedFor.values.reduce((acc, v) => acc + v);
-
-    if (_amount != payedByTotal) {
+    if (_payedBy == null) {
       _scaffoldKey.currentState.showSnackBar(
-        SnackBar(content: Text('Sum of "payed by"s does not match total amount'))
+          SnackBar(content: Text('Please select the person who paid'))
       );
+
       return;
     }
+
+    if (_payedBy is PayedByMany) {
+      final int payedByTotal = (_payedBy as PayedByMany).amounts.values.reduce((acc, v) => acc + v);
+
+      if (_amount != payedByTotal) {
+        _scaffoldKey.currentState.showSnackBar(
+            SnackBar(content: Text('Sum of "payed by"s does not match total amount'))
+        );
+        return;
+      }
+    }
+
+    final int payedForTotal = _payedFor.values.reduce((acc, v) => acc + v);
+
 
     if (_amount != payedForTotal) {
       _scaffoldKey.currentState.showSnackBar(
@@ -312,16 +393,21 @@ class AddTransactionPageState extends State<AddTransactionPage> {
       return;
     }
 
-    final List<PayedBy> payedBy = _members.map((person) =>
-        PayedBy.create()
-          ..person = person.uuid
-          ..amount = _payedBy[person.uuid.toString()]
-    ).toList();
+    final List<PayedBy> payedBy = (_payedBy is PayedByOne) ?
+      (PayedBy.create()
+        ..person = (_payedBy as PayedByOne).person.uuid
+        ..amount = _amount)
+      :
+      _members.map((person) =>
+          PayedBy.create()
+            ..person = person.uuid
+            ..amount = (_payedBy as PayedByMany).amounts[person]
+      ).toList();
 
     final List<PayedFor> payedFor = _members.map((person) =>
     PayedFor.create()
       ..person = person.uuid
-      ..amount = _payedFor[person.uuid.toString()]
+      ..amount = _payedFor[person]
     ).toList();
 
     final Transaction tx = Transaction.create()

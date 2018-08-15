@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:flouze_flutter/flouze_flutter.dart';
 
 import 'package:flouze/pages/add_transaction.dart';
+import 'package:flouze/utils/amounts.dart';
 import 'package:flouze/utils/config.dart';
 
 class TransactionListPage extends StatefulWidget {
@@ -54,16 +55,6 @@ class TransactionListPageState extends State<TransactionListPage> {
     loadTransactions();
   }
 
-  static String formatAmount(int value) {
-    double res = value.toDouble();
-
-    for (int i = 0; i < AppConfig.currencyDecimals; i++) {
-      res /= 10;
-    }
-
-    return res.toStringAsFixed(AppConfig.currencyDecimals).replaceFirst('.', String.fromCharCode(AppConfig.decimalSeparator));
-  }
-
   String personName(List<int> personId) {
     for (Person p in account.members) {
       if (listEquality(p.uuid, personId)) {
@@ -89,7 +80,7 @@ class TransactionListPageState extends State<TransactionListPage> {
         title: Row(
           children: <Widget>[
             Expanded(child: Text(tx.label)),
-            Text('${formatAmount(tx.amount)} ${AppConfig.currencySymbol}')
+            Text('${amountToString(tx.amount)} ${AppConfig.currencySymbol}')
           ],
         ),
         subtitle: Text('On ${dateFormat.format(DateTime.fromMillisecondsSinceEpoch(1000*tx.timestamp.toInt()))} by $payedBy'),
