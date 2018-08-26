@@ -394,9 +394,9 @@ class AddTransactionPageState extends State<AddTransactionPage> {
     }
 
     final List<PayedBy> payedBy = (_payedBy is PayedByOne) ?
-      (PayedBy.create()
+      ([PayedBy.create()
         ..person = (_payedBy as PayedByOne).person.uuid
-        ..amount = _amount)
+        ..amount = _amount])
       :
       _members.map((person) =>
           PayedBy.create()
