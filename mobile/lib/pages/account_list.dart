@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flouze_flutter/flouze_flutter.dart';
 
 import 'package:flouze/pages/add_account.dart';
-import 'package:flouze/pages/transaction_list.dart';
+import 'package:flouze/pages/account.dart';
 
 class AccountListPage extends StatefulWidget {
   final SledRepository repository;
@@ -82,7 +82,7 @@ class AccountListPageState extends State<AccountListPage> {
 
   void _openAccount(Account account) {
     Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => new TransactionListPage(repository: repository, account: account))
+        MaterialPageRoute(builder: (context) => new AccountPage(repository: repository, account: account))
     );
   }
 
