@@ -199,3 +199,33 @@ pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_SledReposito
     };
     ok_or_throw(&env, add_transaction(&mut repo, &account_id, &transaction_bytes), ());
 }
+
+fn get_balance(repo: &SledRepository, account_id: &model::AccountId) -> ::flouze::errors::Result<Vec<u8>> {
+    let account = repo.get_account(account_id)?;
+    let balance_entries: Vec<balance::Entry> = repository::get_balance(repo, &account)?
+        .into_iter()
+        .map(|(k, v)| balance::Entry{person: k, balance: v})
+        .collect();
+    let balance = Balance{entries: balance_entries};
+    let mut buf = Vec::new();
+    buf.reserve(balance.encoded_len());
+    balance.encode(&mut buf).unwrap();
+    Ok(buf)
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_Repository_getBalance(env: JNIEnv, _class: JClass, instance: jlong, jaccount_id: jbyteArray) -> jbyteArray {
+    let repo = &mut *(instance as *mut SledRepository);
+    let account_id = match env.convert_byte_array(jaccount_id) {
+        Ok(bytes) => bytes,
+        Err(_) => { return env.byte_array_from_slice(&vec!()).unwrap(); }
+    };
+    match get_balance(&repo, &account_id) {
+        Ok(bytes) => env.byte_array_from_slice(&bytes).unwrap(),
+        Err(e) => {
+            throw_err(&env, e);
+            return env.byte_array_from_slice(&vec!()).unwrap();
+        }
+    }
+}

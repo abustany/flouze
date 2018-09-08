@@ -75,4 +75,15 @@ class SledRepository {
 
     await _channel.invokeMethod('SledRepository::addTransaction', params);
   }
+
+  Future<Map<List<int>, int>> getBalance(List<int> accountId) async {
+    final Map<String, dynamic> params = {
+      'ptr': _ptr,
+      'accountId': Uint8List.fromList(accountId),
+    };
+
+    return _channel.invokeMethod('Repository::getBalance', params).then((bytes) =>
+      Map.fromEntries(Balance.fromBuffer(bytes).entries.map((entry) => MapEntry(entry.person, entry.balance.toInt())))
+    );
+  }
 }

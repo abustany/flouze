@@ -102,6 +102,15 @@ public class FlouzeFlutterPlugin implements MethodCallHandler {
                 result.error("SLED_REPOSITORY_ERROR", e.toString(), null);
             }
             return;
+        case "Repository::getBalance":
+            try {
+                final long ptr = pointerValue(call.argument("ptr"));
+                final byte[] accountId = call.argument("accountId");
+                result.success(Repository.getBalance(ptr, accountId));
+            } catch (Throwable e) {
+                result.error("REPOSITORY_ERROR", e.toString(), null);
+            }
+            return;
         default:
             result.notImplemented();
         }
