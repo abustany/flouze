@@ -1,16 +1,25 @@
 extern crate flouze;
 extern crate jni;
 extern crate prost;
+#[macro_use]
+extern crate prost_derive;
 
 use jni::JNIEnv;
 use jni::objects::*;
 use jni::sys::*;
 
 use flouze::model;
+use flouze::repository;
 use flouze::repository::{Repository, get_transaction_chain};
 use flouze::sledrepository::SledRepository;
 
 use prost::Message;
+
+mod proto {
+    include!(concat!(env!("OUT_DIR"), "/flouze_flutter.rs"));
+}
+
+use proto::*;
 
 const FLOUZE_EXCEPTION_CLASS: &'static str = "org/bustany/flouze/flouzeflutter/FlouzeException";
 
@@ -111,80 +120,63 @@ pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_SledReposito
     }
 }
 
-fn list_accounts(repo: &SledRepository) -> ::flouze::errors::Result<Vec<Vec<u8>>> {
-    Ok(repo.list_accounts()?.into_iter().map(|a| {
-        let mut buf = Vec::new();
-        buf.reserve(a.encoded_len());
-        a.encode(&mut buf).unwrap();
-        buf
-    }).collect())
-}
-
-fn add_items_to_list(env: &JNIEnv, list: &mut JList, items: &[Vec<u8>]) -> bool{
-    for item in items {
-        let jobj: JObject = match env.byte_array_from_slice(&item) {
-            Ok(x) => x.into(),
-            Err(_) => { return false; }
-        };
-
-        if list.add(jobj).is_err() {
-            return false;
-        }
-    }
-
-    return true;
+fn list_accounts(repo: &SledRepository) -> ::flouze::errors::Result<Vec<u8>> {
+    let accounts = AccountList{
+        accounts: repo.list_accounts()?,
+    };
+    let mut buf = Vec::new();
+    buf.reserve(accounts.encoded_len());
+    accounts.encode(&mut buf).unwrap();
+    Ok(buf)
 }
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_SledRepository_listAccounts(env: JNIEnv, _class: JClass, instance: jlong, res: JObject) {
+pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_SledRepository_listAccounts(env: JNIEnv, _class: JClass, instance: jlong) -> jbyteArray {
     let repo = &mut *(instance as *mut SledRepository);
-    let accounts = match list_accounts(&repo) {
-        Ok(accounts) => accounts,
+    match list_accounts(&repo) {
+        Ok(bytes) => env.byte_array_from_slice(&bytes).unwrap(),
         Err(e) => {
             throw_err(&env, e);
-            return;
+            return env.byte_array_from_slice(&vec!()).unwrap();
         }
-    };
-
-    let mut res = env.get_list(res).unwrap();
-    add_items_to_list(&env, &mut res, &accounts);
+    }
 }
 
-fn list_transactions(repo: &SledRepository, account_id: &model::AccountId) -> ::flouze::errors::Result<Vec<Vec<u8>>> {
+fn list_transactions(repo: &SledRepository, account_id: &model::AccountId) -> ::flouze::errors::Result<Vec<u8>> {
     let account = repo.get_account(account_id)?;
-    let mut res: Vec<Vec<u8>> = Vec::new();
+    let mut transactions: Vec<model::Transaction> = Vec::new();
 
     for tx in get_transaction_chain(repo, &account) {
         let tx = tx?;
-
-        let mut buf = Vec::new();
-        buf.reserve(tx.encoded_len());
-        tx.encode(&mut buf).unwrap();
-        res.push(buf);
+        transactions.push(tx);
     }
 
-    Ok(res)
+    let transaction_list = TransactionList{
+        transactions: transactions,
+    };
+
+    let mut buf = Vec::new();
+    buf.reserve(transaction_list.encoded_len());
+    transaction_list.encode(&mut buf).unwrap();
+    Ok(buf)
 }
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_SledRepository_listTransactions(env: JNIEnv, _class: JClass, instance: jlong, jaccount_id: jbyteArray, res: JObject) {
+pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_SledRepository_listTransactions(env: JNIEnv, _class: JClass, instance: jlong, jaccount_id: jbyteArray) -> jbyteArray {
     let repo = &mut *(instance as *mut SledRepository);
     let account_id = match env.convert_byte_array(jaccount_id) {
         Ok(bytes) => bytes,
-        Err(_) => { return; }
+        Err(_) => { return env.byte_array_from_slice(&vec!()).unwrap(); }
     };
-    let transactions = match list_transactions(&repo, &account_id) {
-        Ok(transactions) => transactions,
+    match list_transactions(&repo, &account_id) {
+        Ok(bytes) => env.byte_array_from_slice(&bytes).unwrap(),
         Err(e) => {
             throw_err(&env, e);
-            return;
+            return env.byte_array_from_slice(&vec!()).unwrap();
         }
-    };
-
-    let mut res = env.get_list(res).unwrap();
-    add_items_to_list(&env, &mut res, &transactions);
+    }
 }
 
 fn add_transaction(repo: &mut SledRepository, account_id: &model::AccountId, transaction_data: &Vec<u8>) -> ::flouze::errors::Result<()> {

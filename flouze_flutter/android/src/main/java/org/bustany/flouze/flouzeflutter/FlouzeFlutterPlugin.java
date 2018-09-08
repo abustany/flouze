@@ -1,8 +1,5 @@
 package org.bustany.flouze.flouzeflutter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -80,9 +77,7 @@ public class FlouzeFlutterPlugin implements MethodCallHandler {
         case "SledRepository::listAccounts":
             try {
                 final long ptr = pointerValue(call.arguments());
-                final List<byte[]> accounts = new ArrayList<>();
-                SledRepository.listAccounts(ptr, accounts);
-                result.success(accounts);
+                result.success(SledRepository.listAccounts(ptr));
             } catch (Throwable e) {
                 result.error("SLED_REPOSITORY_ERROR", e.toString(), null);
             }
@@ -91,9 +86,7 @@ public class FlouzeFlutterPlugin implements MethodCallHandler {
             try {
                 final long ptr = pointerValue(call.argument("ptr"));
                 final byte[] accountId = call.argument("accountId");
-                final List<byte[]> transactions = new ArrayList<>();
-                SledRepository.listTransactions(ptr, accountId, transactions);
-                result.success(transactions);
+                result.success(SledRepository.listTransactions(ptr, accountId));
             } catch (Throwable e) {
                 result.error("SLED_REPOSITORY_ERROR", e.toString(), null);
             }

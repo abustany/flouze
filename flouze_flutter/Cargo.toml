@@ -8,6 +8,11 @@ path = "rust/lib.rs"
 crate_type = ["cdylib"]
 
 [dependencies]
+bytes = "0.4"
 jni = "0.10"
 prost = "0.4"
+prost-derive = "0.4"
 flouze = { path = "../lib" }
+
+[build-dependencies]
+prost-build = "0.4"

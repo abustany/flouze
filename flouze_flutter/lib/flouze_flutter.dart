@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 
+import 'package:flouze_flutter/bindings.pb.dart';
+
 import 'package:flouze_flutter/flouze.pb.dart';
 export 'package:flouze_flutter/flouze.pb.dart';
 
@@ -48,8 +50,8 @@ class SledRepository {
   }
 
   Future<List<Account>> listAccounts() async {
-    return _channel.invokeMethod('SledRepository::listAccounts', _ptr).then((accounts) =>
-      (accounts as List<dynamic>).map((account) => Account.fromBuffer(account as List<int>)).toList()
+    return _channel.invokeMethod('SledRepository::listAccounts', _ptr).then((bytes) =>
+      AccountList.fromBuffer(bytes).accounts
     );
   }
 
@@ -59,8 +61,8 @@ class SledRepository {
       'accountId': Uint8List.fromList(accountId),
     };
 
-    return _channel.invokeMethod('SledRepository::listTransactions', params).then((transactions) =>
-      (transactions as List<dynamic>).map((transaction) => Transaction.fromBuffer(transaction as List<int>)).toList()
+    return _channel.invokeMethod('SledRepository::listTransactions', params).then((bytes) =>
+      TransactionList.fromBuffer(bytes).transactions
     );
   }
 

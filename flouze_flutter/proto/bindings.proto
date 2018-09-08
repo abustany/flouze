@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package flouze_flutter;
+
+import "flouze.proto";
+
+message AccountList {
+	repeated flouze.model.Account accounts = 1;
+}
+
+message TransactionList {
+	repeated flouze.model.Transaction transactions = 1;
+}
+
+message Balance {
+	message Entry {
+		bytes person = 1;
+		int64 balance = 2;
+	}
+
+	repeated Balance.Entry entries = 1;
+}

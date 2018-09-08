@@ -44,4 +44,5 @@ chmod a+x protoc-gen-dart
 set -e
 
 $PROTOC --plugin=$MY_DIR/protoc-gen-dart --dart_out=$MY_DIR/lib $MY_DIR/../lib/proto/flouze.proto -I $MY_DIR/../lib/proto
+$PROTOC --plugin=$MY_DIR/protoc-gen-dart --dart_out=$MY_DIR/lib $MY_DIR/proto/bindings.proto -I $MY_DIR/proto -I $MY_DIR/../lib/proto
 echo "Generated models in $MY_DIR/lib"
