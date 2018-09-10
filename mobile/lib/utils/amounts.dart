@@ -23,3 +23,23 @@ String amountToString(int amount) {
 
   return val.toStringAsFixed(AppConfig.currencyDecimals).replaceFirst('.', String.fromCharCode(AppConfig.decimalSeparator));
 }
+
+List<int> divideAmount(int amount, int nMembers) {
+  if (nMembers == 0) {
+    return List();
+  }
+
+  int slice = (amount / nMembers).floor();
+  List<int> amounts = List.filled(nMembers, slice);
+
+  int total = slice * nMembers;
+
+  for (int i = 0; i < nMembers && total < amount; ++i) {
+    amounts[i]++;
+    total++;
+  }
+
+  amounts.shuffle();
+
+  return amounts;
+}

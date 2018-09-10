@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:collection/collection.dart';
 import 'package:fixnum/fixnum.dart';
 
 import 'package:intl/intl.dart';
@@ -10,6 +11,7 @@ import 'package:flouze/utils/amounts.dart';
 import 'package:flouze/utils/uuid.dart';
 import 'package:flouze/widgets/amount_field.dart';
 import 'package:flouze/widgets/simple_payed_by.dart';
+import 'package:flouze/widgets/simple_payed_for.dart';
 import 'package:flouze/widgets/payed_table.dart';
 
 class AddTransactionPage extends StatefulWidget {
@@ -21,12 +23,29 @@ class AddTransactionPage extends StatefulWidget {
   State<StatefulWidget> createState() => new AddTransactionPageState(members);
 }
 
-
-abstract class AbstractPayedBy{}
+abstract class AbstractPayedBy{
+  String validate(int amount);
+  List<PayedBy> asPayedBy(int amount);
+}
 
 class PayedByOne extends AbstractPayedBy {
   final Person person;
   PayedByOne(this.person);
+
+  @override
+  List<PayedBy> asPayedBy(int amount) =>
+    [PayedBy.create()
+        ..person = person.uuid
+        ..amount = amount];
+
+  @override
+  String validate(int amount) {
+    if (person == null) {
+      return 'Please select the person who paid';
+    }
+
+    return null;
+  }
 }
 
 class PayedByMany extends AbstractPayedBy {
@@ -35,6 +54,78 @@ class PayedByMany extends AbstractPayedBy {
 
   void update(Person person, int amount) {
     this.amounts[person] = amount;
+  }
+
+  @override
+  List<PayedBy> asPayedBy(int amount) =>
+    amounts.keys.map((person) =>
+          PayedBy.create()
+            ..person = person.uuid
+            ..amount = amounts[person]
+      ).toList();
+
+  @override
+  String validate(int amount) {
+    final int total = amounts.values.reduce((acc, v) => acc + v);
+
+    if (amount != total) {
+      return 'Sum of "payed by"s does not match total amount';
+    }
+
+    return null;
+  }
+}
+
+abstract class AbstractPayedFor {
+  String validate(int amount); // Returns null if no error, error message else
+  List<PayedFor> asPayedFor(int amount);
+}
+
+class PayedForSimple extends AbstractPayedFor {
+  final Set<Person> persons;
+
+  PayedForSimple(this.persons);
+
+  String validate(int amount) {
+    if (persons.isEmpty) {
+      return 'Please select at least one payment recipient';
+    }
+
+    return null;
+  }
+
+  List<PayedFor> asPayedFor(int amount) {
+    List<int> amounts = divideAmount(amount, persons.length);
+    return IterableZip(<Iterable<dynamic>>[persons, amounts]).map((entry) =>
+        PayedFor.create()
+          ..person = (entry[0] as Person).uuid
+          ..amount = (entry[1] as int)
+    ).toList();
+  }
+}
+
+class PayedForAdvanced extends AbstractPayedFor {
+  final Map<Person, int> amounts;
+
+  PayedForAdvanced(this.amounts);
+
+  @override
+  List<PayedFor> asPayedFor(int amount) =>
+    amounts.keys.map((person) =>
+      PayedFor.create()
+        ..person = person.uuid
+        ..amount = amounts[person]
+    ).toList();
+
+  @override
+  String validate(int amount) {
+    final int total = amounts.values.reduce((acc, v) => acc + v);
+
+    if (amount != total) {
+      return 'Sum of "payed by"s does not match total amount';
+    }
+
+    return null;
   }
 }
 
@@ -49,10 +140,11 @@ class AddTransactionPageState extends State<AddTransactionPage> {
   int _amount = 0;
   DateTime _date = DateTime.now();
   AbstractPayedBy _payedBy;
-  Map<Person, int> _payedFor;
+  AbstractPayedFor _payedFor;
 
   AddTransactionPageState(this._members) {
-    _payedFor = Map.fromEntries(_members.map((person) => MapEntry<Person, int>(person, 0)));
+    _payedBy = PayedByOne(null);
+    _payedFor = PayedForSimple(_members.toSet());
   }
 
   static TableRow formRow({@required BuildContext context, @required String label, @required Widget child}) =>
@@ -69,19 +161,25 @@ class AddTransactionPageState extends State<AddTransactionPage> {
         ],
       );
 
-  static PayedByMany convertToMany(AbstractPayedBy payed, List<Person> members, int amount) {
-    if (payed is PayedByMany) {
-      return payed;
-    }
-
-    var selectedPerson = (payed is PayedByOne ? payed.person : null);
+  static PayedByMany payedByOneToMany(PayedByOne payed, List<Person> members, int amount) {
+    var selectedPerson = payed.person;
 
     return PayedByMany(Map.fromEntries(members.map((person) => MapEntry(person, (person == selectedPerson) ? amount : 0))));
   }
 
+  static PayedForAdvanced payedForSimpleToAdvanced(PayedForSimple payed, List<Person> members, int amount) {
+    Set<Person> persons = payed.persons;
+    List<int> splitAmounts = divideAmount(amount, persons.length);
+    final Map<Person, int> amounts = Map.fromEntries(members.map((person) => MapEntry(person, 0)));
+    IterableZip(<Iterable<dynamic>>[persons, splitAmounts]).forEach((entry) =>
+      amounts[entry[0] as Person] = (entry[1] as int)
+    );
+    return PayedForAdvanced(amounts);
+  }
+
   @override
   Widget build(BuildContext context) {
-    Widget payedByWidget = (_payedBy == null || _payedBy is PayedByOne) ?
+    final Widget payedByWidget = (_payedBy == null || _payedBy is PayedByOne) ?
     Padding(
       padding: EdgeInsets.only(top: 12.0),
       child: SimplePayedBy(
@@ -93,12 +191,34 @@ class AddTransactionPageState extends State<AddTransactionPage> {
           },
           onSplit: () {
             setState(() {
-              _payedBy = convertToMany(_payedBy, _members, amountFromString(_amountController.text));
+              _payedBy = payedByOneToMany(_payedBy, _members, amountFromString(_amountController.text));
             });
           },
           selected: ((_payedBy != null) ? (_payedBy as PayedByOne).person : false)))
       :
       PayedTable(members: _members, amounts: (_payedBy as PayedByMany).amounts, keyPrefix: 'payed-by)');
+
+    final Widget payedForWidget = (_payedFor is PayedForSimple) ?
+      SimplePayedFor(
+        members: _members,
+        selected: (_payedFor as PayedForSimple).persons,
+        onChanged: (members) {
+          setState(() {
+            _payedFor = PayedForSimple(members);
+          });
+        },
+        onSplit: () {
+          setState(() {
+            _payedFor = payedForSimpleToAdvanced(_payedFor, _members, amountFromString(_amountController.text));
+          });
+        },
+      )
+      :
+      PayedTable(
+        members: _members,
+        amounts: (_payedFor as PayedForAdvanced).amounts,
+        keyPrefix: 'payed-for-',
+      );
 
     return new Scaffold(
         key: _scaffoldKey,
@@ -176,11 +296,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
                               style: Theme.of(context).textTheme.title,
                             )
                         ),
-                        PayedTable(
-                          members: _members,
-                          amounts: _payedFor,
-                          keyPrefix: 'payed-for-',
-                        ),
+                        payedForWidget,
                       ],
                     )
                 )
@@ -198,59 +314,31 @@ class AddTransactionPageState extends State<AddTransactionPage> {
 
     formState.save();
 
-    if (_payedBy == null) {
+    String payedByError = _payedBy.validate(_amount);
+
+    if (payedByError != null) {
       _scaffoldKey.currentState.showSnackBar(
-          SnackBar(content: Text('Please select the person who paid'))
-      );
-
-      return;
-    }
-
-    if (_payedBy is PayedByMany) {
-      final int payedByTotal = (_payedBy as PayedByMany).amounts.values.reduce((acc, v) => acc + v);
-
-      if (_amount != payedByTotal) {
-        _scaffoldKey.currentState.showSnackBar(
-            SnackBar(content: Text('Sum of "payed by"s does not match total amount'))
-        );
-        return;
-      }
-    }
-
-    final int payedForTotal = _payedFor.values.reduce((acc, v) => acc + v);
-
-
-    if (_amount != payedForTotal) {
-      _scaffoldKey.currentState.showSnackBar(
-          SnackBar(content: Text('Sum of "payed for"s does not match total amount'))
+          SnackBar(content: Text(payedByError))
       );
       return;
     }
 
-    final List<PayedBy> payedBy = (_payedBy is PayedByOne) ?
-      ([PayedBy.create()
-        ..person = (_payedBy as PayedByOne).person.uuid
-        ..amount = _amount])
-      :
-      _members.map((person) =>
-          PayedBy.create()
-            ..person = person.uuid
-            ..amount = (_payedBy as PayedByMany).amounts[person]
-      ).toList();
+    String payedForError = _payedFor.validate(_amount);
 
-    final List<PayedFor> payedFor = _members.map((person) =>
-    PayedFor.create()
-      ..person = person.uuid
-      ..amount = _payedFor[person]
-    ).toList();
+    if (payedForError != null) {
+      _scaffoldKey.currentState.showSnackBar(
+          SnackBar(content: Text(payedForError))
+      );
+      return;
+    }
 
     final Transaction tx = Transaction.create()
       ..uuid = generateUuid()
       ..label = _description
       ..amount = _amount
       ..timestamp = Int64(_date.millisecondsSinceEpoch~/1000)
-      ..payedBy.addAll(payedBy)
-      ..payedFor.addAll(payedFor);
+      ..payedBy.addAll(_payedBy.asPayedBy(_amount))
+      ..payedFor.addAll(_payedFor.asPayedFor(_amount));
 
     Navigator.of(context).pop(tx);
   }
