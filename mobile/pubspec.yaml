@@ -8,6 +8,7 @@ dependencies:
   flouze_flutter:
     path: ../flouze_flutter/
 
+  built_collection: "^4.0.0"
   charcode: "^1.1.1"
   collection: "^1.14.6"
   fixnum: ">=0.9.0 <0.11.0"

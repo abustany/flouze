@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import 'package:flouze_flutter/flouze_flutter.dart';
 
+import 'package:flouze/utils/account_members.dart';
 import 'package:flouze/utils/amounts.dart';
 import 'package:flouze/utils/uuid.dart';
 import 'package:flouze/widgets/amount_field.dart';
@@ -16,11 +17,12 @@ import 'package:flouze/widgets/payed_table.dart';
 
 class AddTransactionPage extends StatefulWidget {
   final List<Person> members;
+  final Transaction transaction;
 
-  AddTransactionPage({Key key, @required this.members}) : super(key: key);
+  AddTransactionPage({Key key, @required this.members, this.transaction}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => new AddTransactionPageState(members);
+  State<StatefulWidget> createState() => new AddTransactionPageState(members, transaction);
 }
 
 abstract class AbstractPayedBy{
@@ -136,15 +138,52 @@ class AddTransactionPageState extends State<AddTransactionPage> {
   final DateFormat _dateFormat = DateFormat.yMMMd();
   final List<Person> _members;
 
-  String _description = '';
-  int _amount = 0;
-  DateTime _date = DateTime.now();
+  String _description;
+  int _amount;
+  DateTime _date;
   AbstractPayedBy _payedBy;
   AbstractPayedFor _payedFor;
+  List<int> _replaces;
 
-  AddTransactionPageState(this._members) {
-    _payedBy = PayedByOne(null);
-    _payedFor = PayedForSimple(_members.toSet());
+  AddTransactionPageState(this._members, Transaction transaction) {
+    _description = transaction?.label ?? '';
+    _amount = transaction?.amount ?? 0;
+    _amountController.text = amountToString(_amount);
+    _date = (transaction != null) ? DateTime.fromMillisecondsSinceEpoch(1000*transaction.timestamp.toInt()) : DateTime.now();
+    _payedBy = initPayedBy(this._members, transaction?.payedBy ?? List());
+    _payedFor = initPayedFor(this._members, transaction?.payedFor ?? List());
+    _replaces = transaction?.uuid ?? [];
+  }
+
+  static AbstractPayedBy initPayedBy(List<Person> members, List<PayedBy> payedBy) {
+    if (payedBy.isEmpty) {
+      return PayedByOne(null);
+    }
+
+    if (payedBy.length == 1) {
+      return PayedByOne(findPersonById(members, payedBy.first.person));
+    }
+
+    return PayedByMany(Map.fromEntries(payedBy
+        .map((p) => (MapEntry(findPersonById(members, p.person), p.amount)))
+        .where((entry) => entry.key != null)));
+  }
+
+  static AbstractPayedFor initPayedFor(List<Person> members, List<PayedFor> payedFor) {
+    if (payedFor.isEmpty) {
+      return PayedForSimple(members.toSet());
+    }
+
+    final Map<Person, int> amounts = Map.fromEntries(payedFor
+        .map((p) => (MapEntry(findPersonById(members, p.person), p.amount)))
+        .where((entry) => entry.key != null));
+
+    if (amounts.values.toSet().length == 1) {
+      // Even payment distribution for all members
+      return PayedForSimple(amounts.keys.toSet());
+    }
+
+    return PayedForAdvanced(amounts);
   }
 
   static TableRow formRow({@required BuildContext context, @required String label, @required Widget child}) =>
@@ -251,6 +290,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
                                   label: 'Description',
                                   child: TextFormField(
                                     autofocus: true,
+                                    initialValue: _description,
                                     validator: (value) {
                                       if (value.isEmpty) {
                                         return 'Description cannot be empty';
@@ -263,7 +303,11 @@ class AddTransactionPageState extends State<AddTransactionPage> {
                               formRow(
                                 context: context,
                                 label: 'Amount',
-                                child: AmountField(onSaved: (value) => _amount = value, notNull: true, controller: _amountController),
+                                child: AmountField(
+                                  onSaved: (value) => _amount = value,
+                                  notNull: true,
+                                  controller: _amountController
+                                ),
                               ),
 
                               formRow(
@@ -334,10 +378,13 @@ class AddTransactionPageState extends State<AddTransactionPage> {
 
     final Transaction tx = Transaction.create()
       ..uuid = generateUuid()
+      ..replaces = _replaces
       ..label = _description
       ..amount = _amount
       ..timestamp = Int64(_date.millisecondsSinceEpoch~/1000)
+      ..payedBy.clear()
       ..payedBy.addAll(_payedBy.asPayedBy(_amount))
+      ..payedFor.clear()
       ..payedFor.addAll(_payedFor.asPayedFor(_amount));
 
     Navigator.of(context).pop(tx);

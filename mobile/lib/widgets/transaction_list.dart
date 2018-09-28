@@ -14,10 +14,11 @@ class TransactionList extends StatelessWidget {
   final Function listEquality = ListEquality().equals;
   final DateFormat dateFormat = DateFormat.yMMMd();
 
-  final List<Transaction> transactions;
+  final Iterable<Transaction> transactions;
   final List<Person> members;
+  final void Function(Transaction) onTap;
 
-  TransactionList({Key key, @required this.transactions, @required this.members}) : super(key: key);
+  TransactionList({Key key, @required this.transactions, @required this.members, this.onTap}) : super(key: key);
 
   String formatPayedBy(List<PayedBy> payedBys) {
     final names = payedBys.where((p) => p.amount > 0).map((p) => personName(members, p.person)).toList();
@@ -38,7 +39,11 @@ class TransactionList extends StatelessWidget {
           ],
         ),
         subtitle: Text('On ${dateFormat.format(DateTime.fromMillisecondsSinceEpoch(1000*tx.timestamp.toInt()))} by $payedBy'),
-        onTap: () {},
+        onTap: () {
+          if (onTap != null) {
+            onTap(tx);
+          }
+        },
       );
     }).toList();
 

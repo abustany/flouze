@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:built_collection/built_collection.dart';
+
 import 'package:flouze_flutter/flouze_flutter.dart';
 
 import 'package:flouze/pages/add_transaction.dart';
+import 'package:flouze/utils/transactions.dart';
 import 'package:flouze/widgets/transaction_list.dart';
 import 'package:flouze/widgets/reports.dart';
 
@@ -24,7 +27,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
 
   final SledRepository repository;
   final Account account;
-  List<Transaction> _transactions;
+  BuiltList<Transaction> _transactions;
   Map<List<int>, int> _balance;
 
   TabController _tabController;
@@ -56,7 +59,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
 
       if (mounted) {
         setState(() {
-          _transactions = transactions ?? [];
+          _transactions = BuiltList(flattenHistory(transactions) ?? []);
         });
       }
     } on PlatformException catch (e) {
@@ -92,12 +95,36 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
       return;
     }
 
-    transaction.parent = account.latestTransaction;
+    _appendTransaction(transaction);
+  }
 
+  void _editTransaction(Transaction transaction) async {
+    final Transaction newTransaction = await Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => new AddTransactionPage(members: account.members, transaction: transaction,))
+    );
+
+    if (newTransaction == null || !mounted) {
+      return;
+    }
+
+    _appendTransaction(newTransaction);
+  }
+
+  void _appendTransaction(Transaction transaction) async {
+    final BuiltList<Transaction> previousTransactions = _transactions;
     final List<int> previousLatestTransaction = account.latestTransaction;
 
+    transaction.parent = account.latestTransaction;
+
     setState(() {
-      _transactions.insert(0, transaction);
+      final int idx = transaction.replaces.isNotEmpty ? _transactions.indexWhere((tx) => transactionHasId(tx, transaction.replaces)) : -1;
+      _transactions = _transactions.rebuild((list) {
+        list.insert(idx+1, transaction);
+
+        if (idx > 0) {
+          list.removeAt(idx);
+        }
+      });
       account.latestTransaction = transaction.uuid;
     });
 
@@ -108,7 +135,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
 
       if (!mounted) {
         setState(() {
-          _transactions.remove(transaction);
+          _transactions = previousTransactions;
           account.latestTransaction = previousLatestTransaction;
         });
 
@@ -135,7 +162,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
       body: TabBarView(
           controller: _tabController,
           children: [
-            TransactionList(transactions: _transactions, members: account.members),
+            TransactionList(transactions: _transactions, members: account.members, onTap: _editTransaction),
             Reports(members: account.members, balance: _balance ?? {})
           ]
       ),

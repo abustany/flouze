@@ -13,3 +13,6 @@ String personName(List<Person> members, List<int> personId) {
 
   return '??';
 }
+
+Person findPersonById(List<Person> members, List<int> personId) =>
+  members.firstWhere((person) => _listEquality(person.uuid, personId));

@@ -21,7 +21,7 @@ class PayedTable extends StatelessWidget {
               Text(person.name),
               AmountField(
                 key: Key(keyPrefix + person.uuid.toString()),
-                initialValue: initialValue == 0 ? '' : amountToString(initialValue),
+                initialValue: (initialValue ?? 0) == 0 ? '' : amountToString(initialValue),
                 onSaved: (value) => amounts[person] = value,
               )
             ]
