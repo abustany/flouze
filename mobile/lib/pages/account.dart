@@ -123,7 +123,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
           list.insert(idx + 1, transaction);
         }
 
-        if (idx > 0) {
+        if (idx >= 0) {
           list.removeAt(idx);
         }
       });
