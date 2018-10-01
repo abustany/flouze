@@ -8,7 +8,7 @@ class SimplePayedBy extends StatelessWidget {
   final void Function() onSplit;
   final Person selected;
 
-  SimplePayedBy({Key key, @required this.members, this.onSelected, this.onSplit, this.selected});
+  SimplePayedBy({Key key, @required this.members, this.onSelected, this.onSplit, this.selected}) : super(key: key);
 
   @override
   Widget build(BuildContext context) =>

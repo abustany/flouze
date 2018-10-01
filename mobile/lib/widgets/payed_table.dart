@@ -10,7 +10,7 @@ class PayedTable extends StatelessWidget {
   final Map<Person, int> amounts;
   final String keyPrefix;
 
-  PayedTable({Key key, @required this.members, @required this.amounts, this.keyPrefix});
+  PayedTable({Key key, @required this.members, @required this.amounts, this.keyPrefix}) : super(key: key);
 
   static List<TableRow> payedRows(List<Person> members, Map<Person, int> amounts, String keyPrefix) =>
       members.map((person) {

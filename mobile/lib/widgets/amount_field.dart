@@ -10,7 +10,7 @@ class AmountField extends StatelessWidget {
   final bool notNull;
   final FormFieldSetter<int> onSaved;
 
-  AmountField({Key key, this.initialValue, this.controller, this.onSaved, this.notNull = false});
+  AmountField({Key key, this.initialValue, this.controller, this.onSaved, this.notNull = false}) : super(key: key);
 
   @override
   Widget build(BuildContext context) =>
