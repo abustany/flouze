@@ -101,14 +101,17 @@ class AccountListPageState extends State<AccountListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> accountWidgets = (_accounts ?? []).map((account) =>
-      ListTile(
+    int i = -1;
+    final List<Widget> accountWidgets = (_accounts ?? []).map((account) {
+      i++;
+      return ListTile(
+        key: Key("account-$i"),
         title: Text(account.label),
         onTap: () {
           _openAccount(account);
         },
-      )
-    ).toList();
+      );
+    }).toList();
 
     return new Scaffold(
       key: _scaffoldKey,

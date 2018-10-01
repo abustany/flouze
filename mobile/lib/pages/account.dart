@@ -162,7 +162,12 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
       body: TabBarView(
           controller: _tabController,
           children: [
-            TransactionList(transactions: _transactions, members: account.members, onTap: _editTransaction),
+            TransactionList(
+              key: Key('transactions'),
+              transactions: _transactions,
+              members: account.members,
+              onTap: _editTransaction
+            ),
             Reports(members: account.members, balance: _balance ?? {})
           ]
       ),

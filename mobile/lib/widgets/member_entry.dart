@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:flouze/utils/keys.dart';
+
 class MemberEntryWidget extends StatelessWidget {
   final String initialValue;
   final ValueChanged<String> onChanged;
@@ -17,6 +19,7 @@ class MemberEntryWidget extends StatelessWidget {
         ),
         Expanded(
           child: TextField(
+            key: subkey(key, '-input-name'),
             decoration: new InputDecoration(hintText: 'Add a new member…'),
             onChanged: (value) {
               this.onChanged(value);

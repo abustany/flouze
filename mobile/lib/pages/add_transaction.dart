@@ -222,23 +222,25 @@ class AddTransactionPageState extends State<AddTransactionPage> {
     Padding(
       padding: EdgeInsets.only(top: 12.0),
       child: SimplePayedBy(
-          members: _members,
-          onSelected: (Person p) {
-            setState(() {
-              _payedBy = PayedByOne(p);
-            });
-          },
-          onSplit: () {
-            setState(() {
-              _payedBy = payedByOneToMany(_payedBy, _members, amountFromString(_amountController.text));
-            });
-          },
-          selected: ((_payedBy != null) ? (_payedBy as PayedByOne).person : false)))
+        key: Key('payed-by'),
+        members: _members,
+        onSelected: (Person p) {
+          setState(() {
+            _payedBy = PayedByOne(p);
+          });
+        },
+        onSplit: () {
+          setState(() {
+            _payedBy = payedByOneToMany(_payedBy, _members, amountFromString(_amountController.text));
+          });
+        },
+        selected: ((_payedBy != null) ? (_payedBy as PayedByOne).person : false)))
       :
-      PayedTable(members: _members, amounts: (_payedBy as PayedByMany).amounts, keyPrefix: 'payed-by)');
+      PayedTable(key: Key('payed-by'), members: _members, amounts: (_payedBy as PayedByMany).amounts);
 
     final Widget payedForWidget = (_payedFor is PayedForSimple) ?
       SimplePayedFor(
+        key: Key('payed-for'),
         members: _members,
         selected: (_payedFor as PayedForSimple).persons,
         onChanged: (members) {
@@ -254,9 +256,9 @@ class AddTransactionPageState extends State<AddTransactionPage> {
       )
       :
       PayedTable(
+        key: Key('payed-for'),
         members: _members,
         amounts: (_payedFor as PayedForAdvanced).amounts,
-        keyPrefix: 'payed-for-',
       );
 
     return new Scaffold(
@@ -265,6 +267,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
           title: new Text("Add a transaction"),
           actions: <Widget>[
             IconButton(
+              key: Key('action-save-transaction'),
               icon: Icon(Icons.check),
               onPressed: _onSave,
             )
@@ -289,6 +292,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
                                   context: context,
                                   label: 'Description',
                                   child: TextFormField(
+                                    key: Key('input-description'),
                                     autofocus: true,
                                     initialValue: _description,
                                     validator: (value) {
@@ -304,6 +308,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
                                 context: context,
                                 label: 'Amount',
                                 child: AmountField(
+                                  key: Key('input-amount'),
                                   onSaved: (value) => _amount = value,
                                   notNull: true,
                                   controller: _amountController
@@ -314,6 +319,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
                                   context: context,
                                   label: 'Date',
                                   child: InkWell(
+                                    key: Key('input-date'),
                                     onTap: () => _pickDate(context),
                                     child: InputDecorator(
                                       decoration: InputDecoration(),

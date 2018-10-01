@@ -18,7 +18,6 @@ class AmountField extends StatelessWidget {
           children: <Widget>[
             Expanded(
                 child: TextFormField(
-                  key: key,
                   initialValue: initialValue,
                   textAlign: TextAlign.end,
                   keyboardType: TextInputType.numberWithOptions(signed: false, decimal: false),

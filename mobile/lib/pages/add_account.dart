@@ -88,6 +88,7 @@ class AddAccountPageState extends State<AddAccountPage> {
           title: new Text("Create an account"),
           actions: <Widget>[
             IconButton(
+              key: Key('action-save-account'),
               icon: Icon(Icons.check),
               onPressed: _onSave,
             )
@@ -106,6 +107,7 @@ class AddAccountPageState extends State<AddAccountPage> {
                           style: Theme.of(context).textTheme.title,
                         ),
                         TextFormField(
+                          key: Key('input-account-name'),
                           autofocus: true,
                           validator: (value) {
                             if (value.isEmpty) {

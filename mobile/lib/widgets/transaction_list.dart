@@ -9,6 +9,7 @@ import 'package:flouze_flutter/flouze_flutter.dart';
 import 'package:flouze/utils/account_members.dart';
 import 'package:flouze/utils/amounts.dart';
 import 'package:flouze/utils/config.dart';
+import 'package:flouze/utils/keys.dart';
 
 class TransactionList extends StatelessWidget {
   final Function listEquality = ListEquality().equals;
@@ -28,14 +29,18 @@ class TransactionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    int transactionIndex = -1;
     final List<Widget> transactionWidgets = (transactions ?? []).map((tx) {
       final String payedBy = formatPayedBy(tx.payedBy);
 
+      transactionIndex++;
+
       return ListTile(
+        key: subkey(key, '-$transactionIndex'),
         title: Row(
           children: <Widget>[
-            Expanded(child: Text(tx.label)),
-            Text('${amountToString(tx.amount)} ${AppConfig.currencySymbol}')
+            Expanded(child: Text(tx.label, key: subkey(key, '-$transactionIndex-label'))),
+            Text('${amountToString(tx.amount)} ${AppConfig.currencySymbol}', key: subkey(key, '-$transactionIndex-amount'))
           ],
         ),
         subtitle: Text('On ${dateFormat.format(DateTime.fromMillisecondsSinceEpoch(1000*tx.timestamp.toInt()))} by $payedBy'),
