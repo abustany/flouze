@@ -127,5 +127,14 @@ void main() {
       expectedTransactions[2].amount = 6;
       await checkTransactionsMatch();
     });
+
+    test('delete a transaction', () async {
+      await driver.tap(find.byValueKey('transactions-2'));
+      await driver.tap(find.byValueKey('action-delete-transaction'));
+      await driver.tap(find.text('Delete'));
+
+      expectedTransactions.removeAt(2);
+      await checkTransactionsMatch();
+    });
   });
 }

@@ -119,7 +119,9 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
     setState(() {
       final int idx = transaction.replaces.isNotEmpty ? _transactions.indexWhere((tx) => transactionHasId(tx, transaction.replaces)) : -1;
       _transactions = _transactions.rebuild((list) {
-        list.insert(idx+1, transaction);
+        if (!transaction.deleted) {
+          list.insert(idx + 1, transaction);
+        }
 
         if (idx > 0) {
           list.removeAt(idx);

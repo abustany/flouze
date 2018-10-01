@@ -261,17 +261,27 @@ class AddTransactionPageState extends State<AddTransactionPage> {
         amounts: (_payedFor as PayedForAdvanced).amounts,
       );
 
+    final List<Widget> actionButtons = [
+      IconButton(
+        key: Key('action-save-transaction'),
+        icon: Icon(Icons.check),
+        onPressed: _onSave,
+      ),
+    ];
+
+    if (_replaces.isNotEmpty) {
+      actionButtons.insert(0, IconButton(
+        key: Key('action-delete-transaction'),
+        icon: Icon(Icons.delete),
+        onPressed: _onDelete,
+      ));
+    }
+
     return new Scaffold(
         key: _scaffoldKey,
         appBar: new AppBar(
           title: new Text("Add a transaction"),
-          actions: <Widget>[
-            IconButton(
-              key: Key('action-save-transaction'),
-              icon: Icon(Icons.check),
-              onPressed: _onSave,
-            )
-          ],
+          actions: actionButtons,
         ),
         body: new Padding(
             padding: new EdgeInsets.all(16.0),
@@ -388,10 +398,41 @@ class AddTransactionPageState extends State<AddTransactionPage> {
       ..label = _description
       ..amount = _amount
       ..timestamp = Int64(_date.millisecondsSinceEpoch~/1000)
-      ..payedBy.clear()
       ..payedBy.addAll(_payedBy.asPayedBy(_amount))
-      ..payedFor.clear()
       ..payedFor.addAll(_payedFor.asPayedFor(_amount));
+
+    Navigator.of(context).pop(tx);
+  }
+
+  void _onDelete() async {
+    var doDelete = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text('Delete the transaction?'),
+        actions: <Widget>[
+          FlatButton(
+            child: Text('Cancel'),
+            onPressed: () { Navigator.of(context).pop(false); },
+          ),
+          FlatButton(
+            child: Text('Delete', style: TextStyle(color: Color(0xFFCC0000))),
+            onPressed: () { Navigator.of(context).pop(true); },
+          )
+        ],
+      )
+    ) ?? false;
+
+    if (!doDelete || !mounted) {
+      return;
+    }
+
+    assert(_replaces.isNotEmpty);
+
+    final Transaction tx = Transaction.create()
+      ..uuid = generateUuid()
+      ..replaces = _replaces
+      ..deleted = true
+      ..timestamp = Int64(_date.millisecondsSinceEpoch~/1000);
 
     Navigator.of(context).pop(tx);
   }
