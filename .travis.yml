@@ -1,0 +1,24 @@
+---
+# Travis does not support multi language files, so we'll have to do it
+# ourselves...
+# See https://github.com/travis-ci/travis-ci/issues/4090
+language: minimal
+
+# Looks like we need this to get SHM support
+sudo: required
+
+before_install: |
+  which rustup || ( curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y )
+  export PATH=$HOME/.cargo/bin:$PATH
+  rustup toolchainlist | grep -q nightly || rustup toolchain install nightly
+  rustup default nightly
+  rustup update
+
+script: |
+  export PATH=$HOME/.cargo/bin:$PATH
+  cd lib && cargo build && cargo test
+
+cache:
+  directories:
+    - $HOME/.cargo
+    - $TRAVIS_BUILD_DIR/target
