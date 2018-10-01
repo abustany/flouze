@@ -73,6 +73,34 @@ pub fn check_chain_consistency(transactions: &[&model::Transaction]) -> bool {
     return true;
 }
 
+fn update_balance(balance: &mut HashMap<model::PersonId, i64>, payed_by: &[model::PayedBy], payed_for: &[model::PayedFor], factor: i64) {
+    for p in payed_by {
+        balance.get_mut(&p.person).map(|b| *b += p.amount as i64 * factor);
+    }
+
+    for p in payed_for {
+        balance.get_mut(&p.person).map(|b| *b -= p.amount as i64 * factor);
+    }
+}
+
+fn get_first_non_deleted_ancestor(repo: &Repository, account: &model::Account, deleted: model::Transaction) -> errors::Result<model::Transaction> {
+    let mut cur = deleted;
+
+    loop {
+        if cur.replaces.len() == 0 {
+            return Err(errors::ErrorKind::NoSuchTransaction(cur.replaces.clone()).into());
+        }
+
+        cur = repo.get_transaction(&account.uuid, &cur.replaces)?;
+
+        if !cur.deleted {
+            break;
+        }
+    }
+
+    Ok(cur)
+}
+
 pub fn get_balance(repo: &Repository, account: &model::Account) -> errors::Result<HashMap<model::PersonId, i64>> {
     let mut balance: HashMap<model::PersonId, i64> = account.members.iter().map(|m| (m.uuid.clone(), 0)).collect();
     let chain = get_transaction_chain(repo, account);
@@ -80,12 +108,16 @@ pub fn get_balance(repo: &Repository, account: &model::Account) -> errors::Resul
     for tx in chain {
         let tx = tx?;
 
-        for p in tx.payed_by {
-            balance.get_mut(&p.person).map(|b| *b += p.amount as i64);
-        }
+        if tx.replaces.len() > 0 || tx.deleted {
+            if !tx.deleted {
+                update_balance(&mut balance, &tx.payed_by, &tx.payed_for, 1);
+            }
 
-        for p in tx.payed_for {
-            balance.get_mut(&p.person).map(|b| *b -= p.amount as i64);
+            let original = get_first_non_deleted_ancestor(repo, account, tx)?;
+            update_balance(&mut balance, &original.payed_by, &original.payed_for, -1);
+
+        } else {
+            update_balance(&mut balance, &tx.payed_by, &tx.payed_for, 1);
         }
     }
 
@@ -346,5 +378,20 @@ pub mod tests {
         let balance = get_balance(repo, &account).unwrap();
         assert_eq!(balance.get(&account.members[0].uuid).unwrap(), &8);
         assert_eq!(balance.get(&account.members[1].uuid).unwrap(), &-8);
+
+        let mut tx1_edit = tx1.clone();
+        tx1_edit.uuid = model::generate_transaction_id();
+        tx1_edit.parent = tx2.uuid.clone();
+        tx1_edit.amount = 25;
+        tx1_edit.payed_by[0].amount = 25;
+        tx1_edit.payed_for[0].amount = 12;
+        tx1_edit.payed_for[1].amount = 13;
+        tx1_edit.replaces = tx1.uuid.clone();
+        repo.add_transaction(&account.uuid, &tx1_edit).unwrap();
+        account.latest_transaction = tx1_edit.uuid.to_owned();
+
+        let balance = get_balance(repo, &account).unwrap();
+        assert_eq!(balance.get(&account.members[0].uuid).unwrap(), &3);
+        assert_eq!(balance.get(&account.members[1].uuid).unwrap(), &-3);
     }
 }
