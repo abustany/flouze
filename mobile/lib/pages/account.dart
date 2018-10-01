@@ -32,8 +32,8 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
 
   TabController _tabController;
   final List<Tab> _tabs = [
-    Tab(text: "Transactions"),
-    Tab(text: "Reports"),
+    Tab(key: Key('tab-transactions'),text: "Transactions"),
+    Tab(key: Key('tab-reports'), text: "Reports"),
   ];
 
   AccountPageState({@required this.repository, @required this.account});
@@ -170,7 +170,11 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
               members: account.members,
               onTap: _editTransaction
             ),
-            Reports(members: account.members, balance: _balance ?? {})
+            Reports(
+              key: Key('reports'),
+              members: account.members,
+              balance: _balance ?? {}
+            )
           ]
       ),
       floatingActionButton: new FloatingActionButton(
