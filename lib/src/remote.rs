@@ -68,7 +68,7 @@ pub mod tests {
     }
 
     pub fn test_initial_sync_to_remote(remote: &mut Remote, account_id: &model::AccountId) {
-        assert_eq!(remote.get_latest_transaction(&account_id).unwrap(), vec!());
+        assert_eq!(remote.get_latest_transaction(&account_id).unwrap(), model::INVALID_ID);
         assert_eq!(remote.get_child_transactions(&account_id, &vec!()).unwrap(), vec!());
 
         let tx1 = make_transaction(&vec!());
@@ -76,11 +76,11 @@ pub mod tests {
         let tx3 = make_transaction(&tx2.uuid);
 
         expect_inconsistent_chain(remote.receive_transactions(account_id, &vec!(&tx1, &tx3)));
-        assert_eq!(remote.get_latest_transaction(&account_id).unwrap(), vec!());
+        assert_eq!(remote.get_latest_transaction(&account_id).unwrap(), model::INVALID_ID);
         assert_eq!(remote.get_child_transactions(&account_id, &vec!()).unwrap(), vec!());
 
         expect_must_rebase(remote.receive_transactions(account_id, &vec!(&tx2)));
-        assert_eq!(remote.get_latest_transaction(&account_id).unwrap(), vec!());
+        assert_eq!(remote.get_latest_transaction(&account_id).unwrap(), model::INVALID_ID);
         assert_eq!(remote.get_child_transactions(&account_id, &vec!()).unwrap(), vec!());
 
         remote.receive_transactions(account_id, &vec!(&tx1, &tx2, &tx3)).unwrap();

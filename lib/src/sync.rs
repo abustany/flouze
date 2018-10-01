@@ -291,9 +291,9 @@ mod tests {
 
         sync(&mut local_repo, &mut remote, &account.uuid).unwrap();
         account = local_repo.get_account(&account.uuid).unwrap();
-        assert_eq!(&account.latest_transaction, &vec!());
-        assert_eq!(&account.latest_synchronized_transaction, &vec!());
-        assert_eq!(&remote.get_latest_transaction(&account.uuid).unwrap(), &vec!());
+        assert_eq!(&account.latest_transaction, &model::INVALID_ID);
+        assert_eq!(&account.latest_synchronized_transaction, &model::INVALID_ID);
+        assert_eq!(&remote.get_latest_transaction(&account.uuid).unwrap(), &model::INVALID_ID);
     }
 
     #[test]
