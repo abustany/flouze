@@ -4,6 +4,10 @@ set -e
 
 cd $(dirname $0)
 
+if [ -z "$RUST_RELEASE" ]; then
+  RUST_RELEASE="nightly"
+fi
+
 build() {
 	arch=$1
 	target=$2
@@ -12,9 +16,9 @@ build() {
 	echo "Building for $arch"
 
 	tool_prefix=$(grep '^ar' ~/.cargo/config | grep $arch | awk '{print $3}' | sed -e 's,",,g' -e 's,-ar$,,')
-	export CC="$tool_prefix-gcc"
+	export CC="$tool_prefix-clang"
 	export AR="$tool_prefix-ar"
-	cargo +nightly build --target $target
+	cargo +$RUST_RELEASE build --target $target
 
 	mkdir -p android/src/main/jniLibs/$jni_dir
 	cp ../target/$target/debug/libflouze_flutter.so android/src/main/jniLibs/$jni_dir/

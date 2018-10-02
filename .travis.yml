@@ -4,21 +4,24 @@
 # See https://github.com/travis-ci/travis-ci/issues/4090
 language: minimal
 
-# Looks like we need this to get SHM support
+# Looks like we need this to get SHM support (needed by Sled)
 sudo: required
 
-before_install: |
-  which rustup || ( curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y )
-  export PATH=$HOME/.cargo/bin:$PATH
-  rustup toolchainlist | grep -q nightly || rustup toolchain install nightly
-  rustup default nightly
-  rustup update
+before_install:
+  - "./travis/setup_rust.sh"
+  - "./travis/setup_android_sdk.sh"
+  - "./travis/setup_flouze_flutter_toolchains.sh"
 
 script: |
   export PATH=$HOME/.cargo/bin:$PATH
-  cd lib && cargo build && cargo test
+  (cd lib && cargo build && cargo test) &&
+  (cd flouze_flutter && RUST_RELEASE=nightly-2018-07-18 ./build-jni-libs.sh)
 
 cache:
+  timeout: 1000
   directories:
-    - $HOME/.cargo
-    - $TRAVIS_BUILD_DIR/target
+    - "$HOME/.cargo"
+    - "$HOME/.local/android-sdk-linux"
+    - "$HOME/.local/android-ndk-r18"
+    - "$TRAVIS_BUILD_DIR/target"
+    - "$HOME/.local/ndk-toolchains"

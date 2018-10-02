@@ -1,17 +1,19 @@
 #!/bin/sh
 
-ANDROID_HOME="$HOME/.local/android-sdk-linux"
+if [ -z "$NDK_HOME" ]; then
+	ANDROID_HOME="$HOME/.local/android-sdk-linux"
 
-if [ ! -d "$ANDROID_HOME" ]; then
-	echo "Cannot find the Android SDK in $ANDROID_HOME"
-	exit 1
-fi
+	if [ ! -d "$ANDROID_HOME" ]; then
+		echo "Cannot find the Android SDK in $ANDROID_HOME"
+		exit 1
+	fi
 
-NDK_HOME="$ANDROID_HOME/ndk-bundle"
+	NDK_HOME="$ANDROID_HOME/ndk-bundle"
 
-if [ ! -d "$NDK_HOME" ]; then
-	echo "Cannot find the Android NDK in $NDK_HOME"
-	exit 1
+	if [ ! -d "$NDK_HOME" ]; then
+		echo "Cannot find the Android NDK in $NDK_HOME"
+		exit 1
+	fi
 fi
 
 set -e
