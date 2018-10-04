@@ -1,5 +1,7 @@
 # Flouze, an app to keep track of expenses among friends
 
+[![CircleCI](https://circleci.com/gh/abustany/flouze.svg?style=svg)](https://circleci.com/gh/abustany/flouze)
+
 Flouze is an open source group expense tracker. Whenever you're traveling with
 other people, keeping track of who paid what and who owes whom quickly gets
 complicated. Flouze helps keeping a log of all expenses, which can be
