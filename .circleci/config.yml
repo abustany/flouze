@@ -6,6 +6,7 @@ jobs:
     steps:
       - restore_cache:
           keys:
+            - "v1-cargo"
             - "v1-git"
             - "v1-flutter-cache"
             - "v1-rust"
@@ -27,3 +28,7 @@ jobs:
           key: "v1-git"
           paths:
             - ".git"
+      - save_cache:
+          key: "v1-cargo"
+          paths:
+            - "/home/ci/.cargo"
