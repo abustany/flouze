@@ -1,0 +1,29 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: abustany/flouze-build:latest
+    steps:
+      - restore_cache:
+          keys:
+            - "v1-git"
+            - "v1-flutter-cache"
+            - "v1-rust"
+      - checkout
+      - run: cargo build && cargo test
+      - run: cd flouze_flutter && RUST_RELEASE="nightly-$RUSTC_RELEASE_DATE" ./build-jni-libs.sh
+      - run: cd mobile && flutter build apk
+      # Clean our own artifacts so that they don't clutter the cache
+      - run: cargo clean -p flouze && cargo clean -p flouze-cli && cargo clean -p flouze-jni && cargo clean -p flouze-flutter
+      - save_cache:
+          key: "v1-rust"
+          paths:
+            - "target"
+      - save_cache:
+          key: "v1-flutter-cache"
+          paths:
+            - "/home/ci/.local/flutter/.pub-cache"
+      - save_cache:
+          key: "v1-git"
+          paths:
+            - ".git"
