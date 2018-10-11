@@ -83,10 +83,10 @@ abstract class AbstractPayedFor {
   List<PayedFor> asPayedFor(int amount);
 }
 
-class PayedForSimple extends AbstractPayedFor {
+class PayedSplitEven extends AbstractPayedFor {
   final Set<Person> persons;
 
-  PayedForSimple(this.persons);
+  PayedSplitEven(this.persons);
 
   String validate(int amount) {
     if (persons.isEmpty) {
@@ -106,10 +106,10 @@ class PayedForSimple extends AbstractPayedFor {
   }
 }
 
-class PayedForAdvanced extends AbstractPayedFor {
+class PayedForSplitCustom extends AbstractPayedFor {
   final Map<Person, int> amounts;
 
-  PayedForAdvanced(this.amounts);
+  PayedForSplitCustom(this.amounts);
 
   @override
   List<PayedFor> asPayedFor(int amount) =>
@@ -171,7 +171,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
 
   static AbstractPayedFor initPayedFor(List<Person> members, List<PayedFor> payedFor) {
     if (payedFor.isEmpty) {
-      return PayedForSimple(members.toSet());
+      return PayedSplitEven(members.toSet());
     }
 
     final Map<Person, int> amounts = Map.fromEntries(payedFor
@@ -180,10 +180,10 @@ class AddTransactionPageState extends State<AddTransactionPage> {
 
     if (amounts.values.toSet().length == 1) {
       // Even payment distribution for all members
-      return PayedForSimple(amounts.keys.toSet());
+      return PayedSplitEven(amounts.keys.toSet());
     }
 
-    return PayedForAdvanced(amounts);
+    return PayedForSplitCustom(amounts);
   }
 
   static TableRow formRow({@required BuildContext context, @required String label, @required Widget child}) =>
@@ -206,14 +206,14 @@ class AddTransactionPageState extends State<AddTransactionPage> {
     return PayedByMany(Map.fromEntries(members.map((person) => MapEntry(person, (person == selectedPerson) ? amount : 0))));
   }
 
-  static PayedForAdvanced payedForSimpleToAdvanced(PayedForSimple payed, List<Person> members, int amount) {
+  static PayedForSplitCustom payedForSimpleToAdvanced(PayedSplitEven payed, List<Person> members, int amount) {
     Set<Person> persons = payed.persons;
     List<int> splitAmounts = divideAmount(amount, persons.length);
     final Map<Person, int> amounts = Map.fromEntries(members.map((person) => MapEntry(person, 0)));
     IterableZip(<Iterable<dynamic>>[persons, splitAmounts]).forEach((entry) =>
       amounts[entry[0] as Person] = (entry[1] as int)
     );
-    return PayedForAdvanced(amounts);
+    return PayedForSplitCustom(amounts);
   }
 
   @override
@@ -238,14 +238,14 @@ class AddTransactionPageState extends State<AddTransactionPage> {
       :
       PayedTable(key: Key('payed-by'), members: _members, amounts: (_payedBy as PayedByMany).amounts);
 
-    final Widget payedForWidget = (_payedFor is PayedForSimple) ?
+    final Widget payedForWidget = (_payedFor is PayedSplitEven) ?
       SimplePayedFor(
         key: Key('payed-for'),
         members: _members,
-        selected: (_payedFor as PayedForSimple).persons,
+        selected: (_payedFor as PayedSplitEven).persons,
         onChanged: (members) {
           setState(() {
-            _payedFor = PayedForSimple(members);
+            _payedFor = PayedSplitEven(members);
           });
         },
         onSplit: () {
@@ -258,7 +258,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
       PayedTable(
         key: Key('payed-for'),
         members: _members,
-        amounts: (_payedFor as PayedForAdvanced).amounts,
+        amounts: (_payedFor as PayedForSplitCustom).amounts,
       );
 
     final List<Widget> actionButtons = [
