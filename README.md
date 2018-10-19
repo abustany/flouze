@@ -65,3 +65,9 @@ required because [the sled library requires it for 32-bit support](https://githu
 
 After the native libraries are built, the normal Flutter commands can be used
 from the `mobile/` folder to run/develop/debug the application.
+
+## Sentry
+
+The mobile application can be configured to report crashes to Sentry (for now in
+the Dart part only, the Rust part needs to be done). To do so, place your Sentry
+DSN in `mobile/assets/sentry_dsn.txt`, and rebuild the application.
