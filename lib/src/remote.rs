@@ -2,6 +2,7 @@ use super::errors;
 use super::model;
 
 pub trait Remote {
+    fn create_account(&mut self, account: &model::Account) -> errors::Result<()>;
     fn get_account_info(&self, account_id: &model::AccountId) -> errors::Result<model::Account>;
     fn get_latest_transaction(&self, account_id: &model::AccountId) -> errors::Result<model::TransactionId>;
     fn receive_transactions(&mut self, account_id: &model::AccountId, transactions: &[&model::Transaction]) -> errors::Result<()>;

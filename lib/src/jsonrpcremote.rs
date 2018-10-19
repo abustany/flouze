@@ -16,6 +16,7 @@ mod client {
     use super::super::model;
 
     jsonrpc_client!(pub struct Rpc {
+        pub fn create_account(&mut self, account: &model::Account) -> RpcRequest<()>;
         pub fn get_account_info(&mut self, account_id: &model::AccountId) -> RpcRequest<model::Account>;
         pub fn get_latest_transaction(&mut self, account_id: &model::AccountId) -> RpcRequest<model::TransactionId>;
         pub fn receive_transactions(&mut self, account_id: &model::AccountId, transactions: &[&model::Transaction]) -> RpcRequest<()>;
@@ -39,6 +40,10 @@ impl Client {
 }
 
 impl Remote for Client {
+    fn create_account(&mut self, account: &model::Account) -> errors::Result<()> {
+        self.client.borrow_mut().create_account(account).call().map_err(|e| e.into())
+    }
+
     fn get_account_info(&self, account_id: &model::AccountId) -> errors::Result<model::Account> {
         self.client.borrow_mut().get_account_info(account_id).call().map_err(|e| e.into())
     }
@@ -62,6 +67,8 @@ mod server {
 
     build_rpc_trait!(
         pub trait Rpc {
+            #[rpc(name="create_account")]
+            fn create_account(&self, Account) -> Result<()>;
             #[rpc(name="get_account_info")]
             fn get_account_info(&self, AccountId) -> Result<Account>;
             #[rpc(name="get_latest_transaction")]
@@ -78,7 +85,68 @@ struct ServerRpcImpl<T: Repository> {
     repo: RwLock<T>,
 }
 
+fn validate_person(person: &model::Person) -> Result<(), String> {
+    if person.uuid.len() != 16 {
+        return Err("Person has invalid UUID".to_owned());
+    }
+
+    if person.name.len() == 0 {
+        return Err("Person has no name".to_owned());
+    }
+
+    Ok(())
+}
+
+fn validate_account(account: &model::Account) -> Result<(), String> {
+    if account.uuid.len() != 16 {
+        return Err("Invalid account UUID".to_owned());
+    }
+
+    if account.label.len() == 0 {
+        return Err("Missing account label".to_owned());
+    }
+
+    if account.members.len() == 0 {
+        return Err("Account has no members".to_owned());
+    }
+
+    for member in &account.members {
+        validate_person(member)?;
+    }
+
+    Ok(())
+}
+
 impl<T: Repository + Send + Sync + 'static> server::Rpc for ServerRpcImpl<T> {
+    fn create_account(&self, account: model::Account) -> jsonrpc_core::Result<()> {
+        validate_account(&account).map_err(|e| {
+            let mut err = jsonrpc_core::Error::invalid_request();
+            err.message = e;
+            err
+        })?;
+
+        let mut lock = self.repo.write().unwrap();
+        let repo: &mut Repository = lock.deref_mut();
+
+        // Check that we don't already have an account with this UUID
+        match repo.get_account(&account.uuid) {
+            Ok(_) => {
+                let mut err = jsonrpc_core::Error::invalid_request();
+                err.message = "An account with this UUID already exists".to_owned();
+                return Err(err);
+            },
+            Err(errors::Error(errors::ErrorKind::NoSuchAccount(_), _)) => {},
+            Err(e) => { return Err(e.into()) },
+        };
+
+        // Clear the synchronization fields, they'll be set by the synchronization
+        let mut account = account;
+        account.latest_transaction.clear();
+        account.latest_synchronized_transaction.clear();
+
+        repo.add_account(&account).map_err(|e| e.into())
+    }
+
     fn get_account_info(&self, account_id: model::AccountId) -> jsonrpc_core::Result<model::Account> {
         let lock = self.repo.read().unwrap();
         let repo: &Repository = lock.deref();

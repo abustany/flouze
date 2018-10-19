@@ -14,6 +14,10 @@ impl<'a> LocalRemote<'a> {
 }
 
 impl<'a> Remote for LocalRemote<'a> {
+    fn create_account(&mut self, account: &model::Account) -> errors::Result<()> {
+        self.repo.add_account(account)
+    }
+
     fn get_account_info(&self, account_id: &model::AccountId) -> errors::Result<model::Account> {
         self.repo.get_account(account_id)
     }
