@@ -22,6 +22,7 @@ use uuid::Uuid;
 
 use flouze::model;
 use flouze::jsonrpcremote::{Client, Server};
+use flouze::remote::Remote;
 use flouze::repository::{Repository, get_transaction_chain};
 use flouze::sledrepository::SledRepository;
 use flouze::sync;
@@ -110,7 +111,21 @@ enum Command {
         account_name: String,
         /// Address of the remote peer in the form IP:PORT
         remote_address: String,
-    }
+    },
+
+    #[structopt(name="add-remote-account")]
+    /// Create a new account on a remote server
+    AddRemoteAccount {
+        /// Address of the remote peer in the form IP:PORT
+        remote_address: String,
+        /// Name of the account
+        label: String,
+        /// UUID of the account (by default auto generated)
+        #[structopt(long="id")]
+        id: Option<String>,
+        /// List of members of this account
+        members: Vec<String>,
+    },
 }
 
 #[derive(StructOpt)]
@@ -155,10 +170,11 @@ fn seq_shuffle<T>(items: &mut [T]) {
 
 fn run() -> Result<()> {
     let opt = App::from_args();
-    let mut store = SledRepository::new(&opt.file)?;
     
     match opt.command {
         Command::AddAccount{label, members, id} => {
+            let mut store = SledRepository::new(&opt.file)?;
+
             if members.len() == 0 {
                 bail!("We need at least one member in the account");
             }
@@ -190,6 +206,8 @@ fn run() -> Result<()> {
             store.add_account(&account).map_err(|e| e.into())
         },
         Command::ListAccounts => {
+            let mut store = SledRepository::new(&opt.file)?;
+
             for account in store.list_accounts()? {
                 let member_names = account.members.iter().map(|m| m.name.as_str()).collect::<Vec<&str>>().join(", ");
                 println!("{} (members: {}) - {}", &account.label, member_names, model::IdAsHex(&account.uuid));
@@ -198,6 +216,8 @@ fn run() -> Result<()> {
             Ok(())
         },
         Command::DeleteAccount{label} => {
+            let mut store = SledRepository::new(&opt.file)?;
+
             let account = find_account_by_label(&store, &label)?;
 
             if account.is_none() {
@@ -206,8 +226,9 @@ fn run() -> Result<()> {
 
             store.delete_account(&account.unwrap().uuid).map_err(|e| e.into())
         }
-
         Command::AddTransaction{account_name, label, amount, payed_by} => {
+            let mut store = SledRepository::new(&opt.file)?;
+
             let account = find_account_by_label(&store, &account_name)?;
 
             if account.is_none() {
@@ -255,8 +276,9 @@ fn run() -> Result<()> {
             store.add_transaction(&account.uuid, &tx)?;
             store.set_latest_transaction(&account.uuid, &tx.uuid).map_err(|e| e.into())
         }
-
         Command::ListTransactions{account_name} => {
+            let mut store = SledRepository::new(&opt.file)?;
+
             let account = find_account_by_label(&store, &account_name)?;
 
             if account.is_none() {
@@ -285,14 +307,16 @@ fn run() -> Result<()> {
 
             Ok(())
         }
-
         Command::Serve{listen_address} => {
+            let mut store = SledRepository::new(&opt.file)?;
+
             info!("Listening on {}", listen_address);
             Server::new(store, &listen_address)?.wait();
             Ok(())
         },
-
         Command::Clone{remote_address, account_id} => {
+            let mut store = SledRepository::new(&opt.file)?;
+
             let id = Uuid::parse_str(&account_id)?.as_bytes().to_vec();
 
             let http_address = "http://".to_owned() + &remote_address;
@@ -301,8 +325,9 @@ fn run() -> Result<()> {
             sync::clone_remote(&mut store, &mut remote, &id)?;
             Ok(())
         },
-
         Command::Sync{account_name, remote_address} => {
+            let mut store = SledRepository::new(&opt.file)?;
+
             let account = find_account_by_label(&store, &account_name)?;
 
             if account.is_none() {
@@ -316,7 +341,40 @@ fn run() -> Result<()> {
             sync::sync(&mut store, &mut remote, &account.uuid)?;
 
             Ok(())
-        }
+        },
+        Command::AddRemoteAccount{remote_address, label, members, id} => {
+            if remote_address.len() == 0 {
+                bail!("No remote address specified");
+            }
+
+            if members.len() == 0 {
+                bail!("We need at least one member in the account");
+            }
+
+            let account_id = match id {
+                Some(s) => {
+                    let uuid = Uuid::parse_str(&s)?;
+                    uuid.as_bytes().to_vec()
+                },
+                None => model::generate_account_id(),
+            };
+
+            let account = model::Account{
+                uuid: account_id,
+                label: label,
+                latest_transaction: vec!(),
+                latest_synchronized_transaction: vec!(),
+                members: members.into_iter().map(|name| model::Person{
+                    uuid: model::generate_person_id(),
+                    name: name,
+                }).collect(),
+            };
+
+            let http_address = "http://".to_owned() + &remote_address;
+            let mut remote = Client::new(&http_address)?;
+
+            remote.create_account(&account).map_err(|e| e.into())
+        },
     }
 }
 
