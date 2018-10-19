@@ -1,16 +1,7 @@
 FROM fedora:28
 
 # Install all needed packages as root before dropping to CI user
-RUN \
-  dnf install -y \
-  gcc \
-  git \
-  java-1.8.0-openjdk-devel \
-  libstdc++.i686 \
-  mesa-libGL \
-  pulseaudio-libs \
-  python \
-  unzip
+RUN dnf install -y unzip java-1.8.0-openjdk-devel python gcc git libstdc++.i686
 
 RUN useradd -m ci
 USER ci
@@ -44,11 +35,9 @@ RUN \
 ENV NDK_HOME="/home/ci/.local/android-ndk-r18"
 
 ENV PATH="/home/ci/.local/flutter/bin:$PATH"
-ENV PATH="/home/ci/.local/android-sdk-linux/platform-tools:/home/ci/.local/android-sdk-linux/emulator:$PATH"
 
 RUN \
-  echo yes | sdkmanager --install "build-tools;27.0.3" "platform-tools" "platforms;android-27" "emulator" "system-images;android-25;google_apis;armeabi-v7a" && \
-  echo no | avdmanager create avd -k 'system-images;android-25;google_apis;armeabi-v7a' -n Flouze && \
+  echo yes | sdkmanager --install "build-tools;27.0.3" "platform-tools" "platforms;android-27" && \
   cd ~/.local && \
   git clone https://github.com/flutter/flutter.git -b v0.8.2 && \
   flutter doctor
