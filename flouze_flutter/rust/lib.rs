@@ -10,8 +10,11 @@ use jni::sys::*;
 
 use flouze::model;
 use flouze::repository;
+use flouze::jsonrpcremote::Client;
+use flouze::remote::Remote;
 use flouze::repository::{Repository, get_transaction_chain};
 use flouze::sledrepository::SledRepository;
+use flouze::sync;
 
 use prost::Message;
 
@@ -228,4 +231,50 @@ pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_Repository_g
             return env.byte_array_from_slice(&vec!()).unwrap();
         }
     }
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_JsonRpcClient_create(env: JNIEnv, _class: JClass, url: JString) -> jlong {
+    let url: String = match env.get_string(url) {
+        Ok(p) => p.into(),
+        Err(_) => { return 0; }
+    };
+
+    match Client::new(&url) {
+        Ok(client) => Box::into_raw(Box::new(client)) as jlong,
+        Err(e) => {
+            let _ = env.throw((FLOUZE_EXCEPTION_CLASS, format!("Error while creating JsonRpcClient: {}", e)));
+            0
+        },
+    }
+}
+
+fn create_account(client: &mut Client, account_data: &Vec<u8>) -> ::flouze::errors::Result<()> {
+    let account = model::Account::decode(account_data)?;
+    client.create_account(&account)
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_JsonRpcClient_createAccount(env: JNIEnv, _class: JClass, instance: jlong, account: jbyteArray) {
+    let mut client = &mut *(instance as *mut Client);
+    let account_bytes = match env.convert_byte_array(account) {
+        Ok(bytes) => bytes,
+        Err(_) => { return; }
+    };
+    ok_or_throw(&env, create_account(&mut client, &account_bytes), ());
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_Sync_sync(env: JNIEnv, _class: JClass, repoPtr: jlong, remotePtr: jlong, jaccount_id: jbyteArray) {
+    let repo = &mut *(repoPtr as *mut SledRepository);
+    let client = &mut *(remotePtr as *mut Client);
+    let account_id = match env.convert_byte_array(jaccount_id) {
+        Ok(bytes) => bytes,
+        Err(_) => { return; }
+    };
+
+    ok_or_throw(&env, sync::sync(repo, client, &account_id), ());
 }

@@ -24,9 +24,7 @@ class FlouzeFlutter {
 class SledRepository {
   int _ptr;
 
-  SledRepository._(int ptr) {
-    _ptr = ptr;
-  }
+  SledRepository._(this._ptr);
 
   static Future<SledRepository> temporary() async {
     return SledRepository._(await _channel.invokeMethod('SledRepository::temporary'));
@@ -85,5 +83,36 @@ class SledRepository {
     return _channel.invokeMethod('Repository::getBalance', params).then((bytes) =>
       Map.fromEntries(Balance.fromBuffer(bytes).entries.map((entry) => MapEntry(entry.person, entry.balance.toInt())))
     );
+  }
+}
+
+class JsonRpcClient {
+  int _ptr;
+
+  JsonRpcClient._(this._ptr);
+
+  static Future<JsonRpcClient> create(String url) async {
+    return JsonRpcClient._(await _channel.invokeMethod('JsonRpcClient::create', url));
+  }
+
+  Future<void> createAccount(Account account) async {
+    final Map<String, dynamic> params = {
+      'ptr': _ptr,
+      'account': account.writeToBuffer(),
+    };
+
+    await _channel.invokeMethod('JsonRpcClient::createAccount', params);
+  }
+}
+
+class Sync {
+  static Future<void> sync(SledRepository repository, JsonRpcClient client, List<int> accountId) async {
+    final Map<String, dynamic> params = {
+      'repoPtr': repository._ptr,
+      'remotePtr': client._ptr,
+      'accountId': Uint8List.fromList(accountId),
+    };
+
+    await _channel.invokeMethod('Sync::sync', params);
   }
 }
