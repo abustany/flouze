@@ -8,8 +8,12 @@ import 'package:built_collection/built_collection.dart';
 import 'package:flouze_flutter/flouze_flutter.dart';
 
 import 'package:flouze/pages/add_transaction.dart';
+import 'package:flouze/utils/account_config.dart';
+import 'package:flouze/utils/account_config_store.dart' as AccountConfigStore;
+import 'package:flouze/utils/rpc_client.dart';
 import 'package:flouze/utils/transactions.dart';
 import 'package:flouze/widgets/transaction_list.dart';
+import 'package:flouze/widgets/sync_indicator.dart';
 import 'package:flouze/widgets/reports.dart';
 
 class AccountPage extends StatefulWidget {
@@ -27,8 +31,10 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
 
   final SledRepository repository;
   final Account account;
+  AccountConfig _accountConfig;
   BuiltList<Transaction> _transactions;
   Map<List<int>, int> _balance;
+  bool _synchronizing = false;
 
   TabController _tabController;
   final List<Tab> _tabs = [
@@ -42,6 +48,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    loadAccountConfig(account.uuid);
     loadTransactions();
     loadBalance();
   }
@@ -50,6 +57,16 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> loadAccountConfig(List<int> accountUuid) async {
+    AccountConfig accountConfig = await AccountConfigStore.loadAccountConfig(accountUuid);
+
+    if (mounted) {
+      setState(() {
+        _accountConfig = accountConfig;
+      });
+    }
   }
 
   Future<void> loadTransactions() async {
@@ -150,8 +167,164 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
     loadBalance();
   }
 
+  Future<List<int>> _pickMember() async {
+    final List<Person> members = List.from(account.members);
+    members.sort((p1, p2) => p1.name.compareTo(p2.name));
+    final List<Widget> options = members.map((person) =>
+      SimpleDialogOption(
+        child: Text(person.name),
+        onPressed: () { Navigator.pop(context, person.uuid); },
+      )).toList();
+
+    return showDialog(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text('Who are you ?'),
+        children: options,
+      )
+    );
+  }
+
+  Future<bool> _ensureMeUuid() async {
+    if (_accountConfig.meUuid.isNotEmpty) {
+      return true;
+    }
+
+    // Who are you ?
+    var meUuid = await _pickMember();
+
+    if (meUuid == null) {
+      // User canceled
+      return false;
+    }
+
+    var oldAccountConfig = _accountConfig;
+
+    try {
+      var newAccountConfig = _accountConfig.rebuild((b) =>
+        b..meUuid.update((b) => b..clear()..addAll(meUuid))
+      );
+
+      setState(() {
+        _accountConfig = newAccountConfig;
+      });
+
+      await AccountConfigStore.saveAccountConfig(account.uuid, newAccountConfig);
+
+      return true;
+    } on PlatformException catch (e) {
+      print('Error while saving account configuration: ${e.message}');
+
+      setState(() {
+        _accountConfig = oldAccountConfig;
+      });
+
+      throw e;
+    }
+  }
+
+  Future<void> _ensureRemoteAccountExists(JsonRpcClient client) async {
+    if (_accountConfig.synchronized) {
+      return;
+    }
+
+    var oldAccountConfig = _accountConfig;
+
+    try {
+      var newAccountConfig = _accountConfig.rebuild((b) => b..synchronized = true);
+
+      setState(() {
+        _accountConfig = newAccountConfig;
+      });
+
+      await client.createAccount(account);
+      await AccountConfigStore.saveAccountConfig(account.uuid, newAccountConfig);
+    } on PlatformException catch (e) {
+      print('Error while creating remote account: ${e.message}');
+
+      setState(() {
+        _accountConfig = oldAccountConfig;
+      });
+
+      throw e;
+    }
+  }
+
+  void _uploadAccount() async {
+    assert(_accountConfig != null);
+
+    if (_accountConfig.synchronized || _synchronizing) {
+      return;
+    }
+
+    setState(() {
+      _synchronizing = true;
+    });
+
+    try {
+      var client = await getJsonRpcClient();
+
+      if (!await _ensureMeUuid()) {
+        // User cancelled the flow
+        return;
+      }
+
+      await _ensureRemoteAccountExists(client);
+      await Sync.sync(repository, client, account.uuid);
+    } on PlatformException catch (e) {
+      print('Synchronization failed: ${e.message}');
+    } finally {
+      setState(() {
+        _synchronizing = false;
+      });
+    }
+  }
+
+  void _syncAccount() async {
+    assert(_accountConfig.synchronized);
+
+    setState(() {
+      _synchronizing = true;
+    });
+
+    try {
+      var client = await getJsonRpcClient();
+      await Sync.sync(repository, client, account.uuid);
+    } on PlatformException catch (e) {
+      print('Synchronization failed: ${e.message}');
+    } finally {
+      setState(() {
+        _synchronizing = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final List<Widget> actions = [];
+
+    if (_synchronizing) {
+      actions.add(SyncIndicator());
+    } else {
+      if (!(_accountConfig?.synchronized ?? false)) {
+        actions.add(
+          IconButton(
+            key: Key('action-upload-account'),
+            icon: Icon(Icons.cloud_upload),
+            onPressed: _uploadAccount,
+          ),
+        );
+      } else {
+        actions.add(
+          IconButton(
+            key: Key('action-sync-account'),
+            icon: Icon(Icons.sync),
+            onPressed: _syncAccount,
+          ),
+        );
+      }
+    }
+
     return new Scaffold(
       key: _scaffoldKey,
       appBar: new AppBar(
@@ -160,6 +333,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
             controller: _tabController,
             tabs: _tabs
         ),
+        actions: actions,
       ),
       body: TabBarView(
           controller: _tabController,

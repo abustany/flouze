@@ -30,10 +30,10 @@ features:
 - Support several accounts (expense logs)
 - Adding/editing/deleting Transactions
 - Balance view showing who owes whom
+- Synchronization (needs more testing)
 
 The features currently being developed include:
 
-- Synchronization (basic support in the library, needs a server + UI work)
 - Statistics per day/week/month for long running accounts (eg. shared flat)
 
 ## Compatibility
@@ -65,6 +65,14 @@ required because [the sled library requires it for 32-bit support](https://githu
 
 After the native libraries are built, the normal Flutter commands can be used
 from the `mobile/` folder to run/develop/debug the application.
+
+## Synchronization server
+
+The synchronization server URL is configured by the `mobile/assets/sync_server_uri.txt`
+file. The file should contain a URL in the form `http://my.sync.server.tld:8080/`.
+
+Flouze ships with a basic built-in server, accessible via the `serve` command of
+`flouze-cli`.
 
 ## Sentry
 

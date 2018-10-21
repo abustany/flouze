@@ -9,6 +9,7 @@ dependencies:
     path: ../flouze_flutter/
 
   built_collection: "^4.0.0"
+  built_value: "^6.1.4"
   charcode: "^1.1.1"
   collection: "^1.14.6"
   device_info: "^0.2.1"
@@ -16,6 +17,7 @@ dependencies:
   intl: "^0.15.6"
   path_provider: "^0.4.1"
   sentry: "^2.1.1"
+  shared_preferences: "^0.4.3"
   uuid: "^1.0.1"
 
   # The following adds the Cupertino Icons font to your application.
@@ -27,6 +29,9 @@ dev_dependencies:
     sdk: flutter
   flutter_driver:
     sdk: flutter
+
+  build_runner: ">=0.9.0 <0.11.0"
+  built_value_generator: "^6.1.4"
 
 
 # For information on the generic Dart part of this file, see the
