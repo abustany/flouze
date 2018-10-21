@@ -7,6 +7,8 @@ use jsonrpc_client_http;
 use jsonrpc_core;
 use jsonrpc_http_server;
 
+use uuid::Uuid;
+
 use super::errors;
 use super::model;
 use super::remote::Remote;
@@ -98,9 +100,7 @@ fn validate_person(person: &model::Person) -> Result<(), String> {
 }
 
 fn validate_account(account: &model::Account) -> Result<(), String> {
-    if account.uuid.len() != 16 {
-        return Err("Invalid account UUID".to_owned());
-    }
+    Uuid::from_slice(&account.uuid).map_err(|_| "Invalid account UUID")?;
 
     if account.label.len() == 0 {
         return Err("Missing account label".to_owned());
