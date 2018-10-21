@@ -127,16 +127,21 @@ impl<T: Repository + Send + Sync + 'static> server::Rpc for ServerRpcImpl<T> {
 
         let mut lock = self.repo.write().unwrap();
         let repo: &mut Repository = lock.deref_mut();
+        let account_uuid = Uuid::from_slice(&account.uuid).unwrap_or_else(|_| Uuid::nil()).to_hyphenated();
 
         // Check that we don't already have an account with this UUID
         match repo.get_account(&account.uuid) {
             Ok(_) => {
+                info!("Account creation failed (duplicate UUID): {}", &account_uuid);
                 let mut err = jsonrpc_core::Error::invalid_request();
                 err.message = "An account with this UUID already exists".to_owned();
                 return Err(err);
             },
             Err(errors::Error(errors::ErrorKind::NoSuchAccount(_), _)) => {},
-            Err(e) => { return Err(e.into()) },
+            Err(e) => {
+                warn!("Error while creating account with UUID {}: {}", &account_uuid, &e);
+                return Err(e.into())
+            },
         };
 
         // Clear the synchronization fields, they'll be set by the synchronization
@@ -144,7 +149,15 @@ impl<T: Repository + Send + Sync + 'static> server::Rpc for ServerRpcImpl<T> {
         account.latest_transaction.clear();
         account.latest_synchronized_transaction.clear();
 
-        repo.add_account(&account).map_err(|e| e.into())
+        let res: jsonrpc_core::Result<()> = repo.add_account(&account).map_err(|e| e.into());
+
+        if let Ok(_) = res {
+            info!("Created account with UUID {}", &account_uuid);
+        } else if let Err(ref e) = res {
+            warn!("Error while creating account with UUID {}: {:?}", &account_uuid, &e);
+        }
+
+        res
     }
 
     fn get_account_info(&self, account_id: model::AccountId) -> jsonrpc_core::Result<model::Account> {
