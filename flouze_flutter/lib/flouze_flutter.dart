@@ -103,9 +103,30 @@ class JsonRpcClient {
 
     await _channel.invokeMethod('JsonRpcClient::createAccount', params);
   }
+
+  Future<Account> getAccountInfo(List<int> accountId) async {
+    final Map<String, dynamic> params = {
+      'ptr': _ptr,
+      'accountId': Uint8List.fromList(accountId),
+    };
+
+    return _channel.invokeMethod('JsonRpcClient::getAccountInfo', params).then((bytes) =>
+      Account.fromBuffer(bytes)
+    );
+  }
 }
 
 class Sync {
+  static Future<void> cloneRemote(SledRepository repository, JsonRpcClient client, List<int> accountId) async {
+    final Map<String, dynamic> params = {
+      'repoPtr': repository._ptr,
+      'remotePtr': client._ptr,
+      'accountId': Uint8List.fromList(accountId),
+    };
+
+    await _channel.invokeMethod('Sync::cloneRemote', params);
+  }
+
   static Future<void> sync(SledRepository repository, JsonRpcClient client, List<int> accountId) async {
     final Map<String, dynamic> params = {
       'repoPtr': repository._ptr,

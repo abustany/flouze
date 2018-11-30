@@ -266,6 +266,47 @@ pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_JsonRpcClien
     ok_or_throw(&env, create_account(&mut client, &account_bytes), ());
 }
 
+fn get_account_info(client: &mut Client, account_id: &Vec<u8>) -> ::flouze::errors::Result<Vec<u8>> {
+    let account = client.get_account_info(account_id)?;
+
+    let mut buf = Vec::new();
+    buf.reserve(account.encoded_len());
+    account.encode(&mut buf).unwrap();
+
+    Ok(buf)
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_JsonRpcClient_getAccountInfo(env: JNIEnv, _class: JClass, instance: jlong, jaccount_id: jbyteArray) -> jbyteArray {
+    let mut client = &mut *(instance as *mut Client);
+    let account_id = match env.convert_byte_array(jaccount_id) {
+        Ok(bytes) => bytes,
+        Err(_) => { return env.byte_array_from_slice(&vec!()).unwrap(); }
+    };
+
+    match get_account_info(&mut client, &account_id) {
+        Ok(bytes) => env.byte_array_from_slice(&bytes).unwrap(),
+        Err(e) => {
+            throw_err(&env, e);
+            return env.byte_array_from_slice(&vec!()).unwrap()
+        }
+    }
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_Sync_cloneRemote(env: JNIEnv, _class: JClass, repoPtr: jlong, remotePtr: jlong, jaccount_id: jbyteArray) {
+    let repo = &mut *(repoPtr as *mut SledRepository);
+    let client = &mut *(remotePtr as *mut Client);
+    let account_id = match env.convert_byte_array(jaccount_id) {
+        Ok(bytes) => bytes,
+        Err(_) => { return; }
+    };
+
+    ok_or_throw(&env, sync::clone_remote(repo, client, &account_id), ());
+}
+
 #[no_mangle]
 #[allow(non_snake_case)]
 pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_Sync_sync(env: JNIEnv, _class: JClass, repoPtr: jlong, remotePtr: jlong, jaccount_id: jbyteArray) {

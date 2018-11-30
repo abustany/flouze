@@ -129,6 +129,26 @@ public class FlouzeFlutterPlugin implements MethodCallHandler {
                 result.error("JSON_RPC_CLIENT_ERROR", e.toString(), null);
             }
             return;
+        case "JsonRpcClient::getAccountInfo":
+            try {
+                final long ptr = pointerValue(call.argument("ptr"));
+                final byte[] accountId = call.argument("accountId");
+                result.success(JsonRpcClient.getAccountInfo(ptr, accountId));
+            } catch (Throwable e) {
+                result.error("JSON_RPC_CLIENT_ERROR", e.toString(), null);
+            }
+            return;
+        case "Sync::cloneRemote":
+            try {
+                final long repoPtr = pointerValue(call.argument("repoPtr"));
+                final long remotePtr = pointerValue(call.argument("remotePtr"));
+                final byte[] accountId = call.argument("accountId");
+                Sync.cloneRemote(repoPtr, remotePtr, accountId);
+                result.success(null);
+            } catch (Throwable e) {
+                result.error("SYNC_ERROR", e.toString(), null);
+            }
+            return;
         case "Sync::sync":
             try {
                 final long repoPtr = pointerValue(call.argument("repoPtr"));
