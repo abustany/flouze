@@ -40,7 +40,7 @@ Future<SentryClient> _initSentry() async {
   }
 }
 
-Future<Null> _reportError(SentryClient client, dynamic error, dynamic stackTrace) async {
+Future<void> _reportError(SentryClient client, dynamic error, dynamic stackTrace) async {
   print('Caught error: $error');
 
   if (isInDebugMode || client == null) {
@@ -116,7 +116,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 }
 
-Future<Null> main() async {
+Future<void> main() async {
   var sentryClient = await _initSentry();
 
   FlutterError.onError = (FlutterErrorDetails details) async {
@@ -130,7 +130,7 @@ Future<Null> main() async {
     }
   };
 
-  runZoned<Future<Null>>(() async {
+  runZoned<Future<void>>(() async {
     runApp(new MyApp());
   }, onError: (error, stackTrace) async {
     await _reportError(sentryClient, error, stackTrace);

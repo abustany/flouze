@@ -16,7 +16,7 @@ Future<AccountConfig> loadAccountConfig(List<int> accountUuid) async {
   return serializers.deserialize(json.decode(accountJson)) as AccountConfig;
 }
 
-Future<Null> saveAccountConfig(List<int> accountUuid, AccountConfig accountConfig) async {
+Future<void> saveAccountConfig(List<int> accountUuid, AccountConfig accountConfig) async {
   var prefs = await SharedPreferences.getInstance();
   await prefs.setString(accountConfigKey(accountUuid), json.encode(serializers.serialize(accountConfig)));
 }
