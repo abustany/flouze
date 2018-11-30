@@ -33,3 +33,11 @@ void closeRepository() async {
     _repository = null;
   }
 }
+
+void setNavigator(Navigator navigator) {
+  _navigator = navigator;
+}
+
+Navigator getNavigator() {
+  return _navigator;
+}

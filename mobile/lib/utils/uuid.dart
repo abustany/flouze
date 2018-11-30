@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import 'package:uuid/uuid.dart';
 
 Uuid _uuid = new Uuid();
@@ -7,3 +9,9 @@ List<int> generateUuid() {
   _uuid.v4(buffer: res);
   return res;
 }
+
+List<int> parse(String uuid) {
+  return _uuid.parse(uuid);
+}
+
+final Function uuidEquals = ListEquality().equals;

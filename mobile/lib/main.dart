@@ -5,7 +5,9 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:sentry/sentry.dart';
 
+import 'package:flouze/pages/account_clone.dart';
 import 'package:flouze/pages/account_list.dart';
+import 'package:flouze/utils/applinks.dart' as applinks;
 import 'package:flouze/utils/build_info.dart';
 import 'package:flouze/utils/services.dart';
 
@@ -67,6 +69,7 @@ class MyApp extends StatefulWidget {
 }
 
 class MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  final _navigatorKey = GlobalKey<NavigatorState>();
   StreamSubscription<applinks.LinkAction> _linkActions;
 
   @override
@@ -74,10 +77,20 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.initState();
 
     WidgetsBinding.instance.addObserver(this);
+
+    _linkActions = applinks.linkActions().listen((action) {
+      final navigator = _navigatorKey.currentState;
+      if (mounted && navigator != null && action is applinks.LinkActionClone) {
+        navigator.push(MaterialPageRoute(builder: (context) =>
+          new AccountClonePage(accountUuid: action.accountUuid)
+        ));
+      }
+    });
   }
 
   @override
   void dispose() {
+    _linkActions?.cancel();
     WidgetsBinding.instance.removeObserver(this);
 
     super.dispose();
@@ -98,6 +111,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         primarySwatch: Colors.green,
       ),
       home: AccountListPage(),
+      navigatorKey: _navigatorKey,
     );
   }
 }
