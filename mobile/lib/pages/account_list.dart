@@ -7,26 +7,25 @@ import 'package:flouze_flutter/flouze_flutter.dart';
 
 import 'package:flouze/pages/add_account.dart';
 import 'package:flouze/pages/account.dart';
+import 'package:flouze/utils/services.dart';
 
 class AccountListPage extends StatefulWidget {
-  final SledRepository repository;
-
-  AccountListPage({Key key, @required this.repository}) : super(key: key);
+  AccountListPage({Key key}) : super(key: key);
 
   @override
-  AccountListPageState createState() => new AccountListPageState(repository);
+  AccountListPageState createState() => new AccountListPageState();
 }
 
 class AccountListPageState extends State<AccountListPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  final SledRepository repository;
   List<Account> _accounts;
 
-  AccountListPageState(this.repository);
+  AccountListPageState();
 
   Future<void> loadAccounts() async {
     try {
       print('Listing accounts');
+      final repository = await getRepository();
       List<Account> accounts = await repository.listAccounts();
 
       if (mounted) {
@@ -60,6 +59,7 @@ class AccountListPageState extends State<AccountListPage> {
     final ScaffoldState scaffoldState = _scaffoldKey.currentState;
 
     try {
+      final repository = await getRepository();
       await repository.addAccount(account);
 
       scaffoldState.showSnackBar(
@@ -82,7 +82,7 @@ class AccountListPageState extends State<AccountListPage> {
 
   void _openAccount(Account account) {
     Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => new AccountPage(repository: repository, account: account))
+        MaterialPageRoute(builder: (context) => new AccountPage(account: account))
     );
   }
 
@@ -90,13 +90,6 @@ class AccountListPageState extends State<AccountListPage> {
   void initState() {
     super.initState();
     loadAccounts();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-
-    repository?.close();
   }
 
   @override

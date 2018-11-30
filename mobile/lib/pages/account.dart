@@ -15,21 +15,20 @@ import 'package:flouze/utils/transactions.dart';
 import 'package:flouze/widgets/transaction_list.dart';
 import 'package:flouze/widgets/sync_indicator.dart';
 import 'package:flouze/widgets/reports.dart';
+import 'package:flouze/utils/services.dart';
 
 class AccountPage extends StatefulWidget {
-  final SledRepository repository;
   final Account account;
 
-  AccountPage({Key key, @required this.repository, @required this.account}) : super(key: key);
+  AccountPage({Key key, @required this.account}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => new AccountPageState(repository: repository, account: account);
+  State<StatefulWidget> createState() => new AccountPageState(account: account);
 }
 
 class AccountPageState extends State<AccountPage> with SingleTickerProviderStateMixin {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  final SledRepository repository;
   final Account account;
   AccountConfig _accountConfig;
   BuiltList<Transaction> _transactions;
@@ -42,7 +41,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
     Tab(key: Key('tab-reports'), text: "Reports"),
   ];
 
-  AccountPageState({@required this.repository, @required this.account});
+  AccountPageState({@required this.account});
 
   @override
   void initState() {
@@ -72,6 +71,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
   Future<void> loadTransactions() async {
     try {
       print('Listing transactions');
+      final repository = await getRepository();
       List<Transaction> transactions = await repository.listTransactions(account.uuid);
 
       if (mounted) {
@@ -86,6 +86,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
 
   Future<void> loadBalance() async {
     try {
+      final repository = await getRepository();
       Map<List<int>, int> balance = await repository.getBalance(account.uuid);
 
       if (mounted) {
@@ -148,6 +149,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
     });
 
     try {
+      final repository = await getRepository();
       await repository.addTransaction(account.uuid, transaction);
     } on PlatformException catch (e) {
       print('Error while saving transaction: ${e.message}');
@@ -269,6 +271,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
         return;
       }
 
+      final repository = await getRepository();
       await _ensureRemoteAccountExists(client);
       await Sync.sync(repository, client, account.uuid);
     } on PlatformException catch (e) {
@@ -288,7 +291,8 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
     });
 
     try {
-      var client = await getJsonRpcClient();
+      final repository = await getRepository();
+      final client = await getJsonRpcClient();
       await Sync.sync(repository, client, account.uuid);
     } on PlatformException catch (e) {
       print('Synchronization failed: ${e.message}');

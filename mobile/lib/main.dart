@@ -5,8 +5,9 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:sentry/sentry.dart';
 
-import 'package:flouze/pages/welcome.dart';
+import 'package:flouze/pages/account_list.dart';
 import 'package:flouze/utils/build_info.dart';
+import 'package:flouze/utils/services.dart';
 
 bool get isInDebugMode {
   bool inDebugMode = false;
@@ -60,8 +61,35 @@ Future<Null> _reportError(SentryClient client, dynamic error, dynamic stackTrace
   }
 }
 
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+class MyApp extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => MyAppState();
+}
+
+class MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  StreamSubscription<applinks.LinkAction> _linkActions;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      closeRepository();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
@@ -69,7 +97,7 @@ class MyApp extends StatelessWidget {
       theme: new ThemeData(
         primarySwatch: Colors.green,
       ),
-      home: new WelcomePage(),
+      home: AccountListPage(),
     );
   }
 }
