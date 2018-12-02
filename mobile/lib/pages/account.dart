@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 
 import 'package:built_collection/built_collection.dart';
 
+import 'package:share/share.dart';
+
 import 'package:flouze_flutter/flouze_flutter.dart';
 
 import 'package:flouze/pages/add_transaction.dart';
@@ -252,6 +254,11 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
     }
   }
 
+  void _shareAccount() async {
+    Share.share('Get the Flouze app and share the account "${account.label}" with me!'
+        '\n\n${await shareAccountUri(account.uuid)}');
+  }
+
   void _uploadAccount() async {
     assert(_accountConfig != null);
 
@@ -339,6 +346,8 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
           ),
         );
       }
+
+      actions.add(IconButton(icon: Icon(Icons.share), onPressed: _shareAccount));
     }
 
     return new Scaffold(

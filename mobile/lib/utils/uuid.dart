@@ -14,4 +14,8 @@ List<int> parse(String uuid) {
   return _uuid.parse(uuid);
 }
 
+String toString(List<int> uuid) {
+  return _uuid.unparse(uuid);
+}
+
 final Function uuidEquals = ListEquality().equals;

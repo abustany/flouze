@@ -1,13 +1,17 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 import 'package:flouze_flutter/flouze_flutter.dart';
 
+import 'package:flouze/utils/uuid.dart' as UUID;
+
 Future<SledRepository> _repository;
+Future<String> _cachedShareServerUri;
 Navigator _navigator;
 
 Future<SledRepository> getRepository() async {
@@ -41,3 +45,23 @@ void setNavigator(Navigator navigator) {
 Navigator getNavigator() {
   return _navigator;
 }
+
+String removeTrailingSlashes(String uri) {
+  while (uri.endsWith('/')) {
+    uri = uri.substring(0, uri.length-1);
+  }
+
+  return uri;
+}
+
+Future<String> _shareServerUri() {
+  if (_cachedShareServerUri == null) {
+    _cachedShareServerUri = rootBundle.loadString('assets/share_server_uri.txt')
+        .then((serverUri) => removeTrailingSlashes(serverUri.trim()));
+  }
+
+  return _cachedShareServerUri;
+}
+
+Future<String> shareAccountUri(List<int> accountId) async =>
+    "${await _shareServerUri()}/mobile/clone?accountId=${UUID.toString(accountId)}";
