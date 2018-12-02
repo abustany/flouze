@@ -15,7 +15,7 @@ def loadShareServerPlaceholders() {
     URI shareServerUri;
 
     try {
-        shareServerUri = new URI(new File(projectDir, '../../assets/share_server_uri.txt').getText('UTF-8'))
+        shareServerUri = new URI(new File(projectDir, '../../assets/share_server_uri.txt').getText('UTF-8').trim())
     } catch (FileNotFoundException ignored) {
         println('File share_server_uri.txt not found, sharing URIs will not work')
         return [shareServerScheme: '', shareServerHost: '', shareServerPathPrefix: '']
