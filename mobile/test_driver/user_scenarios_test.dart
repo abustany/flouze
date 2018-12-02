@@ -65,6 +65,7 @@ void main() {
     };
 
     test('create an account', () async {
+      await driver.waitForAbsent(find.byValueKey('account-list-loading'));
       await driver.tap(find.byTooltip('Add a new account'));
       await driver.tap(find.byValueKey('input-account-name'));
       await driver.enterText('Test account');
