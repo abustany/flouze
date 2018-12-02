@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:flouze_flutter/flouze_flutter.dart';
+import 'package:flouze_flutter/flouze_flutter.dart' as Flouze;
 
 import 'package:flouze/pages/add_account.dart';
 import 'package:flouze/pages/account.dart';
@@ -18,7 +18,7 @@ class AccountListPage extends StatefulWidget {
 
 class AccountListPageState extends State<AccountListPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  List<Account> _accounts;
+  List<Flouze.Account> _accounts;
 
   AccountListPageState();
 
@@ -26,7 +26,7 @@ class AccountListPageState extends State<AccountListPage> {
     try {
       print('Listing accounts');
       final repository = await getRepository();
-      List<Account> accounts = await repository.listAccounts();
+      List<Flouze.Account> accounts = await repository.listAccounts();
 
       if (mounted) {
         setState(() {
@@ -44,7 +44,7 @@ class AccountListPageState extends State<AccountListPage> {
       return;
     }
 
-    final Account account = await Navigator.of(context).push(
+    final Flouze.Account account = await Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => new AddAccountPage())
     );
 
@@ -80,7 +80,7 @@ class AccountListPageState extends State<AccountListPage> {
     }
   }
 
-  void _openAccount(Account account) {
+  void _openAccount(Flouze.Account account) {
     Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => new AccountPage(account: account))
     );
