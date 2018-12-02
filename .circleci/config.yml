@@ -13,7 +13,7 @@ jobs:
       - checkout
       - run: cargo build && cargo test
       - run: cd flouze_flutter && RUST_RELEASE="nightly-$RUSTC_RELEASE_DATE" ./build-jni-libs.sh
-      - run: cd mobile && flutter packages pub run build_runner build && flutter build apk
+      - run: cd mobile && flutter packages get && flutter packages pub run build_runner build && flutter build apk
       # Clean our own artifacts so that they don't clutter the cache
       - run: cargo clean -p flouze && cargo clean -p flouze-cli && cargo clean -p flouze-jni && cargo clean -p flouze-flutter
       - save_cache:
