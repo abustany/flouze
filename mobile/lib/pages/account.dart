@@ -5,8 +5,6 @@ import 'package:flutter/services.dart';
 
 import 'package:built_collection/built_collection.dart';
 
-import 'package:fluttertoast/fluttertoast.dart';
-
 import 'package:flouze_flutter/flouze_flutter.dart';
 
 import 'package:flouze/pages/add_transaction.dart';
@@ -297,19 +295,19 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
       final client = await getJsonRpcClient();
       await Sync.sync(repository, client, account.uuid);
 
-      Fluttertoast.showToast(
-        msg: 'Synchronized successfully!',
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-      );
+      if (mounted) {
+        _scaffoldKey.currentState.showSnackBar(
+            SnackBar(content: Text('Synchronized successfully!'))
+        );
+      }
     } on PlatformException catch (e) {
       print('Synchronization failed: ${e.message}');
 
-      Fluttertoast.showToast(
-        msg: 'Synchronization failed: ${e.message}',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-      );
+      if (mounted) {
+        _scaffoldKey.currentState.showSnackBar(
+            SnackBar(content: Text('Synchronization failed: ${e.message}'))
+        );
+      }
     } finally {
       setState(() {
         _synchronizing = false;

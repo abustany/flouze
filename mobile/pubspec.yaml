@@ -14,7 +14,6 @@ dependencies:
   collection: "^1.14.6"
   device_info: "^0.2.1"
   fixnum: ">=0.9.0 <0.11.0"
-  fluttertoast: "^2.1.2"
   intl: "^0.15.6"
   path_provider: "^0.4.1"
   sentry: "^2.1.1"
