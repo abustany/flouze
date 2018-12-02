@@ -1,5 +1,6 @@
 package org.bustany.flouze.flouzeflutter;
 
+import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -7,11 +8,18 @@ import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 
 /** FlouzeFlutterPlugin */
-public class FlouzeFlutterPlugin implements MethodCallHandler {
+public class FlouzeFlutterPlugin implements MethodCallHandler, EventChannel.StreamHandler {
+    private EventChannel.EventSink events;
+
     /** Plugin registration. */
     public static void registerWith(Registrar registrar) {
+        final FlouzeFlutterPlugin instance = new FlouzeFlutterPlugin();
+
         final MethodChannel channel = new MethodChannel(registrar.messenger(), "flouze_flutter");
-        channel.setMethodCallHandler(new FlouzeFlutterPlugin());
+        channel.setMethodCallHandler(instance);
+
+        final EventChannel eventChannel = new EventChannel(registrar.messenger(), "flouze_flutter/events");
+        eventChannel.setStreamHandler(instance);
     }
 
     private long pointerValue(Object object) {
@@ -24,6 +32,14 @@ public class FlouzeFlutterPlugin implements MethodCallHandler {
         }
 
         throw new RuntimeException("Pointer object is neither Integer or Long");
+    }
+
+    private void onAccountListChanged() {
+        if (events == null) {
+            return;
+        }
+
+        events.success("account_list_changed");
     }
 
     @Override
@@ -70,6 +86,7 @@ public class FlouzeFlutterPlugin implements MethodCallHandler {
                 final byte[] account = call.argument("account");
                 SledRepository.addAccount(ptr, account);
                 result.success(null);
+                onAccountListChanged();
             } catch (Throwable e) {
                 result.error("SLED_REPOSITORY_ERROR", e.toString(), null);
             }
@@ -145,6 +162,7 @@ public class FlouzeFlutterPlugin implements MethodCallHandler {
                 final byte[] accountId = call.argument("accountId");
                 Sync.cloneRemote(repoPtr, remotePtr, accountId);
                 result.success(null);
+                onAccountListChanged();
             } catch (Throwable e) {
                 result.error("SYNC_ERROR", e.toString(), null);
             }
@@ -163,5 +181,15 @@ public class FlouzeFlutterPlugin implements MethodCallHandler {
         default:
             result.notImplemented();
         }
-  }
+    }
+
+    @Override
+    public void onListen(Object o, EventChannel.EventSink eventSink) {
+        events = eventSink;
+    }
+
+    @Override
+    public void onCancel(Object o) {
+        events = null;
+    }
 }

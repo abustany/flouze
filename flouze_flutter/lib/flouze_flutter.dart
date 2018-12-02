@@ -10,6 +10,9 @@ export 'package:flouze_flutter/flouze.pb.dart';
 
 const MethodChannel _channel = const MethodChannel('flouze_flutter');
 
+const EventChannel _eventChannel = const EventChannel('flouze_flutter/events');
+Stream<String> _eventStream;
+
 class FlouzeFlutter {
   static Future<String> get platformVersion async {
     final String version = await _channel.invokeMethod('getPlatformVersion');
@@ -135,5 +138,17 @@ class Sync {
     };
 
     await _channel.invokeMethod('Sync::sync', params);
+  }
+}
+
+class Events {
+  static const String ACCOUNT_LIST_CHANGED = 'account_list_changed';
+
+  static Stream<String> stream() {
+    if (_eventStream == null) {
+      _eventStream = _eventChannel.receiveBroadcastStream().cast<String>();
+    }
+
+    return _eventStream;
   }
 }
