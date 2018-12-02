@@ -42,9 +42,9 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
 
                 <data
-                    android:scheme="https"
-                    android:host="flouze.bustany.org"
-                    android:pathPrefix="/mobile"/>
+                    android:scheme="${shareServerScheme}"
+                    android:host="${shareServerHost}"
+                    android:pathPrefix="${shareServerPathPrefix}"/>
             </intent-filter>
         </activity>
     </application>

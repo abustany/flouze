@@ -74,6 +74,26 @@ file. The file should contain a URL in the form `http://my.sync.server.tld:8080/
 Flouze ships with a basic built-in server, accessible via the `serve` command of
 `flouze-cli`.
 
+## Sharing accounts between devices
+
+Sharing is accomplished by registering a URL prefix with the application, and
+interpreting the URLs under that prefix in the app. The URL used for sharing
+needs *not* match the actual address of the synchronization server, in other
+words it is a "vanity" URL, which however needs to validate [certain criteria
+described in the Android Developer Documentation](https://developer.android.com/training/app-links/verify-site-associations),
+notably the hosting of a `/.well-known/assetlinks.json` file.
+
+The URL of the sharing server is configured by the `mobile/assets/share_server_uri.txt`
+file. The file should contain a URL of the form `https://myapp.com/app`.
+
+With the example above, any link starting with `https://myapp.com/app` will
+activate the mobile application. As of now, the only action using such links is
+the cloning of a remote account. Clicking a link of the form
+`https://myapp.com/app/clone?accountId=[ACCOUNT_ID]`, where `[ACCOUNT_ID]` is
+the UUID of the account, will activate the "Clone remote account" page of the
+app. Remember, the server that will be contacted for the cloning is the
+*synchronization server*, not the *sharing server*.
+
 ## Sentry
 
 The mobile application can be configured to report crashes to Sentry (for now in

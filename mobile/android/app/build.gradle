@@ -11,6 +11,31 @@ if (flutterRoot == null) {
     throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
 }
 
+def loadShareServerPlaceholders() {
+    URI shareServerUri;
+
+    try {
+        shareServerUri = new URI(new File(projectDir, '../../assets/share_server_uri.txt').getText('UTF-8'))
+    } catch (FileNotFoundException ignored) {
+        println('File share_server_uri.txt not found, sharing URIs will not work')
+        return [shareServerScheme: '', shareServerHost: '', shareServerPathPrefix: '']
+    }
+
+    String host = shareServerUri.host;
+
+    if (shareServerUri.port > 0) {
+        host += ":${shareServerUri.port}"
+    }
+
+    final Map<String, Object> placeholders = new HashMap<>();
+
+    placeholders.put('shareServerScheme', shareServerUri.scheme)
+    placeholders.put('shareServerHost', host)
+    placeholders.put('shareServerPathPrefix', shareServerUri.path)
+
+    return placeholders;
+}
+
 apply plugin: 'com.android.application'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
@@ -22,13 +47,14 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "org.bustany.flouze"
         minSdkVersion 16
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        manifestPlaceholders = loadShareServerPlaceholders()
     }
 
     buildTypes {
