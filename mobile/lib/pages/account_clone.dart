@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 
 import 'package:flouze_flutter/flouze_flutter.dart';
 
+import 'package:flouze/utils/account_config.dart';
+import 'package:flouze/utils/account_config_store.dart' as AccountConfigStore;
 import 'package:flouze/utils/services.dart';
 import 'package:flouze/utils/rpc_client.dart';
 import 'package:flouze/utils/uuid.dart';
@@ -76,6 +78,9 @@ class AccountClonePageState extends State<AccountClonePage> {
       final repository = await getRepository();
       final client = await getJsonRpcClient();
       await Sync.cloneRemote(repository, client, accountUuid);
+
+      final accountConfig = AccountConfig((b) => b..synchronized = true);
+      await AccountConfigStore.saveAccountConfig(accountUuid, accountConfig);
 
       if (mounted) {
         navigator.pop();
