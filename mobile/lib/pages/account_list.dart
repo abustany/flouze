@@ -19,6 +19,7 @@ class AccountListPage extends StatefulWidget {
 class AccountListPageState extends State<AccountListPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   List<Flouze.Account> _accounts;
+  StreamSubscription<String> _accountEvents;
 
   AccountListPageState();
 
@@ -89,7 +90,25 @@ class AccountListPageState extends State<AccountListPage> {
   @override
   void initState() {
     super.initState();
+
+    _accountEvents = Flouze.Events.stream().listen((event) {
+      switch (event) {
+        case Flouze.Events.ACCOUNT_LIST_CHANGED:
+          loadAccounts();
+          break;
+        default:
+          return;
+      }
+    });
+
     loadAccounts();
+  }
+
+  @override
+  void dispose() {
+    _accountEvents.cancel();
+
+    super.dispose();
   }
 
   @override
