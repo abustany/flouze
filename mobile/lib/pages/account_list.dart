@@ -106,6 +106,13 @@ class AccountListPageState extends State<AccountListPage> {
       );
     }).toList();
 
+    final Widget accountList = (_accounts == null) ?
+    CircularProgressIndicator(key: Key('account-list-loading')) :
+    ListView(
+      shrinkWrap: true,
+      children: accountWidgets,
+    );
+
     return new Scaffold(
       key: _scaffoldKey,
       appBar: new AppBar(
@@ -122,10 +129,7 @@ class AccountListPageState extends State<AccountListPage> {
             ),
           ),
           Expanded(
-            child: ListView(
-              shrinkWrap: true,
-              children: accountWidgets,
-            ),
+            child: accountList,
           )
         ]
       ),
