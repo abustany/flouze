@@ -35,6 +35,9 @@ jobs:
           command: |-
             set -e
             cd mobile
+            echo "$SENTRY_DSN" > assets/sentry_dsn.txt
+            echo "$SHARE_SERVER_URI" > assets/share_server_uri.txt
+            echo "$SYNC_SERVER_URI" > assets/sync_server_uri.txt
             flutter packages get
             flutter packages pub run build_runner build
             flutter build apk
