@@ -14,7 +14,7 @@ jobs:
       - run:
           name: Setup environment variables
           command: |-
-            echo RELEASE_NAME="${CIRCLE_BRANCH}-$(echo -n ${CIRCLE_SHA1} | tail -c10)" >> $BASH_ENV
+            echo RELEASE_NAME="${CIRCLE_BRANCH}-$(echo -n ${CIRCLE_SHA1} | head -c10)" >> $BASH_ENV
       - run:
           name: Create the artifacts directory
           command: mkdir -p artifacts
