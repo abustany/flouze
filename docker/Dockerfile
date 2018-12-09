@@ -1,12 +1,16 @@
-FROM fedora:28
+FROM centos:7
 
 # Install all needed packages as root before dropping to CI user
-RUN dnf install -y unzip java-1.8.0-openjdk-devel python gcc git libstdc++.i686
+# Flutter currently need a recent version of Git (https://github.com/flutter/flutter/issues/21626)
+RUN \
+  curl -o /etc/yum.repos.d/git.repo https://copr.fedorainfracloud.org/coprs/g/git-maint/git/repo/epel-7/group_git-maint-git-epel-7.repo && \
+  yum install -y unzip java-1.8.0-openjdk-devel python gcc git which libstdc++.i686
 
 RUN useradd -m ci
 USER ci
 
 ENV PATH="/home/ci/.cargo/bin:$PATH"
+ENV JAVA_HOME="/usr/lib/jvm/java-1.8.0"
 ENV RUSTC_RELEASE_DATE="2018-07-18"
 
 RUN \
