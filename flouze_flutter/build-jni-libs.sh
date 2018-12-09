@@ -8,6 +8,14 @@ if [ -z "$RUST_RELEASE" ]; then
   RUST_RELEASE="nightly"
 fi
 
+CARGO_ARGS=
+LIB_DIR=debug
+
+if [ "$1" == "--release" ]; then
+	CARGO_ARGS="${CARGO_ARGS} --release"
+	LIB_DIR=release
+fi
+
 build() {
 	arch=$1
 	target=$2
@@ -18,10 +26,10 @@ build() {
 	tool_prefix=$(grep '^ar' ~/.cargo/config | grep $arch | awk '{print $3}' | sed -e 's,",,g' -e 's,-ar$,,')
 	export CC="$tool_prefix-clang"
 	export AR="$tool_prefix-ar"
-	cargo +$RUST_RELEASE build --target $target
+	cargo +$RUST_RELEASE build --target $target $CARGO_ARGS
 
 	mkdir -p android/src/main/jniLibs/$jni_dir
-	cp ../target/$target/debug/libflouze_flutter.so android/src/main/jniLibs/$jni_dir/
+	cp ../target/$target/$LIB_DIR/libflouze_flutter.so android/src/main/jniLibs/$jni_dir/
 	"$tool_prefix-strip" android/src/main/jniLibs/$jni_dir/libflouze_flutter.so
 }
 
