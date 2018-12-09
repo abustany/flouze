@@ -29,7 +29,7 @@ jobs:
             cp target/release/flouze-cli artifacts/flouze-cli-${RELEASE_NAME}-linux-x86_64
       - run:
           name: Build JNI libs for the app
-          command: cd flouze_flutter && RUST_RELEASE="nightly-$RUSTC_RELEASE_DATE" ./build-jni-libs.sh
+          command: cd flouze_flutter && RUST_RELEASE="nightly-$RUSTC_RELEASE_DATE" ./build-jni-libs.sh --release
       - run:
           name: Build the app
           command: |-
