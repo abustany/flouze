@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: abustany/flouze-build@sha256:68d0de20a95d5974d8b3e9599bfebf1c12835f3183194f126ff66c69b435c368
+      - image: abustany/flouze-build@sha256:42079f59d7dd719b7285fbc6f1732256495385608e287b7492913fc3a8db1d11
     steps:
       - restore_cache:
           keys:
