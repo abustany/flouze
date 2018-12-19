@@ -305,6 +305,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
                                     key: Key('input-description'),
                                     autofocus: true,
                                     initialValue: _description,
+                                    textCapitalization: TextCapitalization.sentences,
                                     validator: (value) {
                                       if (value.isEmpty) {
                                         return 'Description cannot be empty';

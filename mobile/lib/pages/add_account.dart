@@ -109,6 +109,7 @@ class AddAccountPageState extends State<AddAccountPage> {
                         TextFormField(
                           key: Key('input-account-name'),
                           autofocus: true,
+                          textCapitalization: TextCapitalization.sentences,
                           validator: (value) {
                             if (value.isEmpty) {
                               return 'Account name cannot be empty';

@@ -24,6 +24,7 @@ class MemberEntryWidget extends StatelessWidget {
             onChanged: (value) {
               this.onChanged(value);
             },
+            textCapitalization: TextCapitalization.words,
           ),
         )
       ],
