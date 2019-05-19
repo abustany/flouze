@@ -69,21 +69,21 @@ impl Remote for Client {
 mod server {
     use super::super::model::*;
     use jsonrpc_core::Result;
+    use jsonrpc_derive::rpc;
 
-    build_rpc_trait!(
-        pub trait Rpc {
-            #[rpc(name="create_account")]
-            fn create_account(&self, Account) -> Result<()>;
-            #[rpc(name="get_account_info")]
-            fn get_account_info(&self, AccountId) -> Result<Account>;
-            #[rpc(name="get_latest_transaction")]
-            fn get_latest_transaction(&self, AccountId) -> Result<TransactionId>;
-            #[rpc(name="receive_transactions")]
-            fn receive_transactions(&self, AccountId, Vec<Transaction>) -> Result<()>;
-            #[rpc(name="get_child_transactions")]
-            fn get_child_transactions(&self, AccountId, TransactionId) -> Result<Vec<Transaction>>;
-        }
-    );
+    #[rpc]
+    pub trait Rpc {
+        #[rpc(name="create_account")]
+        fn create_account(&self, Account) -> Result<()>;
+        #[rpc(name="get_account_info")]
+        fn get_account_info(&self, AccountId) -> Result<Account>;
+        #[rpc(name="get_latest_transaction")]
+        fn get_latest_transaction(&self, AccountId) -> Result<TransactionId>;
+        #[rpc(name="receive_transactions")]
+        fn receive_transactions(&self, AccountId, Vec<Transaction>) -> Result<()>;
+        #[rpc(name="get_child_transactions")]
+        fn get_child_transactions(&self, AccountId, TransactionId) -> Result<Vec<Transaction>>;
+    }
 }
 
 struct ServerRpcImpl<T: Repository> {

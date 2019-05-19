@@ -5,7 +5,6 @@ extern crate log;
 extern crate env_logger;
 extern crate rand;
 extern crate structopt;
-#[macro_use]
 extern crate structopt_derive;
 extern crate uuid;
 
@@ -41,8 +40,8 @@ mod errors {
         }
     }
 
-    impl From<::uuid::ParseError> for Error {
-        fn from(err: ::uuid::ParseError) -> Self {
+    impl From<::uuid::parser::ParseError> for Error {
+        fn from(err: ::uuid::parser::ParseError) -> Self {
             ErrorKind::InvalidUuid(format!("{}", err)).into()
         }
     }

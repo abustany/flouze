@@ -1,8 +1,6 @@
 extern crate flouze;
 extern crate jni;
 extern crate prost;
-#[macro_use]
-extern crate prost_derive;
 
 use jni::JNIEnv;
 use jni::objects::*;

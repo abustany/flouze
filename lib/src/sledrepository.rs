@@ -1,5 +1,4 @@
 use std::convert::From;
-use std::fmt::Debug;
 
 use prost::Message;
 use sled;
@@ -14,14 +13,14 @@ const ACCOUNT_KEY_PREFIX: &'static [u8] = &[0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 
 // tx:
 const TX_KEY_PREFIX: &'static [u8] = &[0x74, 0x78, 0x3a];
 
-impl<T> From<sled::Error<T>> for errors::Error where T: Debug {
-    fn from(err: sled::Error<T>) -> Self {
+impl From<sled::Error> for errors::Error {
+    fn from(err: sled::Error) -> Self {
         errors::ErrorKind::Storage(format!("Sled error: {}", err)).into()
     }
 }
 
 pub struct SledRepository {
-    tree: sled::Tree,
+    db: sled::Db,
 }
 
 impl SledRepository {
@@ -29,18 +28,18 @@ impl SledRepository {
         let config = sled::ConfigBuilder::new()
             .path(path.to_owned())
             .build();
-        let tree = sled::Tree::start(config)?;
+        let db = sled::Db::start(config)?;
 
-        Ok(SledRepository{tree})
+        Ok(SledRepository{db})
     }
 
     pub fn temporary() -> errors::Result<SledRepository> {
         let config = sled::ConfigBuilder::new()
             .temporary(true)
             .build();
-        let tree = sled::Tree::start(config)?;
+        let db = sled::Db::start(config)?;
 
-        Ok(SledRepository{tree})
+        Ok(SledRepository{db})
     }
 }
 
@@ -50,22 +49,22 @@ impl Repository for SledRepository {
         buf.reserve(account.encoded_len());
         account.encode(&mut buf).unwrap();
 
-        self.tree.set(account_key(&account.uuid), buf)?;
+        self.db.set(account_key(&account.uuid), buf)?;
 
         Ok(())
     }
 
     fn get_account(&self, account_id: &model::AccountId) -> errors::Result<model::Account> {
-        let buf = self.tree.get(&account_key(account_id))?;
+        let buf = self.db.get(&account_key(account_id))?;
 
         match buf {
             None => Err(errors::ErrorKind::NoSuchAccount(account_id.clone()).into()),
-            Some(ref data) => model::Account::decode(data).map_err(|e| e.into()),
+            Some(ref data) => model::Account::decode(data.as_ref()).map_err(|e| e.into()),
         }
     }
 
     fn delete_account(&mut self, account_id: &model::AccountId) -> errors::Result<()> {
-        match self.tree.del(&account_key(account_id))? {
+        match self.db.del(&account_key(account_id))? {
             Some(_) => Ok(()),
             None => Err(errors::ErrorKind::NoSuchAccount(account_id.clone()).into()),
         }
@@ -74,7 +73,7 @@ impl Repository for SledRepository {
     fn list_accounts(&self) -> errors::Result<Vec<model::Account>> {
         let mut accounts = vec!();
 
-        for it in self.tree.scan(ACCOUNT_KEY_PREFIX) {
+        for it in self.db.scan(ACCOUNT_KEY_PREFIX) {
             if let Err(e) = it {
                 return Err(e.into());
             }
@@ -85,7 +84,7 @@ impl Repository for SledRepository {
                 break;
             }
 
-            let account = model::Account::decode(data)?;
+            let account = model::Account::decode(data.as_ref())?;
             accounts.push(account);
         }
 
@@ -109,21 +108,21 @@ impl Repository for SledRepository {
         buf.reserve(transaction.encoded_len());
         transaction.encode(&mut buf).unwrap();
 
-        self.tree.set(tx_key(&account_uuid, &transaction.uuid), buf)?;
+        self.db.set(tx_key(&account_uuid, &transaction.uuid), buf)?;
         Ok(())
     }
 
     fn get_transaction(&self, account_uuid: &model::AccountId, transaction_id: &model::TransactionId) -> errors::Result<model::Transaction> {
-        let buf = self.tree.get(&tx_key(&account_uuid, &transaction_id))?;
+        let buf = self.db.get(&tx_key(&account_uuid, &transaction_id))?;
         
         match buf {
             None => Err(errors::ErrorKind::NoSuchTransaction(transaction_id.clone()).into()),
-            Some(ref data) => model::Transaction::decode(data).map_err(|e| e.into()),
+            Some(ref data) => model::Transaction::decode(data.as_ref()).map_err(|e| e.into()),
         }
     }
 
     fn delete_transaction(&mut self, account_id: &model::AccountId, transaction_id: &model::TransactionId) -> errors::Result<()> {
-        match self.tree.del(&tx_key(account_id, transaction_id))? {
+        match self.db.del(&tx_key(account_id, transaction_id))? {
             Some(_) => Ok(()),
             None => Err(errors::ErrorKind::NoSuchTransaction(transaction_id.clone()).into()),
         }
