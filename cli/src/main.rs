@@ -310,7 +310,7 @@ fn run() -> Result<()> {
             let mut store = SledRepository::new(&opt.file)?;
 
             info!("Listening on {}", listen_address);
-            Server::new(store, &listen_address)?.wait();
+            Server::new(store, &listen_address)?.wait()?;
             Ok(())
         },
         Command::Clone{remote_address, account_id} => {
@@ -320,8 +320,8 @@ fn run() -> Result<()> {
 
             let http_address = "http://".to_owned() + &remote_address;
             let mut remote = Client::new(&http_address)?;
-
             sync::clone_remote(&mut store, &mut remote, &id)?;
+            remote.shutdown()?;
             Ok(())
         },
         Command::Sync{account_name, remote_address} => {
@@ -336,8 +336,8 @@ fn run() -> Result<()> {
             let account = account.unwrap();
             let http_address = "http://".to_owned() + &remote_address;
             let mut remote = Client::new(&http_address)?;
-
             sync::sync(&mut store, &mut remote, &account.uuid)?;
+            remote.shutdown()?;
 
             Ok(())
         },
@@ -371,8 +371,9 @@ fn run() -> Result<()> {
 
             let http_address = "http://".to_owned() + &remote_address;
             let mut remote = Client::new(&http_address)?;
-
-            remote.create_account(&account).map_err(|e| e.into())
+            remote.create_account(&account)?;
+            remote.shutdown()?;
+            Ok(())
         },
     }
 }

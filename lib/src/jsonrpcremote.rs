@@ -4,11 +4,11 @@ use std::ops::{Deref, DerefMut};
 use std::time::{Duration, Instant};
 use std::sync::RwLock;
 
-use jsonrpc_client_http;
 use jsonrpc_core;
 use jsonrpc_core::futures::Future;
 use jsonrpc_core::futures::future::Either;
-use jsonrpc_http_server;
+use jsonrpc_ws_client;
+use jsonrpc_ws_server;
 
 use uuid::Uuid;
 
@@ -17,72 +17,69 @@ use super::model;
 use super::remote::Remote;
 use super::repository::{Repository, receive_transactions, get_child_transactions};
 
-mod client {
-    use super::super::model;
+mod rpc {
+    use jsonrpc_core::Result;
+    use jsonrpc_derive::rpc;
+    use super::model;
 
-    jsonrpc_client!(pub struct Rpc {
-        pub fn create_account(&mut self, account: &model::Account) -> RpcRequest<()>;
-        pub fn get_account_info(&mut self, account_id: &model::AccountId) -> RpcRequest<model::Account>;
-        pub fn get_latest_transaction(&mut self, account_id: &model::AccountId) -> RpcRequest<model::TransactionId>;
-        pub fn receive_transactions(&mut self, account_id: &model::AccountId, transactions: &[&model::Transaction]) -> RpcRequest<()>;
-        pub fn get_child_transactions(&mut self, account_id: &model::AccountId, base: &model::TransactionId) -> RpcRequest<Vec<model::Transaction>>;
-    });
+    #[rpc]
+    pub trait Api {
+        #[rpc(name="create_account")]
+        fn create_account(&self, account: model::Account) -> Result<()>;
+        #[rpc(name="get_account_info")]
+        fn get_account_info(&self, account: model::AccountId) -> Result<model::Account>;
+        #[rpc(name="get_latest_transaction")]
+        fn get_latest_transaction(&self, account: model::AccountId) -> Result<model::TransactionId>;
+        #[rpc(name="receive_transactions")]
+        fn receive_transactions(&self, account: model::AccountId, transactions: Vec<model::Transaction>) -> Result<()>;
+        #[rpc(name="get_child_transactions")]
+        fn get_child_transactions(&self, account: model::AccountId, transaction: model::TransactionId) -> Result<Vec<model::Transaction>>;
+    }
 }
 
 pub struct Client {
-    client: RefCell<client::Rpc<jsonrpc_client_http::HttpHandle>>,
+    runtime: tokio::runtime::Runtime,
+    client: RefCell<self::rpc::gen_client::Client>,
 }
 
 impl Client {
     pub fn new(uri: &str) -> errors::Result<Client> {
-        let transport = jsonrpc_client_http::HttpTransport::new().standalone()?;
-        let handle = transport.handle(uri)?;
+        let mut runtime = tokio::runtime::Runtime::new()?;
+        let client = runtime.block_on(jsonrpc_ws_client::connect::<self::rpc::gen_client::Client>(uri)?)?;
 
         Ok(Client {
-            client: RefCell::new(client::Rpc::new(handle)),
+            runtime: runtime,
+            client: RefCell::new(client),
         })
     }
 }
 
 impl Remote for Client {
     fn create_account(&mut self, account: &model::Account) -> errors::Result<()> {
-        self.client.borrow_mut().create_account(account).call().map_err(|e| e.into())
+        self.client.borrow_mut().create_account(account.clone()).wait().map_err(|e| e.into())
     }
 
     fn get_account_info(&self, account_id: &model::AccountId) -> errors::Result<model::Account> {
-        self.client.borrow_mut().get_account_info(account_id).call().map_err(|e| e.into())
+        self.client.borrow_mut().get_account_info(account_id.clone()).wait().map_err(|e| e.into())
     }
 
     fn get_latest_transaction(&self, account_id: &model::AccountId) -> errors::Result<model::TransactionId> {
-        self.client.borrow_mut().get_latest_transaction(account_id).call().map_err(|e| e.into())
+        self.client.borrow_mut().get_latest_transaction(account_id.clone()).wait().map_err(|e| e.into())
     }
 
     fn receive_transactions(&mut self, account_id: &model::AccountId, transactions: &[&model::Transaction]) -> errors::Result<()> {
-        self.client.borrow_mut().receive_transactions(account_id, transactions).call().map_err(|e| e.into())
+        let owned_transactions: Vec<model::Transaction> = transactions.into_iter().map(|&t| t.clone()).collect();
+        self.client.borrow_mut().receive_transactions(account_id.clone(), owned_transactions).wait().map_err(|e| e.into())
     }
 
     fn get_child_transactions(&self, account_id: &model::AccountId, base: &model::TransactionId) -> errors::Result<Vec<model::Transaction>> {
-        self.client.borrow_mut().get_child_transactions(account_id, base).call().map_err(|e| e.into())
+        self.client.borrow_mut().get_child_transactions(account_id.clone(), base.clone()).wait().map_err(|e| e.into())
     }
 }
 
-mod server {
-    use super::super::model::*;
-    use jsonrpc_core::Result;
-    use jsonrpc_derive::rpc;
-
-    #[rpc]
-    pub trait Rpc {
-        #[rpc(name="create_account")]
-        fn create_account(&self, Account) -> Result<()>;
-        #[rpc(name="get_account_info")]
-        fn get_account_info(&self, AccountId) -> Result<Account>;
-        #[rpc(name="get_latest_transaction")]
-        fn get_latest_transaction(&self, AccountId) -> Result<TransactionId>;
-        #[rpc(name="receive_transactions")]
-        fn receive_transactions(&self, AccountId, Vec<Transaction>) -> Result<()>;
-        #[rpc(name="get_child_transactions")]
-        fn get_child_transactions(&self, AccountId, TransactionId) -> Result<Vec<Transaction>>;
+impl Client {
+    pub fn shutdown(self) -> errors::Result<()> {
+        self.runtime.shutdown_now().wait().map_err(|_| errors::ErrorKind::GenericError("Error while shutting down client".to_owned()).into())
     }
 }
 
@@ -120,7 +117,7 @@ fn validate_account(account: &model::Account) -> Result<(), String> {
     Ok(())
 }
 
-impl<T: Repository + Send + Sync + 'static> server::Rpc for ServerRpcImpl<T> {
+impl<T: Repository + Send + Sync + 'static> rpc::Api for ServerRpcImpl<T> {
     fn create_account(&self, account: model::Account) -> jsonrpc_core::Result<()> {
         validate_account(&account).map_err(|e| {
             let mut err = jsonrpc_core::Error::invalid_request();
@@ -250,27 +247,26 @@ impl jsonrpc_core::Middleware<RequestMeta> for LoggingMiddleware {
 }
 
 pub struct Server {
-    server: jsonrpc_http_server::Server,
+    server: jsonrpc_ws_server::Server,
 }
 
 impl Server {
     pub fn new<T: Repository + Send + Sync + 'static>(repo: T, listen_address: &str) -> errors::Result<Server> {
-        use self::server::*;
+        use self::rpc::*;
 
         let rpc_impl = ServerRpcImpl{repo: RwLock::new(repo)};
         let mut io = jsonrpc_core::MetaIoHandler::with_middleware(LoggingMiddleware::default());
         io.extend_with(rpc_impl.to_delegate());
 
         let addr: SocketAddr = listen_address.parse()?;
-        let server = jsonrpc_http_server::ServerBuilder::new(io)
-            .threads(3)
-            .start_http(&addr)?;
+        let server = jsonrpc_ws_server::ServerBuilder::new(io)
+            .start(&addr)?;
 
         Ok(Server{server})
     }
 
-    pub fn wait(self) {
-        self.server.wait();
+    pub fn wait(self) -> errors::Result<()> {
+        self.server.wait().map_err(|e| e.into())
     }
 
     pub fn close(self) {

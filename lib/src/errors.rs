@@ -1,9 +1,9 @@
 use std::io;
 use std::net::AddrParseError;
 
-use jsonrpc_client_core;
-use jsonrpc_client_http;
 use jsonrpc_core;
+use jsonrpc_ws_client;
+use jsonrpc_ws_server;
 use prost;
 
 use super::model;
@@ -43,11 +43,21 @@ error_chain! {
             description("Invalid IP address"),
             display("Invalid IP address: {}", t)
         }
-    }
 
-    links {
-        JsonRpcCore(jsonrpc_client_core::Error, jsonrpc_client_core::ErrorKind);
-        JsonRpcHttp(jsonrpc_client_http::Error, jsonrpc_client_http::ErrorKind);
+        WebsocketClientError(t: String) {
+            description("Websocket client error"),
+            display("Error in the websocket client: {}", t)
+        }
+
+        WebsocketServerError(t: String) {
+            description("Websocket server error"),
+            display("Error in the websocket server: {}", t)
+        }
+
+        GenericError(t: String) {
+            description("Generic error"),
+            display("Generic error: {}", t)
+        }
     }
 }
 
@@ -66,6 +76,24 @@ impl From<prost::DecodeError> for Error {
 impl From<AddrParseError> for Error {
     fn from(err: AddrParseError) -> Self {
         ErrorKind::InvalidIpAddress(format!("{}", err)).into()
+    }
+}
+
+impl From<jsonrpc_ws_client::RpcError> for Error {
+    fn from(err: jsonrpc_ws_client::RpcError) -> Self {
+        ErrorKind::WebsocketClientError(format!("{}", err)).into()
+    }
+}
+
+impl From<jsonrpc_ws_server::Error> for Error {
+    fn from(err: jsonrpc_ws_server::Error) -> Self {
+        ErrorKind::WebsocketServerError(format!("{}", err)).into()
+    }
+}
+
+impl From<failure::Error> for Error {
+    fn from(err: failure::Error) -> Self {
+        ErrorKind::GenericError(format!("{}", err)).into()
     }
 }
 

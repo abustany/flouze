@@ -1,13 +1,12 @@
 extern crate bytes;
 #[macro_use]
 extern crate error_chain;
+extern crate failure;
 extern crate hex;
-#[macro_use]
-extern crate jsonrpc_client_core;
-extern crate jsonrpc_client_http;
 extern crate jsonrpc_core;
 extern crate jsonrpc_derive;
-extern crate jsonrpc_http_server;
+extern crate jsonrpc_ws_client;
+extern crate jsonrpc_ws_server;
 #[macro_use]
 extern crate log;
 extern crate prost;
