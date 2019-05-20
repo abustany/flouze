@@ -318,7 +318,11 @@ fn run() -> Result<()> {
 
             let id = Uuid::parse_str(&account_id)?.as_bytes().to_vec();
 
-            let http_address = "http://".to_owned() + &remote_address;
+            let http_address = if remote_address.starts_with("http") {
+                remote_address.to_owned()
+            } else {
+                "http://".to_owned() + &remote_address
+            };
             let mut remote = Client::new(&http_address)?;
             sync::clone_remote(&mut store, &mut remote, &id)?;
             remote.shutdown()?;
