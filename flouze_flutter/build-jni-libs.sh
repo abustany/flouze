@@ -5,7 +5,7 @@ set -e
 cd $(dirname $0)
 
 if [ -z "$RUST_RELEASE" ]; then
-  RUST_RELEASE="nightly"
+  RUST_RELEASE="stable"
 fi
 
 CARGO_ARGS=
