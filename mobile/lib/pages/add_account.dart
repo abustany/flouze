@@ -18,11 +18,6 @@ class AddAccountPageState extends State<AddAccountPage> {
   String _accountName = '';
   List<String> _members = [];
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
   void _onSave() {
     final FormState state = _formKey.currentState;
 
@@ -110,12 +105,8 @@ class AddAccountPageState extends State<AddAccountPage> {
                           key: Key('input-account-name'),
                           autofocus: true,
                           textCapitalization: TextCapitalization.sentences,
-                          validator: (value) {
-                            if (value.isEmpty) {
-                              return 'Account name cannot be empty';
-                            }
-                          },
                           onSaved: (name) => _accountName = name,
+                          validator: (value) => value.isEmpty ? "Account name cannot be empty" : null,
                         ),
 
                         Container(
