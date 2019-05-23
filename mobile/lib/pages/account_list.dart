@@ -1,13 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'package:flouze_flutter/flouze_flutter.dart' as Flouze;
 
 import 'package:flouze/pages/add_account.dart';
 import 'package:flouze/pages/account.dart';
-import 'package:flouze/utils/services.dart';
+import 'package:flouze/blocs/account_list.dart';
 
 class AccountListPage extends StatefulWidget {
   AccountListPage({Key key}) : super(key: key);
@@ -18,66 +17,17 @@ class AccountListPage extends StatefulWidget {
 
 class AccountListPageState extends State<AccountListPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  List<Flouze.Account> _accounts;
-  StreamSubscription<String> _accountEvents;
+  AccountListBloc _bloc;
+  StreamSubscription _notificationsSub;
 
-  AccountListPageState();
-
-  Future<void> loadAccounts() async {
-    try {
-      print('Listing accounts');
-      final repository = await getRepository();
-      List<Flouze.Account> accounts = await repository.listAccounts();
-
-      if (mounted) {
-        setState(() {
-          _accounts = accounts ?? [];
-        });
-      }
-    } on PlatformException catch (e) {
-      print('Error while listing accounts: ${e.message}');
-    }
-  }
-
-  void _addAccount() async {
-    if (_accounts == null) {
-      // Wait until accounts are loaded
-      return;
-    }
-
+  void _saveAccount() async {
     final Flouze.Account account = await Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => new AddAccountPage())
     );
 
-    if (account == null || !mounted) {
+    if (account != null) {
+      _bloc.saveAccount(account);
       return;
-    }
-
-    setState(() {
-      _accounts.add(account);
-    });
-
-    final ScaffoldState scaffoldState = _scaffoldKey.currentState;
-
-    try {
-      final repository = await getRepository();
-      await repository.addAccount(account);
-
-      scaffoldState.showSnackBar(
-          SnackBar(content: Text('Account saved'))
-      );
-    } on PlatformException catch (e) {
-      print('Error while saving account: ${e.message}');
-
-      if (mounted) {
-        setState(() {
-          _accounts.remove(account);
-        });
-
-        scaffoldState.showSnackBar(
-            SnackBar(content: Text('Error while saving account'))
-        );
-      }
     }
   }
 
@@ -89,49 +39,26 @@ class AccountListPageState extends State<AccountListPage> {
 
   @override
   void initState() {
-    super.initState();
-
-    _accountEvents = Flouze.Events.stream().listen((event) {
-      switch (event) {
-        case Flouze.Events.ACCOUNT_LIST_CHANGED:
-          loadAccounts();
-          break;
-        default:
-          return;
-      }
+    _bloc = AccountListBloc();
+    _bloc.loadAccounts();
+    _notificationsSub = _bloc.notifications.listen((notification) {
+      _scaffoldKey.currentState.showSnackBar(
+          SnackBar(content: Text(notification))
+      );
     });
 
-    loadAccounts();
+    super.initState();
   }
 
   @override
   void dispose() {
-    _accountEvents.cancel();
-
+    _notificationsSub.cancel();
+    _bloc.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    int i = -1;
-    final List<Widget> accountWidgets = (_accounts ?? []).map((account) {
-      i++;
-      return ListTile(
-        key: Key("account-$i"),
-        title: Text(account.label),
-        onTap: () {
-          _openAccount(account);
-        },
-      );
-    }).toList();
-
-    final Widget accountList = (_accounts == null) ?
-    CircularProgressIndicator(key: Key('account-list-loading')) :
-    ListView(
-      shrinkWrap: true,
-      children: accountWidgets,
-    );
-
     return new Scaffold(
       key: _scaffoldKey,
       appBar: new AppBar(
@@ -148,15 +75,51 @@ class AccountListPageState extends State<AccountListPage> {
             ),
           ),
           Expanded(
-            child: accountList,
+            child: StreamBuilder<AccountListState>(
+              stream: _bloc.accounts,
+              initialData: AccountListLoadingState(),
+              builder: (context, snapshot) {
+                if (snapshot.data is AccountListLoadingState) {
+                  return _buildLoading();
+                }
+
+                if (snapshot.data is AccountListLoadedState) {
+                  return _buildLoaded(snapshot.data);
+                }
+
+                if (snapshot.data is AccountListErrorState) {
+                  return _buildError(snapshot.data);
+                }
+              }
+            )
           )
         ]
       ),
       floatingActionButton: new FloatingActionButton(
-        onPressed: _addAccount,
+        onPressed: _saveAccount,
         tooltip: 'Add a new account',
         child: new Icon(Icons.add),
       ),
     );
   }
+
+  Widget _buildLoading() => CircularProgressIndicator(key: Key('account-list-loading'));
+
+  Widget _buildLoaded(AccountListLoadedState state) =>
+      ListView(
+        shrinkWrap: true,
+        children: state.accounts.asMap().map((idx, account) =>
+            MapEntry(
+                idx,
+                ListTile(
+                    key: Key("account-$idx"),
+                    title: Text(account.label),
+                    onTap: () {
+                      _openAccount(account);
+                    })
+            )
+        ).values.toList(),
+      );
+
+  Widget _buildError(AccountListErrorState state) => Text(state.error);
 }
