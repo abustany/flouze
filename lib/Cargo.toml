@@ -13,7 +13,6 @@ jsonrpc-derive = { git = "https://github.com/paritytech/jsonrpc", rev = "ff4e20e
 jsonrpc-http-server = { git = "https://github.com/paritytech/jsonrpc", rev = "ff4e20ecce6321835aab7a81cbb6fa2458a6082d" }
 log = "^0.4"
 prost = "^0.5"
-#prost-derive = "^0.5"
 serde = "^1.0.0"
 serde_derive = "^1.0.0"
 uuid = {version = "0.7", features = ["v4"]}
