@@ -103,7 +103,7 @@ class AccountListPageState extends State<AccountListPage> {
     );
   }
 
-  Widget _buildLoading() => CircularProgressIndicator(key: Key('account-list-loading'));
+  Widget _buildLoading() => Center(child: CircularProgressIndicator(key: Key('account-list-loading')));
 
   Widget _buildLoaded(AccountListLoadedState state) {
     if (state.accounts.isEmpty) {
