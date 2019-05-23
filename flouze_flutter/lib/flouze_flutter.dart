@@ -30,15 +30,25 @@ class SledRepository {
   SledRepository._(this._ptr);
 
   static Future<SledRepository> temporary() async {
-    return SledRepository._(await _channel.invokeMethod('SledRepository::temporary'));
+    return SledRepository._(
+        await _channel.invokeMethod('SledRepository::temporary'));
   }
 
   static Future<SledRepository> fromFile(String path) async {
-    return SledRepository._(await _channel.invokeMethod('SledRepository::fromFile', path));
+    final Map<String, dynamic> params = {
+      'path': path,
+    };
+
+    return SledRepository._(
+        await _channel.invokeMethod('SledRepository::fromFile', params));
   }
 
   Future<void> close() async {
-    await _channel.invokeMethod('SledRepository::close', _ptr);
+    final Map<String, dynamic> params = {
+      'ptr': _ptr,
+    };
+
+    await _channel.invokeMethod('SledRepository::close', params);
   }
 
   Future<void> addAccount(Account account) async {
@@ -51,9 +61,13 @@ class SledRepository {
   }
 
   Future<List<Account>> listAccounts() async {
-    return _channel.invokeMethod('SledRepository::listAccounts', _ptr).then((bytes) =>
-      AccountList.fromBuffer(bytes).accounts
-    );
+    final Map<String, dynamic> params = {
+      'ptr': _ptr,
+    };
+
+    return _channel
+        .invokeMethod('SledRepository::listAccounts', params)
+        .then((bytes) => AccountList.fromBuffer(bytes).accounts);
   }
 
   Future<List<Transaction>> listTransactions(List<int> accountId) async {
@@ -62,12 +76,13 @@ class SledRepository {
       'accountId': Uint8List.fromList(accountId),
     };
 
-    return _channel.invokeMethod('SledRepository::listTransactions', params).then((bytes) =>
-      TransactionList.fromBuffer(bytes).transactions
-    );
+    return _channel
+        .invokeMethod('SledRepository::listTransactions', params)
+        .then((bytes) => TransactionList.fromBuffer(bytes).transactions);
   }
 
-  Future<void> addTransaction(List<int> accountId, Transaction transaction) async {
+  Future<void> addTransaction(
+      List<int> accountId, Transaction transaction) async {
     final Map<String, dynamic> params = {
       'ptr': _ptr,
       'accountId': Uint8List.fromList(accountId),
@@ -83,9 +98,10 @@ class SledRepository {
       'accountId': Uint8List.fromList(accountId),
     };
 
-    return _channel.invokeMethod('Repository::getBalance', params).then((bytes) =>
-      Map.fromEntries(Balance.fromBuffer(bytes).entries.map((entry) => MapEntry(entry.person, entry.balance.toInt())))
-    );
+    return _channel.invokeMethod('Repository::getBalance', params).then(
+        (bytes) => Map.fromEntries(Balance.fromBuffer(bytes)
+            .entries
+            .map((entry) => MapEntry(entry.person, entry.balance.toInt()))));
   }
 }
 
@@ -95,7 +111,14 @@ class JsonRpcClient {
   JsonRpcClient._(this._ptr);
 
   static Future<JsonRpcClient> create(String url) async {
-    return JsonRpcClient._(await _channel.invokeMethod('JsonRpcClient::create', url));
+    final Map<String, dynamic> params = {
+      'url': url,
+    };
+
+    print('Creating API client with URL "$url"');
+
+    return JsonRpcClient._(
+        await _channel.invokeMethod('JsonRpcClient::create', params));
   }
 
   Future<void> createAccount(Account account) async {
@@ -113,14 +136,15 @@ class JsonRpcClient {
       'accountId': Uint8List.fromList(accountId),
     };
 
-    return _channel.invokeMethod('JsonRpcClient::getAccountInfo', params).then((bytes) =>
-      Account.fromBuffer(bytes)
-    );
+    return _channel
+        .invokeMethod('JsonRpcClient::getAccountInfo', params)
+        .then((bytes) => Account.fromBuffer(bytes));
   }
 }
 
 class Sync {
-  static Future<void> cloneRemote(SledRepository repository, JsonRpcClient client, List<int> accountId) async {
+  static Future<void> cloneRemote(SledRepository repository,
+      JsonRpcClient client, List<int> accountId) async {
     final Map<String, dynamic> params = {
       'repoPtr': repository._ptr,
       'remotePtr': client._ptr,
@@ -130,7 +154,8 @@ class Sync {
     await _channel.invokeMethod('Sync::cloneRemote', params);
   }
 
-  static Future<void> sync(SledRepository repository, JsonRpcClient client, List<int> accountId) async {
+  static Future<void> sync(SledRepository repository, JsonRpcClient client,
+      List<int> accountId) async {
     final Map<String, dynamic> params = {
       'repoPtr': repository._ptr,
       'remotePtr': client._ptr,
