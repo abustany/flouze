@@ -7,12 +7,10 @@ authors = ["Adrien Bustany <adrien@bustany.org>"]
 bytes = "0.4"
 failure = "^0.1.5"
 hex = "^0.3.0"
-jsonrpc-core = "^11.0.0"
-jsonrpc-core-client = "^11.0.0"
-jsonrpc-derive = "^11.0.0"
-jsonrpc-macros = "^10.1.0"
-jsonrpc-ws-client = "^11.0.0"
-jsonrpc-ws-server = "^11.0.0"
+jsonrpc-core = { git = "https://github.com/paritytech/jsonrpc", rev = "ff4e20ecce6321835aab7a81cbb6fa2458a6082d" }
+jsonrpc-core-client = { git = "https://github.com/paritytech/jsonrpc", rev = "ff4e20ecce6321835aab7a81cbb6fa2458a6082d", features = ["tls"] }
+jsonrpc-derive = { git = "https://github.com/paritytech/jsonrpc", rev = "ff4e20ecce6321835aab7a81cbb6fa2458a6082d" }
+jsonrpc-http-server = { git = "https://github.com/paritytech/jsonrpc", rev = "ff4e20ecce6321835aab7a81cbb6fa2458a6082d" }
 log = "^0.4"
 prost = "^0.5"
 #prost-derive = "^0.5"

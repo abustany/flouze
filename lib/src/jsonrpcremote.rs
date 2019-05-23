@@ -7,8 +7,8 @@ use std::sync::RwLock;
 use jsonrpc_core;
 use jsonrpc_core::futures::Future;
 use jsonrpc_core::futures::future::Either;
-use jsonrpc_ws_client;
-use jsonrpc_ws_server;
+use jsonrpc_core_client;
+use jsonrpc_http_server;
 
 use uuid::Uuid;
 
@@ -45,7 +45,7 @@ pub struct Client {
 impl Client {
     pub fn new(uri: &str) -> errors::Result<Client> {
         let mut runtime = tokio::runtime::Runtime::new()?;
-        let client = runtime.block_on(jsonrpc_ws_client::connect::<self::rpc::gen_client::Client>(uri)?)?;
+        let client = runtime.block_on(jsonrpc_core_client::transports::http::http::<self::rpc::gen_client::Client>(uri))?;
 
         Ok(Client {
             runtime: runtime,
@@ -247,7 +247,7 @@ impl jsonrpc_core::Middleware<RequestMeta> for LoggingMiddleware {
 }
 
 pub struct Server {
-    server: jsonrpc_ws_server::Server,
+    server: jsonrpc_http_server::Server,
 }
 
 impl Server {
@@ -259,14 +259,14 @@ impl Server {
         io.extend_with(rpc_impl.to_delegate());
 
         let addr: SocketAddr = listen_address.parse()?;
-        let server = jsonrpc_ws_server::ServerBuilder::new(io)
-            .start(&addr)?;
+        let server = jsonrpc_http_server::ServerBuilder::new(io).start_http(&addr)?;
 
         Ok(Server{server})
     }
 
     pub fn wait(self) -> errors::Result<()> {
-        self.server.wait().map_err(|e| e.into())
+        self.server.wait();
+        Ok(())
     }
 
     pub fn close(self) {

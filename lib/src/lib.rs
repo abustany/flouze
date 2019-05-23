@@ -4,9 +4,9 @@ extern crate error_chain;
 extern crate failure;
 extern crate hex;
 extern crate jsonrpc_core;
+extern crate jsonrpc_core_client;
 extern crate jsonrpc_derive;
-extern crate jsonrpc_ws_client;
-extern crate jsonrpc_ws_server;
+extern crate jsonrpc_http_server;
 #[macro_use]
 extern crate log;
 extern crate prost;
