@@ -6,7 +6,7 @@ Uuid _uuid = new Uuid();
 
 List<int> generateUuid() {
   List<int> res = List.filled(16, 0);
-  _uuid.v4(buffer: res);
+  _uuid.v4buffer(res);
   return res;
 }
 
