@@ -105,8 +105,11 @@ class AccountListPageState extends State<AccountListPage> {
 
   Widget _buildLoading() => CircularProgressIndicator(key: Key('account-list-loading'));
 
-  Widget _buildLoaded(AccountListLoadedState state) =>
-      ListView(
+  Widget _buildLoaded(AccountListLoadedState state) {
+    if (state.accounts.isEmpty) {
+      return Center(child: Text("Get started by creating a new account"));
+    } else {
+      return ListView(
         shrinkWrap: true,
         children: state.accounts.asMap().map((idx, account) =>
             MapEntry(
@@ -120,6 +123,8 @@ class AccountListPageState extends State<AccountListPage> {
             )
         ).values.toList(),
       );
+    }
+  }
 
   Widget _buildError(AccountListErrorState state) => Text(state.error);
 }
