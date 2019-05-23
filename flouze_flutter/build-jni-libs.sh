@@ -9,6 +9,7 @@ if [ -z "$RUST_RELEASE" ]; then
 fi
 
 CARGO_ARGS=
+MY_DIR=$(pwd)
 LIB_DIR=debug
 
 if [ "$1" == "--release" ]; then
@@ -26,6 +27,14 @@ build() {
 	tool_prefix=$(grep '^ar' ~/.cargo/config | grep $arch | awk '{print $3}' | sed -e 's,",,g' -e 's,-ar$,,')
 	export CC="$tool_prefix-clang"
 	export AR="$tool_prefix-ar"
+	export OPENSSL_DIR="$MY_DIR/openssl/install-openssl-$arch"
+	export OPENSSL_STATIC=1
+
+	if [ ! -d "$OPENSSL_DIR" ]; then
+		echo "OpenSSL wasn't built for this architecture, run build-openssl.sh first"
+		exit 1
+	fi
+
 	cargo +$RUST_RELEASE build --target $target $CARGO_ARGS
 
 	mkdir -p android/src/main/jniLibs/$jni_dir
