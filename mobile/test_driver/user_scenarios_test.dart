@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_driver/flutter_driver.dart';
+
+import 'package:flouze_flutter/flouze.pb.dart' as Flouze;
 
 import 'package:test/test.dart';
 
@@ -14,16 +18,96 @@ class TxDescription {
   TxDescription(this.label, this.amount);
 }
 
+final flouzeCli = File("${Directory.current.path}/../target/debug/flouze-cli").absolute;
+final flouzeDbName = 'user_scenarios_test.flouze';
+final testServerPort = 3142;
+
+Process flouzeServer;
+
+Future<void> enableReversePortForwarding() {
+  disableReversePortForwarding(); // just to be sure
+
+  return Process.run('adb', ['reverse', 'tcp:$testServerPort', 'tcp:$testServerPort'])
+    .then((result) {
+      if (result.exitCode != 0) {
+        throw 'Cannot set up reverse port forwarding: ${result.stderr}';
+      }
+    });
+}
+
+Future<void> disableReversePortForwarding() {
+  return Process.run('adb', ['reverse', '--remove', 'tcp:$testServerPort']);
+}
+
+Future<void> startFlouzeServer() async {
+  if (flouzeServer != null) {
+    await stopFlouzeServer();
+  }
+
+  if (!await flouzeCli.exists()) {
+    throw "flouze-cli not found in ${flouzeCli.path}";
+  }
+
+  Directory(flouzeDbName).delete(recursive: true);
+
+  flouzeServer = await Process.start(flouzeCli.path, [flouzeDbName, 'serve', '127.0.0.1:$testServerPort']);
+
+  print("Started test server on port $testServerPort");
+}
+
+Future<void> stopFlouzeServer() async {
+  if (flouzeServer == null) {
+    return;
+  }
+
+  flouzeServer.kill();
+  print('Killed test server');
+}
+
+Future<void> pressBackButton() {
+  return Process.run('adb', ['shell', 'input', 'keyevent', 'KEYCODE_BACK']);
+}
+
+Future<List<Flouze.Account>> listServerAccounts() {
+  return Process.run(flouzeCli.path, [flouzeDbName, 'list-accounts', '--json'])
+    .then((result) {
+      if (result.exitCode != 0) {
+        throw 'Flouze exited with code ${result.exitCode} (stderr: ${result.stderr as String})';
+      }
+
+      return (result.stdout as String).trim().split('\n')
+        .map((j) {
+          final decoded = json.decode(j);
+          return Flouze.Account.create()
+            ..uuid = decoded['uuid'].cast<int>()
+            ..label = decoded['label']
+            ..latestTransaction = decoded['latest_transaction'].cast<int>()
+            ..latestSynchronizedTransaction = decoded['latest_synchronized_transaction'].cast<int>()
+            ..members.addAll((decoded['members'] as List<dynamic>).map((p) =>
+                Flouze.Person.create()
+                  ..uuid = p['uuid'].cast<int>()
+                  ..name = p['name']
+            ));
+        }).toList();
+    });
+}
+
 void main() {
   group('user scenarios', () {
     FlutterDriver driver;
 
     setUpAll(() async {
+      await startFlouzeServer();
+      await enableReversePortForwarding();
+
       // Connects to the app
       driver = await FlutterDriver.connect();
     });
 
     tearDownAll(() async {
+      await stopFlouzeServer();
+      await disableReversePortForwarding();
+
       if (driver != null) {
         // Closes the connection
         driver.close();
@@ -174,6 +258,29 @@ void main() {
 
       await checkTransactionsMatch();
       await checkBalance();
+    });
+
+    test('share the account', () async {
+      // The sync button shouldn't be shown if the account hasn't been uploaded
+      // already.
+      await driver.waitForAbsent(find.byValueKey('action-sync-account'));
+      await driver.tap(find.byValueKey('action-share-account'));
+
+      // Cancel the share dialog
+      await pressBackButton();
+
+      // The sync button should now be visible
+      await driver.waitFor(find.byValueKey('action-sync-account'));
+
+      // The database we use for now (sled) doesn't support concurrent processes
+      // accessing it, so stop the server first.
+      await stopFlouzeServer();
+
+      final accounts = await listServerAccounts();
+      expect(accounts.length, 1);
+
+      final Flouze.Account account = accounts.first;
+      expect(account.members.map((p) => p.name).toList()..sort(), ['Bob', 'John']);
     });
   });
 }
