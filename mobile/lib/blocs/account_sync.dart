@@ -50,13 +50,22 @@ class AccountSyncBloc {
       return;
     }
 
-    _syncController.add(AccountSyncSynchronizingState(config));
+    Future<AccountConfig> accountConfigFuture;
 
-    _upload(account, config)
-      .then((newConfig) {
-        _syncController.add(AccountSyncLoadedState(newConfig));
-        return shareAccountUri(account.uuid);
-      })
+    if (config.synchronized) {
+      accountConfigFuture = Future.value(config);
+    } else {
+      _syncController.add(AccountSyncSynchronizingState(config));
+
+      accountConfigFuture = _upload(account, config)
+          .then((newConfig) {
+            _syncController.add(AccountSyncLoadedState(newConfig));
+            return newConfig;
+          });
+    }
+
+    accountConfigFuture
+      .then((config) => shareAccountUri(account.uuid))
       .then((uri) {
         Share.share('Get the Flouze app and share the account "${account.label}" with me!'
             '\n\n$uri');
