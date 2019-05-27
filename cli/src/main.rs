@@ -4,6 +4,7 @@ extern crate error_chain;
 extern crate log;
 extern crate env_logger;
 extern crate rand;
+extern crate serde_json;
 extern crate structopt;
 extern crate structopt_derive;
 extern crate uuid;
@@ -37,12 +38,23 @@ mod errors {
                 description("Invalid UUID"),
                 display("Invalid UUID: {}", t)
             }
+
+            JsonError(t: String) {
+                description("Error while encoding/decoding JSON"),
+                display("{}", t)
+            }
         }
     }
 
     impl From<::uuid::parser::ParseError> for Error {
         fn from(err: ::uuid::parser::ParseError) -> Self {
             ErrorKind::InvalidUuid(format!("{}", err)).into()
+        }
+    }
+
+    impl From<::serde_json::Error> for Error {
+        fn from(err: ::serde_json::Error) -> Self {
+            ErrorKind::JsonError(format!("{}", err)).into()
         }
     }
 }
@@ -64,7 +76,11 @@ enum Command {
     },
     #[structopt(name="list-accounts")]
     /// List all accounts in the file
-    ListAccounts,
+    ListAccounts {
+        /// Output accounts as JSON, one per line
+        #[structopt(long="json")]
+        json: bool,
+    },
     #[structopt(name="delete-account")]
     /// Delete an existing account and all its transactions
     DeleteAccount {
@@ -204,12 +220,16 @@ fn run() -> Result<()> {
 
             store.add_account(&account).map_err(|e| e.into())
         },
-        Command::ListAccounts => {
+        Command::ListAccounts{json} => {
             let mut store = SledRepository::new(&opt.file)?;
 
             for account in store.list_accounts()? {
-                let member_names = account.members.iter().map(|m| m.name.as_str()).collect::<Vec<&str>>().join(", ");
-                println!("{} (members: {}) - {}", &account.label, member_names, model::IdAsHex(&account.uuid));
+                if json {
+                    println!("{}", serde_json::to_string(&account)?);
+                } else {
+                    let member_names = account.members.iter().map(|m| m.name.as_str()).collect::<Vec<&str>>().join(", ");
+                    println!("{} (members: {}) - {}", &account.label, member_names, model::IdAsHex(&account.uuid));
+                }
             }
 
             Ok(())
