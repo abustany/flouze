@@ -227,6 +227,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
               () { _accountSyncBloc.synchronize(account); } : null
         ),
       IconButton(
+          key: Key('action-share-account'),
           icon: Icon(Icons.share),
           onPressed: (state is AccountSyncLoadedState) ?
               () { _accountSyncBloc.share(account); } : null,
