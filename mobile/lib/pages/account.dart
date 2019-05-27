@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flouze_flutter/flouze_flutter.dart';
 
 import 'package:flouze/blocs/account_sync.dart';
-import 'package:flouze/blocs/balance.dart';
 import 'package:flouze/blocs/transactions.dart';
 import 'package:flouze/pages/add_transaction.dart';
 import 'package:flouze/widgets/transaction_list.dart';
@@ -25,7 +24,6 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   AccountSyncBloc _accountSyncBloc;
   TransactionsBloc _transactionsBloc;
-  BalanceBloc _balanceBloc;
   StreamSubscription _notificationsSub;
   StreamSubscription _syncSubscription;
 
@@ -42,7 +40,6 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
   @override
   void initState() {
     _accountSyncBloc = AccountSyncBloc();
-    _balanceBloc = BalanceBloc(account.uuid);
     _transactionsBloc = TransactionsBloc(account);
     _notificationsSub = _transactionsBloc.transactions.listen((state) {
       if (state is TransactionsSaveErrorState) {
@@ -78,7 +75,6 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
         );
       }
     });
-    _balanceBloc.loadBalance();
     _transactionsBloc.loadTransactions();
     _tabController = TabController(length: _tabs.length, vsync: this);
     super.initState();
@@ -89,7 +85,6 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
     _notificationsSub.cancel();
     _syncSubscription.cancel();
     _accountSyncBloc.dispose();
-    _balanceBloc.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -169,19 +164,19 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
                     }
                   }
                 ),
-                StreamBuilder<BalanceState>(
-                  stream: _balanceBloc.balance,
-                  initialData: BalanceLoadingState(),
+                StreamBuilder<TransactionsState>(
+                  stream: _transactionsBloc.transactions,
+                  initialData: TransactionsLoadingState(),
                   builder: (context, snapshot) {
-                    if (snapshot.data is BalanceLoadingState) {
+                    if (snapshot.data is TransactionsLoadingState) {
                       return _buildReportsLoading();
                     }
 
-                    if (snapshot.data is BalanceLoadedState) {
+                    if (snapshot.data is TransactionsLoadedState) {
                       return _buildReportsLoaded(snapshot.data);
                     }
 
-                    if (snapshot.data is BalanceErrorState) {
+                    if (snapshot.data is TransactionsErrorState) {
                       return _buildReportsError(snapshot.data);
                     }
                   }
@@ -241,12 +236,12 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
 
   Widget _buildReportsLoading() => Center(child: CircularProgressIndicator(key: Key('reports-loading')));
 
-  Widget _buildReportsLoaded(BalanceLoadedState state) =>
+  Widget _buildReportsLoaded(TransactionsLoadedState state) =>
       Reports(
           key: Key('reports'),
           members: account.members,
           balance: state.balance,
       );
 
-  Widget _buildReportsError(BalanceErrorState state) => Center(child: Text(state.error));
+  Widget _buildReportsError(TransactionsErrorState state) => Center(child: Text(state.error));
 }

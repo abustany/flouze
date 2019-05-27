@@ -17,9 +17,11 @@ class TransactionsBloc {
   void loadTransactions() {
     _transactionsController.add(TransactionsLoadingState());
     _repository
-        .then((repo) => repo.listTransactions(_account.uuid))
-        .then((transactions) {
-          _transactionsController.add(TransactionsLoadedState(flattenHistory(transactions)));
+        .then((repo) => Future.wait([repo.listTransactions(_account.uuid), repo.getBalance(_account.uuid)]))
+        .then((ctx) {
+          final List<Flouze.Transaction> transactions = ctx[0];
+          final Map<List<int>, int> balance = ctx[1];
+          _transactionsController.add(TransactionsLoadedState(flattenHistory(transactions), balance));
         })
         .catchError((e) => _transactionsController.add(TransactionsLoadErrorState(e.toString())));
   }
@@ -27,14 +29,19 @@ class TransactionsBloc {
   void saveTransaction(Flouze.Transaction transaction) {
     transaction.parent = _account.latestTransaction;
 
+    if (_transactionsController.value is! TransactionsLoadedState) {
+      return;
+    }
+
+    final TransactionsLoadedState state = (_transactionsController.value as TransactionsLoadedState);
+
     final List<int> previousLatestTransaction = _account.latestTransaction;
-    final currentTransactions = (_transactionsController.value is TransactionsLoadedState) ?
-      (_transactionsController.value as TransactionsLoadedState).transactions : [];
     _account.latestTransaction = transaction.uuid;
 
-    _transactionsController.add(TransactionsLoadedState(flattenHistory([transaction, ...currentTransactions])));
+    _transactionsController.add(TransactionsLoadedState(flattenHistory([transaction, ...state.transactions]), state.balance));
     _repository
         .then((repo) { repo.addTransaction(_account.uuid, transaction); })
+        .then((_) => loadTransactions()) // reload the transactions to upload the balance too
         .catchError((e) {
           _account.latestTransaction = previousLatestTransaction;
           _transactionsController.add(TransactionsSaveErrorState(e.toString()));
@@ -54,16 +61,20 @@ class TransactionsState {}
 class TransactionsLoadingState extends TransactionsState {}
 
 class TransactionsLoadedState extends TransactionsState {
-  TransactionsLoadedState(this.transactions);
+  TransactionsLoadedState(this.transactions, this.balance);
   final List<Flouze.Transaction> transactions;
+  final Map<List<int>, int> balance;
 }
 
-class TransactionsLoadErrorState extends TransactionsState {
-  TransactionsLoadErrorState(this.error);
+class TransactionsErrorState extends TransactionsState {
+  TransactionsErrorState(this.error);
   final String error;
 }
 
-class TransactionsSaveErrorState extends TransactionsState {
-  TransactionsSaveErrorState(this.error);
-  final String error;
+class TransactionsLoadErrorState extends TransactionsErrorState {
+  TransactionsLoadErrorState(String error) : super(error);
+}
+
+class TransactionsSaveErrorState extends TransactionsErrorState {
+  TransactionsSaveErrorState(String error) : super(error);
 }
