@@ -63,16 +63,17 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
         _pickMember().then((uuid) => _accountSyncBloc.setMeUuid(account, uuid));
       }
 
-      if (state is AccountSyncSynchronizingState) {
-        wasSynchronizing = true;
-      }
 
       if (state is AccountSyncLoadedState && wasSynchronizing) {
-        wasSynchronizing = false;
-
         _scaffoldKey.currentState.showSnackBar(
             SnackBar(content: Text("Synchronized successfully!"))
         );
+      }
+
+      if (state is AccountSyncSynchronizingState) {
+        wasSynchronizing = true;
+      } else {
+        wasSynchronizing = false;
       }
     });
     _transactionsBloc.loadTransactions();
