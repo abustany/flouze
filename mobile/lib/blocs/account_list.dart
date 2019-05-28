@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:rxdart/rxdart.dart';
 
+import 'package:flouze/utils/account_config.dart';
+import 'package:flouze/utils/account_config_store.dart' as AccountConfigStore;
 import 'package:flouze/utils/services.dart' as Services;
 import 'package:flouze_flutter/flouze_flutter.dart' as Flouze;
 
@@ -39,12 +41,22 @@ class AccountListBloc {
       (_accountsController.value as AccountListLoadedState).accounts : [];
     _accountsController.add(AccountListLoadedState([...currentAccounts, account]));
 
-    _repository
-        .then((repo) => repo.addAccount(account))
-        .catchError((e) {
-          loadAccounts();
-          _notificationController.add("Error while adding account: ${e.toString()}");
-        });
+    final accountConfig = AccountConfig((b) =>
+        b
+          ..meUuid.addAll(account.members.first.uuid)
+          ..synchronized = false
+    );
+
+    // We save the account config first, if that fails the account itself will
+    // not be saved, and the user will try again. If account saving fails, we'll
+    // leave behind a stray account config, not a huge deal.
+    AccountConfigStore.saveAccountConfig(account.uuid, accountConfig)
+      .then((_) => _repository)
+      .then((repo) => repo.addAccount(account))
+      .catchError((e) {
+        loadAccounts();
+        _notificationController.add("Error while adding account: ${e.toString()}");
+      });
   }
 
   Stream<AccountListState> get accounts => _accountsController.stream;
