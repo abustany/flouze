@@ -68,6 +68,11 @@ Future<void> pressBackButton() {
   return Process.run('adb', ['shell', 'input', 'keyevent', 'KEYCODE_BACK']);
 }
 
+Flouze.Person parsePerson(dynamic p) =>
+  Flouze.Person.create()
+    ..uuid = p['uuid'].cast<int>()
+    ..name = p['name'];
+
 Future<List<Flouze.Account>> listServerAccounts() {
   return Process.run(flouzeCli.path, [flouzeDbName, 'list-accounts', '--json'])
     .then((result) {
@@ -83,12 +88,41 @@ Future<List<Flouze.Account>> listServerAccounts() {
             ..label = decoded['label']
             ..latestTransaction = decoded['latest_transaction'].cast<int>()
             ..latestSynchronizedTransaction = decoded['latest_synchronized_transaction'].cast<int>()
-            ..members.addAll((decoded['members'] as List<dynamic>).map((p) =>
-                Flouze.Person.create()
-                  ..uuid = p['uuid'].cast<int>()
-                  ..name = p['name']
-            ));
+            ..members.addAll((decoded['members'] as List<dynamic>).map(parsePerson));
         }).toList();
+    });
+}
+
+Future<List<Flouze.Transaction>> listServerTransactions(String accountName) {
+  return Process.run(flouzeCli.path, [flouzeDbName, 'list-transactions', accountName, '--json'])
+      .then((result) {
+    if (result.exitCode != 0) {
+      throw 'Flouze exited with code ${result.exitCode} (stderr: ${result.stderr as String})';
+    }
+
+    return (result.stdout as String).trim().split('\n')
+      .map((j) {
+        final decoded = json.decode(j);
+        return Flouze.Transaction.create()
+          ..uuid = decoded['uuid'].cast<int>()
+          ..parent = decoded['parent'].cast<int>()
+          ..amount = decoded['amount']
+          ..label = decoded['label']
+          ..deleted = decoded['deleted']
+          ..replaces = decoded['replaces'].cast<int>()
+          ..payedBy.addAll((decoded['payed_by'] as List<dynamic>).map((p) =>
+            Flouze.PayedBy.create()
+              ..person = p['person'].cast<int>()
+              ..amount = p['amount']
+            )
+          )
+          ..payedFor.addAll((decoded['payed_for'] as List<dynamic>).map((p) =>
+            Flouze.PayedFor.create()
+              ..person = p['person'].cast<int>()
+              ..amount = p['amount']
+            )
+          );
+      }).toList();
     });
 }
 
@@ -282,6 +316,9 @@ void main() {
 
       final Flouze.Account account = accounts.first;
       expect(account.members.map((p) => p.name).toList()..sort(), ['Bob', 'John']);
+
+      final transactions = await listServerTransactions(account.label);
+      expect(transactions.length, 5);
     });
   });
 }
