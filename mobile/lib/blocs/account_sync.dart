@@ -25,7 +25,7 @@ class AccountSyncBloc {
         });
   }
 
-  Future<AccountConfig> _upload(Flouze.Account account, AccountConfig config) {
+  Future<AccountConfig> _ensureRemoteAccountExists(Flouze.Account account, AccountConfig config) {
     if (config.synchronized) {
       return Future.value(config);
     }
@@ -50,21 +50,7 @@ class AccountSyncBloc {
       return;
     }
 
-    Future<AccountConfig> accountConfigFuture;
-
-    if (config.synchronized) {
-      accountConfigFuture = Future.value(config);
-    } else {
-      _syncController.add(AccountSyncSynchronizingState(config));
-
-      accountConfigFuture = _upload(account, config)
-          .then((newConfig) {
-            _syncController.add(AccountSyncLoadedState(newConfig));
-            return newConfig;
-          });
-    }
-
-    accountConfigFuture
+    _syncHelper(account, config)
       .then((config) => shareAccountUri(account.uuid))
       .then((uri) {
         Share.share('Get the Flouze app and share the account "${account.label}" with me!'
@@ -76,20 +62,43 @@ class AccountSyncBloc {
       });
   }
 
-  void setMeUuid(Flouze.Account account, List<int> uuid) {
+  void _setMeUuid(Flouze.Account account, List<int> uuid) {
     final AccountSyncState state = _syncController.value;
 
-    if (state is! AccountSyncNeedMeUuidState || uuid == null || uuid.isEmpty) {
+    if (uuid == null || uuid.isEmpty) {
       return;
     }
 
-    final AccountConfig config  = (state as AccountSyncNeedMeUuidState).accountConfig;
+    final AccountConfig config  = (state as AccountSyncLoadedState).accountConfig;
     final newAccountConfig = config.rebuild((b) => b..meUuid.update((b) => b..clear()..addAll(uuid)));
 
     AccountConfigStore.saveAccountConfig(account.uuid, newAccountConfig)
       .then((_) => _syncController.add(AccountSyncLoadedState(newAccountConfig)))
       .catchError((e) {
         _syncController.add(AccountSyncErrorState("Error while saving account config: ${e.toString()}"));
+        _syncController.add(AccountSyncLoadedState(config));
+      });
+  }
+
+  Future<AccountConfig> _syncHelper(Flouze.Account account, AccountConfig config) {
+    _syncController.add(AccountSyncSynchronizingState(config));
+
+    return _ensureRemoteAccountExists(account, config)
+      .then((newConfig) {
+        return Future.wait([RpcClient.getJsonRpcClient(), getRepository()])
+          .then((ctx) {
+            final Flouze.JsonRpcClient client = ctx[0];
+            final Flouze.SledRepository repository = ctx[1];
+
+            return Flouze.Sync.sync(repository, client, account.uuid);
+        }).then((_) => newConfig);
+      })
+      .then((newConfig) {
+        _syncController.add(AccountSyncLoadedState(newConfig));
+        return newConfig;
+      })
+      .catchError((e) {
+        _syncController.add(AccountSyncErrorState(e.toString()));
         _syncController.add(AccountSyncLoadedState(config));
       });
   }
@@ -102,32 +111,7 @@ class AccountSyncBloc {
       return;
     }
 
-    if (config.meUuid?.isEmpty ?? true) {
-      _syncController.add(AccountSyncNeedMeUuidState(config));
-      // The UI then has to call setMeUuid to return to a loaded state. We need
-      // to skip the first state, which will be the current one.
-      _syncController.skip(1).first.then((state) {
-        synchronize(account);
-      });
-      return;
-    }
-
-    assert(config.synchronized && config.meUuid.isNotEmpty);
-
-    _syncController.add(AccountSyncSynchronizingState(config));
-
-    Future.wait([RpcClient.getJsonRpcClient(), getRepository()])
-      .then((ctx) {
-        final Flouze.JsonRpcClient client = ctx[0];
-        final Flouze.SledRepository repository = ctx[1];
-
-        return Flouze.Sync.sync(repository, client, account.uuid);
-      })
-      .then((_) => _syncController.add(AccountSyncLoadedState(config)))
-      .catchError((e) {
-        _syncController.add(AccountSyncErrorState(e.toString()));
-        _syncController.add(AccountSyncLoadedState(config));
-      });
+    _syncHelper(account, config);
   }
 
   Stream<AccountSyncState> get sync => _syncController.stream;
@@ -149,10 +133,6 @@ class AccountSyncLoadedState extends AccountSyncState {
 
 class AccountSyncSynchronizingState extends AccountSyncLoadedState {
   AccountSyncSynchronizingState(AccountConfig accountConfig) : super(accountConfig);
-}
-
-class AccountSyncNeedMeUuidState extends AccountSyncLoadedState {
-  AccountSyncNeedMeUuidState(AccountConfig accountConfig) : super(accountConfig);
 }
 
 class AccountSyncErrorState extends AccountSyncState {
