@@ -101,6 +101,8 @@ enum Command {
     /// List the transactions in an account
     ListTransactions {
         account_name: String,
+        #[structopt(long="json")]
+        json: bool,
     },
 
     #[structopt(name="serve")]
@@ -295,7 +297,7 @@ fn run() -> Result<()> {
             store.add_transaction(&account.uuid, &tx)?;
             store.set_latest_transaction(&account.uuid, &tx.uuid).map_err(|e| e.into())
         }
-        Command::ListTransactions{account_name} => {
+        Command::ListTransactions{account_name, json} => {
             let mut store = SledRepository::new(&opt.file)?;
 
             let account = find_account_by_label(&store, &account_name)?;
@@ -321,7 +323,11 @@ fn run() -> Result<()> {
                     _ => "many people",
                 };
 
-                println!("{}: {} (payed by {})", tx.label, tx.amount, payed_by);
+                if json {
+                    println!("{}", serde_json::to_string(&tx)?);
+                } else {
+                    println!("{}: {} (payed by {})", tx.label, tx.amount, payed_by);
+                }
             }
 
             Ok(())
