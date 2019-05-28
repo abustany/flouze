@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flouze/utils/keys.dart';
 
 class MemberEntryWidget extends StatelessWidget {
-  final String initialValue;
-  final ValueChanged<String> onChanged;
+  final TextEditingController controller;
+  final String hint;
+  final void Function() onRemove;
 
-  MemberEntryWidget({Key key, this.initialValue, this.onChanged}) : super(key: key);
+  MemberEntryWidget({Key key, this.controller, this.hint, this.onRemove}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,15 +19,20 @@ class MemberEntryWidget extends StatelessWidget {
           child: Icon(Icons.account_circle),
         ),
         Expanded(
-          child: TextField(
+          child: TextFormField(
             key: subkey(key, '-input-name'),
-            decoration: new InputDecoration(hintText: 'Add a new member…'),
-            onChanged: (value) {
-              this.onChanged(value);
-            },
+            decoration: new InputDecoration(hintText: hint),
+            controller: controller,
             textCapitalization: TextCapitalization.words,
+            autovalidate: true,
+            validator: (text) => text.isNotEmpty ? null : 'Member name cannot be empty',
           ),
-        )
+        ),
+        if (onRemove != null)
+          IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: onRemove,
+          )
       ],
     );
   }

@@ -155,6 +155,7 @@ void main() {
       await driver.enterText('Test account');
       await driver.tap(find.byValueKey('member-0-input-name'));
       await driver.enterText('John');
+      await driver.tap(find.byValueKey('member-add'));
       await driver.tap(find.byValueKey('member-1-input-name'));
       await driver.enterText('Bob');
       await driver.tap(find.byValueKey('action-save-account'));

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:flouze_flutter/flouze_flutter.dart';
-
-import 'package:flouze/utils/uuid.dart';
+import 'package:flouze/blocs/add_account.dart';
 import 'package:flouze/widgets/member_entry.dart';
 
 class AddAccountPage extends StatefulWidget {
@@ -14,70 +12,42 @@ class AddAccountPage extends StatefulWidget {
 
 class AddAccountPageState extends State<AddAccountPage> {
   final _formKey = GlobalKey<FormState>();
+  AddAccountBloc _bloc;
+  final TextEditingController _nameController = TextEditingController();
+  final Map<int, TextEditingController> _membersController = {};
 
-  String _accountName = '';
-  List<String> _members = [];
+  @override
+  void initState() {
+    _bloc = AddAccountBloc();
+    _nameController.addListener(() => _bloc.setName(_nameController.text));
+    _addMemberController(0); // Append the account owner
+    super.initState();
+  }
 
-  void _onSave() {
-    final FormState state = _formKey.currentState;
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _membersController.forEach((_, c) => c.dispose());
+    _bloc.dispose();
+    super.dispose();
+  }
 
-    if (!state.validate()) {
-      print('There are some validation errors');
-      return;
-    }
+  void _addMemberController(int idx) {
+    final controller = TextEditingController();
+    controller.addListener(() {
+      _bloc.setMemberName(idx, controller.text);
+    });
+    _membersController[idx] = controller;
+  }
 
-    state.save();
-
-    final List<Person> members = _members
-        .where((name) => name.isNotEmpty)
-        .map((name) {
-          final Person person = Person.create()..uuid = generateUuid()..name = name;
-          return person;
-        }).toList();
-
-    final Account account = Account.create()
-      ..uuid = generateUuid()
-      ..label = _accountName
-      ..members.addAll(members);
-
-    Navigator.of(context).pop(account);
+  void _removeMemberController(int idx) {
+    // We'd probably need to dispose the controller as well? But the text field
+    // won't be unmounted until the state is updated, so we can't do it here...
+    _membersController.remove(idx);
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<String> members = List.from(_members);
-
-    while (members.isNotEmpty && members.last == '') {
-      members.removeLast();
-    }
-
-    if (members.isEmpty || members.last != '') {
-      members.add('');
-    }
-
-    final int nMembers = members.length;
-    final List<Widget> memberWidgets = members.asMap().map((idx, name) =>
-        MapEntry(
-            idx,
-
-            new MemberEntryWidget(
-              key: Key('member-$idx'),
-              initialValue: name,
-              onChanged: (value) {
-                members[idx] = value;
-
-                if (idx == nMembers-1 && value.isNotEmpty) {
-                  members.add('');
-                }
-
-                setState(() {
-                  _members = members;
-                });
-              },
-            )
-        )
-    ).values.toList();
-
     return new Scaffold(
         appBar: new AppBar(
           title: new Text("Create an account"),
@@ -85,47 +55,98 @@ class AddAccountPageState extends State<AddAccountPage> {
             IconButton(
               key: Key('action-save-account'),
               icon: Icon(Icons.check),
-              onPressed: _onSave,
+              onPressed: () {
+                Navigator.of(context).pop(_bloc.makeAccount());
+              }
             )
           ],
         ),
-        body: new Padding(
-            padding: new EdgeInsets.all(16.0),
-            child: new Center(
-                child: new Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          'Name',
-                          style: Theme.of(context).textTheme.title,
-                        ),
-                        TextFormField(
-                          key: Key('input-account-name'),
-                          autofocus: true,
-                          textCapitalization: TextCapitalization.sentences,
-                          onSaved: (name) => _accountName = name,
-                          validator: (value) => value.isEmpty ? "Account name cannot be empty" : null,
-                        ),
-
-                        Container(
-                          margin: EdgeInsetsDirectional.only(top: 0.0),
-                          child: Text(
-                            'Members',
-                            style: Theme.of(context).textTheme.title,
-                          ),
-                        ),
-
-                        Column(
+        body: ListView(
+          children: <Widget>[
+            Padding(
+                padding: new EdgeInsets.all(16.0),
+                child: new Center(
+                    child: StreamBuilder<AddAccountState>(
+                      stream: _bloc.account,
+                      initialData: AddAccountState.initial(),
+                      builder: (context, snapshot) => Form(
+                        key: _formKey,
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: memberWidgets,
+                          children: <Widget>[
+                            Text(
+                              'Name',
+                              style: Theme.of(context).textTheme.title,
+                            ),
+                            TextFormField(
+                              key: Key('input-account-name'),
+                              autofocus: true,
+                              textCapitalization: TextCapitalization.sentences,
+                              controller: _nameController,
+                              autovalidate: true,
+                              validator: (_) => snapshot.data.isNameValid ? null : 'Account name cannot be empty',
+                            ),
+
+                            Container(
+                              margin: EdgeInsetsDirectional.only(top: 8.0),
+                              child: Text('Your name', style: Theme.of(context).textTheme.title),
+                            ),
+
+                            MemberEntryWidget(
+                              key: Key('member-0'),
+                              controller: _membersController[0],
+                              hint: '',
+                            ),
+
+                            Container(
+                              margin: EdgeInsetsDirectional.only(top: 8.0),
+                              child: Text('Other members', style: Theme.of(context).textTheme.title),
+                            ),
+
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: _buildMemberWidgets(snapshot.data),
+                            ),
+
+                            RaisedButton(
+                                key: Key('member-add'),
+                                child: Text('Add another member'),
+                                onPressed: () { _bloc.addMember(); }
+                            ),
+                          ],
                         )
-                      ],
+                      )
                     )
                 )
             )
+          ],
         )
     );
+  }
+
+  List<Widget> _buildMemberWidgets(AddAccountState state) {
+    return state.members.map((idx, name) {
+      if (idx == 0) {
+        // 0 is the owner
+        return MapEntry(idx, null);
+      }
+
+      if (!_membersController.containsKey(idx)) {
+        _addMemberController(idx);
+      }
+
+      return MapEntry(
+        idx,
+        MemberEntryWidget(
+          key: Key('member-$idx'),
+          controller: _membersController[idx],
+          hint: 'Add a new member…',
+          onRemove: () {
+            _bloc.removeMember(idx);
+            _removeMemberController(idx);
+          },
+        )
+      );
+    }).values.where((w) => w != null).toList();
   }
 }
