@@ -51,15 +51,17 @@ class AccountSyncBloc {
     }
 
     _syncHelper(account, config)
-      .then((config) => shareAccountUri(account.uuid))
-      .then((uri) {
-        Share.share('Get the Flouze app and share the account "${account.label}" with me!'
-            '\n\n$uri');
-      })
-      .catchError((e) {
-        _syncController.add(AccountSyncErrorState("Error while sharing account: ${e.toString()}"));
-        _syncController.add(AccountSyncLoadedState(config));
-      });
+      .then((_) {
+        return shareAccountUri(account.uuid)
+          .then((uri) {
+            Share.share('Get the Flouze app and share the account "${account.label}" with me!'
+                '\n\n$uri');
+          })
+          .catchError((e) {
+            _syncController.add(AccountSyncErrorState("Error while sharing account: ${e.toString()}"));
+            _syncController.add(AccountSyncLoadedState(config));
+          });
+      }).catchError((_) {});
   }
 
   void _setMeUuid(Flouze.Account account, List<int> uuid) {
@@ -80,7 +82,7 @@ class AccountSyncBloc {
       });
   }
 
-  Future<AccountConfig> _syncHelper(Flouze.Account account, AccountConfig config) {
+  Future<void> _syncHelper(Flouze.Account account, AccountConfig config) {
     _syncController.add(AccountSyncSynchronizingState(config));
 
     return _ensureRemoteAccountExists(account, config)
@@ -95,11 +97,11 @@ class AccountSyncBloc {
       })
       .then((newConfig) {
         _syncController.add(AccountSyncLoadedState(newConfig));
-        return newConfig;
       })
       .catchError((e) {
-        _syncController.add(AccountSyncErrorState(e.toString()));
+        _syncController.add(AccountSyncErrorState('Error while synchronizing account: ${e.toString()}'));
         _syncController.add(AccountSyncLoadedState(config));
+        return Future.error(e);
       });
   }
 
@@ -111,7 +113,8 @@ class AccountSyncBloc {
       return;
     }
 
-    _syncHelper(account, config);
+    // Swallow the error here, _syncHelper already dispatched an error state
+    _syncHelper(account, config).catchError((_) {});
   }
 
   Stream<AccountSyncState> get sync => _syncController.stream;
