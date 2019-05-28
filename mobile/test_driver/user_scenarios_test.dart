@@ -61,6 +61,7 @@ Future<void> stopFlouzeServer() async {
   }
 
   flouzeServer.kill();
+  flouzeServer = null;
   print('Killed test server');
 }
 
