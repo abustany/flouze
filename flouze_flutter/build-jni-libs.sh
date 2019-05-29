@@ -4,10 +4,6 @@ set -e
 
 cd $(dirname $0)
 
-if [ -z "$RUST_RELEASE" ]; then
-  RUST_RELEASE="stable"
-fi
-
 CARGO_ARGS=
 MY_DIR=$(pwd)
 LIB_DIR=debug
@@ -35,7 +31,7 @@ build() {
 		exit 1
 	fi
 
-	cargo +$RUST_RELEASE build --target $target $CARGO_ARGS
+	cargo build --target $target -p flouze-flutter $CARGO_ARGS
 
 	mkdir -p android/src/main/jniLibs/$jni_dir
 	cp ../target/$target/$LIB_DIR/libflouze_flutter.so android/src/main/jniLibs/$jni_dir/
