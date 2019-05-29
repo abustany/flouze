@@ -1,21 +1,19 @@
-FROM centos:7
+FROM centos:7.6.1810
 
 # Install all needed packages as root before dropping to CI user
 # Flutter currently need a recent version of Git (https://github.com/flutter/flutter/issues/21626)
 RUN \
   curl -o /etc/yum.repos.d/git.repo https://copr.fedorainfracloud.org/coprs/g/git-maint/git/repo/epel-7/group_git-maint-git-epel-7.repo && \
-  yum install -y unzip java-1.8.0-openjdk-devel python gcc git which libstdc++.i686
+  yum install -y unzip java-1.8.0-openjdk-devel python gcc git which libstdc++-4.8.5-36.el7.i686 openssl-devel
 
 RUN useradd -m ci
 USER ci
 
 ENV PATH="/home/ci/.cargo/bin:$PATH"
 ENV JAVA_HOME="/usr/lib/jvm/java-1.8.0"
-ENV RUSTC_RELEASE_DATE="2018-07-18"
 
 RUN \
-  curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly-$RUSTC_RELEASE_DATE -y && \
-  rustup default nightly-$RUSTC_RELEASE_DATE && \
+  curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.35.0 -y && \
   rustup target add aarch64-linux-android && \
   rustup target add armv7-linux-androideabi && \
   rustup target add i686-linux-android && \
@@ -41,9 +39,9 @@ ENV NDK_HOME="/home/ci/.local/android-ndk-r18"
 ENV PATH="/home/ci/.local/flutter/bin:$PATH"
 
 RUN \
-  echo yes | sdkmanager --install "build-tools;27.0.3" "platform-tools" "platforms;android-27" && \
+  echo yes | sdkmanager --install "build-tools;28.0.3" "platform-tools" "platforms;android-28" && \
   cd ~/.local && \
-  git clone https://github.com/flutter/flutter.git -b v0.11.13 && \
+  git clone https://github.com/flutter/flutter.git -b v1.5.4-hotfix.2 && \
   flutter doctor
 
 RUN \
