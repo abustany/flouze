@@ -2,6 +2,8 @@
 
 [![CircleCI](https://circleci.com/gh/abustany/flouze.svg?style=svg)](https://circleci.com/gh/abustany/flouze)
 
+[Download prebuilt binaries here!](https://flouze.bustany.org)
+
 Flouze is an open source group expense tracker. Whenever you're traveling with
 other people, keeping track of who paid what and who owes whom quickly gets
 complicated. Flouze helps keeping a log of all expenses, which can be
@@ -55,13 +57,19 @@ The main parts of this repository are:
 - `mobile/` the (pure Dart/Flutter) sources of the mobile app
 - `cli/` a simple CLI tool to interact with Flouze account files
 
+The OpenSSL development headers are required for compilation to succeed, the
+package is named `openssl-devel` on Fedora and `libssl-dev` on Debian
+derivatives. Installing this package is only needed if you want to build the
+flouze CLI for the host architecture, for cross compilation the build scripts
+will take care of downloading and building OpenSSL for Android.
+
 The Rust library needs to be cross-compiled for all supported Android targets
 before building the mobile app. The `generate-toolchains.sh` script in
 `flouze_flutter/` needs to be run once to create standalone versions of the
 toolchains contained in the Android NDK (which needs to be installed
-beforehand). Once this is in place, the `build-jni-libs.sh` script in the same
-directory builds the library for all targets. At this point, Rust nightly is
-required because [the sled library requires it for 32-bit support](https://github.com/spacejam/sled/pull/300).
+beforehand). Once this is in place, the `build-openssl.sh` compiles OpenSSL for
+various Android architectures, and the `build-jni-libs.sh` script in the same
+directory builds the library for all targets.
 
 After the native libraries are built, the normal Flutter commands can be used
 from the `mobile/` folder to run/develop/debug the application.
