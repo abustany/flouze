@@ -38,7 +38,7 @@ mkdir -p openssl
 cd openssl
 
 if [ ! -d "openssl-${OPENSSL_VERSION}" ]; then
-	wget -c https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
+	curl -O -C - https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
 	tar xf openssl-${OPENSSL_VERSION}.tar.gz
 fi
 
