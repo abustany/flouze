@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: abustany/flouze-build@sha256:42079f59d7dd719b7285fbc6f1732256495385608e287b7492913fc3a8db1d11
+      - image: abustany/flouze-build@sha256:0e8f6c7fee3f896c56263b0aea4156cc92a4d02acdfc06009b181c8686fb4a2c
     steps:
       - restore_cache:
           keys:
@@ -28,8 +28,11 @@ jobs:
             cargo build --release -p flouze-cli
             cp target/release/flouze-cli artifacts/flouze-cli-${RELEASE_NAME}-linux-x86_64
       - run:
+          name: Build OpenSSL for Android
+          command: cd flouze_flutter && ./build-openssl.sh
+      - run:
           name: Build JNI libs for the app
-          command: cd flouze_flutter && RUST_RELEASE="nightly-$RUSTC_RELEASE_DATE" ./build-jni-libs.sh --release
+          command: cd flouze_flutter && ./build-jni-libs.sh --release
       - run:
           name: Build the app
           command: |-
