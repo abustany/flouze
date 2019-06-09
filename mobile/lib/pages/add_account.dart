@@ -74,10 +74,6 @@ class AddAccountPageState extends State<AddAccountPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            Text(
-                              'Name',
-                              style: Theme.of(context).textTheme.title,
-                            ),
                             TextFormField(
                               key: Key('input-account-name'),
                               autofocus: true,
@@ -85,22 +81,16 @@ class AddAccountPageState extends State<AddAccountPage> {
                               controller: _nameController,
                               autovalidate: true,
                               validator: (_) => snapshot.data.isNameValid ? null : 'Account name cannot be empty',
-                            ),
-
-                            Container(
-                              margin: EdgeInsetsDirectional.only(top: 8.0),
-                              child: Text('Your name', style: Theme.of(context).textTheme.title),
+                              decoration: InputDecoration(
+                                labelText: "Title",
+                              ),
                             ),
 
                             MemberEntryWidget(
                               key: Key('member-0'),
                               controller: _membersController[0],
                               hint: '',
-                            ),
-
-                            Container(
-                              margin: EdgeInsetsDirectional.only(top: 8.0),
-                              child: Text('Other members', style: Theme.of(context).textTheme.title),
+                              label: 'Your name',
                             ),
 
                             Column(
@@ -108,10 +98,13 @@ class AddAccountPageState extends State<AddAccountPage> {
                               children: _buildMemberWidgets(snapshot.data),
                             ),
 
-                            RaisedButton(
+                            Container(
+                              margin: EdgeInsets.only(top: 8.0, left: 38.0),
+                              child: RaisedButton(
                                 key: Key('member-add'),
-                                child: Text('Add another member'),
+                                child: Text('Add member'),
                                 onPressed: () { _bloc.addMember(); }
+                              )
                             ),
                           ],
                         )
@@ -140,7 +133,7 @@ class AddAccountPageState extends State<AddAccountPage> {
         MemberEntryWidget(
           key: Key('member-$idx'),
           controller: _membersController[idx],
-          hint: 'Add a new member…',
+          label: 'Member name',
           onRemove: () {
             _bloc.removeMember(idx);
             _removeMemberController(idx);
