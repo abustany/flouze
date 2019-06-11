@@ -77,7 +77,7 @@ Future<void> disableReversePortForwarding() {
   return Process.run('adb', ['reverse', '--remove', 'tcp:$testServerPort']);
 }
 
-Future<void> startFlouzeServer() async {
+Future<void> startFlouzeServer({bool deleteDataFirst = false}) async {
   if (_flouzeServer != null) {
     await stopFlouzeServer();
   }
@@ -86,7 +86,13 @@ Future<void> startFlouzeServer() async {
     throw "flouze-cli not found in ${flouzeCli.path}";
   }
 
-  Directory(flouzeDbName).delete(recursive: true);
+  if (deleteDataFirst) {
+    try {
+      Directory(flouzeDbName).deleteSync(recursive: true);
+    } catch (e) {
+      // ignore
+    }
+  }
 
   _flouzeServer = await Process.start(flouzeCli.path, [flouzeDbName, 'serve', '127.0.0.1:$testServerPort']);
 

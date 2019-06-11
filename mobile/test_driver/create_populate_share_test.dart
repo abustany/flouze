@@ -12,7 +12,7 @@ void main() {
     TransactionCheck txcheck;
 
     setUpAll(() async {
-      await startFlouzeServer();
+      await startFlouzeServer(deleteDataFirst: true);
       await enableReversePortForwarding();
 
       // Connects to the app
