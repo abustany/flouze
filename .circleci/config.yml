@@ -43,8 +43,10 @@ jobs:
             echo "$SYNC_SERVER_URI" > assets/sync_server_uri.txt
             flutter packages get
             flutter packages pub run build_runner build
-            flutter build apk
-            cp build/app/outputs/apk/release/app-release.apk ../artifacts/flouze-${RELEASE_NAME}.apk
+            ./build-apk-for-arch.sh android-arm
+            cp build/app/outputs/apk/release/app-release.apk ../artifacts/flouze-${RELEASE_NAME}-arm.apk
+            ./build-apk-for-arch.sh android-arm64
+            cp build/app/outputs/apk/release/app-release.apk ../artifacts/flouze-${RELEASE_NAME}-arm64.apk
       - store_artifacts:
           path: "artifacts"
       # Clean our own artifacts so that they don't clutter the cache
