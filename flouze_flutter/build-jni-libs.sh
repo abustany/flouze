@@ -1,5 +1,15 @@
 #!/bin/sh
 
+# Builds the flouze_flutter Rust library for all supported target architectures
+# on Android.
+#
+# Set the ONLY_ARCH environment variable before running this script to build for
+# one architecture only. The list of valid architectures is:
+# - aarch64-linux-android
+# - arm-linux-androideabi
+# - i686-linux-android
+# - x86_64-linux-android
+
 set -e
 
 cd $(dirname $0)
@@ -17,6 +27,10 @@ build() {
 	arch=$1
 	target=$2
 	jni_dir=$3
+
+	if [ -n "$ONLY_ARCH" -a "$arch" != "$ONLY_ARCH" ]; then
+		return
+	fi
 
 	echo "Building for $arch"
 
