@@ -128,7 +128,7 @@ Future<List<Flouze.Transaction>> listServerTransactions(String accountName) {
 }
 
 void main() {
-  group('user scenarios', () {
+  group('Create, populate and share an account', () {
     FlutterDriver driver;
 
     setUpAll(() async {
