@@ -21,8 +21,8 @@ build() {
 	echo "Building for $arch"
 
 	tool_prefix=$(grep '^ar' ~/.cargo/config | grep $arch | awk '{print $3}' | sed -e 's,",,g' -e 's,-ar$,,')
-	export CC="$tool_prefix-clang"
-	export AR="$tool_prefix-ar"
+	export TARGET_CC="$tool_prefix-clang"
+	export TARGET_AR="$tool_prefix-ar"
 	export OPENSSL_DIR="$MY_DIR/openssl/install-openssl-$arch"
 	export OPENSSL_STATIC=1
 
