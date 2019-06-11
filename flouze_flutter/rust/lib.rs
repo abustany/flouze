@@ -116,7 +116,7 @@ pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_SledReposito
         Ok(bytes) => env.byte_array_from_slice(&bytes).unwrap(),
         Err(e) => {
             throw_err(&env, e);
-            return env.byte_array_from_slice(&vec!()).unwrap()
+            return JObject::null().into_inner();
         }
     }
 }
@@ -139,7 +139,7 @@ pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_SledReposito
         Ok(bytes) => env.byte_array_from_slice(&bytes).unwrap(),
         Err(e) => {
             throw_err(&env, e);
-            return env.byte_array_from_slice(&vec!()).unwrap();
+            return JObject::null().into_inner();
         }
     }
 }
@@ -175,7 +175,7 @@ pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_SledReposito
         Ok(bytes) => env.byte_array_from_slice(&bytes).unwrap(),
         Err(e) => {
             throw_err(&env, e);
-            return env.byte_array_from_slice(&vec!()).unwrap();
+            return JObject::null().into_inner();
         }
     }
 }
@@ -226,7 +226,7 @@ pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_Repository_g
         Ok(bytes) => env.byte_array_from_slice(&bytes).unwrap(),
         Err(e) => {
             throw_err(&env, e);
-            return env.byte_array_from_slice(&vec!()).unwrap();
+            return JObject::null().into_inner();
         }
     }
 }
@@ -287,7 +287,7 @@ pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_JsonRpcClien
         Ok(bytes) => env.byte_array_from_slice(&bytes).unwrap(),
         Err(e) => {
             throw_err(&env, e);
-            return env.byte_array_from_slice(&vec!()).unwrap()
+            return JObject::null().into_inner();
         }
     }
 }
