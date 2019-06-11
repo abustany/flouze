@@ -95,6 +95,8 @@ Future<void> startFlouzeServer({bool deleteDataFirst = false}) async {
   }
 
   _flouzeServer = await Process.start(flouzeCli.path, [flouzeDbName, 'serve', '127.0.0.1:$testServerPort']);
+  _flouzeServer.stdout.transform(utf8.decoder).listen((s) => print("Server stdout: ${s.trimRight()}"));
+  _flouzeServer.stderr.transform(utf8.decoder).listen((s) => print("Server stderr: ${s.trimRight()}"));
 
   print("Started test server on port $testServerPort");
 }
