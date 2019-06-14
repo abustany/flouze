@@ -77,6 +77,13 @@ Future<void> disableReversePortForwarding() {
   return Process.run('adb', ['reverse', '--remove', 'tcp:$testServerPort']);
 }
 
+Future<void> sendCloneAccountIntent(String accountId) {
+  return Process.run('adb', ['shell', 'am', 'start',
+    '-a', 'android.intent.action.VIEW',
+    '-c', 'android.intent.category.BROWSABLE',
+    '-d', 'https://flouze.bustany.org/mobile/clone?accountId=$accountId']);
+}
+
 Future<void> startFlouzeServer({bool deleteDataFirst = false}) async {
   if (_flouzeServer != null) {
     await stopFlouzeServer();
