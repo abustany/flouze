@@ -1,0 +1,89 @@
+os: osx
+osx_image: xcode10.2
+language: rust
+rust:
+  - 1.35.0
+
+env:
+  global:
+    - "PATH=$HOME/.local/android-sdk-linux/tools/bin:$HOME/.local/flutter/bin:$PATH"
+    - "ANDROID_HOME=$HOME/.local/android-sdk-linux"
+    - "JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home"
+
+script: |-
+  set -e
+
+  # Remove RVM alias crap
+  unset cd
+
+  BUILD_DIR=$(pwd)
+  FOLD_FILE=$HOME/.travis_fold_name
+
+  # Folding routines, taken from https://www.koszek.com/blog/2016/07/25/dealing-with-large-jobs-on-travis/
+  travis_fold() {
+    local action=$1
+    local name=$2
+    echo -en "travis_fold:${action}:${name}\r"
+  }
+
+  travis_fold_start() {
+    travis_fold start "$1"
+    echo $1
+    /bin/echo -n $1 > $FOLD_FILE
+  }
+
+  travis_fold_end() {
+    travis_fold end "$(cat ${FOLD_FILE})"
+  }
+
+  mkdir -p ~/.local
+
+  # Install an older Java for Android tools to work
+  travis_fold_start "install-openjdk8"
+  brew update >/dev/null
+  brew tap AdoptOpenJDK/openjdk
+  brew cask install adoptopenjdk8
+  java -version
+  travis_fold_end
+
+  # Android SDK
+  travis_fold_start "install-android-sdk"
+  set -x
+  curl -o $HOME/sdk-tools.zip https://dl.google.com/android/repository/sdk-tools-darwin-4333796.zip
+  mkdir -p ~/.local/android-sdk-linux
+  (cd ~/.local/android-sdk-linux && unzip -q $HOME/sdk-tools.zip)
+  rm $HOME/sdk-tools.zip
+  echo yes | sdkmanager --install "build-tools;28.0.3" "platform-tools" "platforms;android-28" >/dev/null
+  set +x
+  travis_fold_end
+
+  # Rust toolchains
+  travis_fold_start "install-rust-ios-toolchains"
+  rustup target add aarch64-apple-ios
+  rustup target add x86_64-apple-ios
+  cargo install --git https://github.com/abustany/cargo-lipo --branch normalize-lib-name cargo-lipo
+  travis_fold_end
+
+  travis_fold_start "install-flutter-dependencies"
+  brew install --HEAD usbmuxd
+  brew link usbmuxd
+  brew install --HEAD libimobiledevice
+  brew install ideviceinstaller
+  brew install ios-deploy
+  travis_fold_end
+
+  travis_fold_start "install-flutter"
+  git clone https://github.com/flutter/flutter.git -b v1.6.3 ~/.local/flutter
+  # This fails with a broken pipe error for some reason...
+  yes | flutter doctor --android-licenses >/dev/null || true
+  flutter doctor
+  travis_fold_end
+
+  cd $BUILD_DIR
+
+  (cd flouze_flutter && ./build-ios-libs.sh --release)
+
+  cd mobile
+  flutter packages get
+  flutter packages pub run build_runner build
+  flutter build ios --no-codesign
