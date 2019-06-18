@@ -45,7 +45,7 @@ build() {
 		exit 1
 	fi
 
-	cargo build --target $target -p flouze-flutter $CARGO_ARGS
+	cargo build --target $target -p flouze-flutter --features android $CARGO_ARGS
 
 	mkdir -p android/src/main/jniLibs/$jni_dir
 	cp ../target/$target/$LIB_DIR/libflouze_flutter.so android/src/main/jniLibs/$jni_dir/

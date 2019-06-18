@@ -7,9 +7,14 @@ authors = ["Adrien Bustany <adrien@bustany.org>"]
 path = "rust/lib.rs"
 crate_type = ["staticlib", "cdylib"]
 
+[features]
+default = []
+android = ["jni"]
+ios = []
+
 [dependencies]
 bytes = "^0.4"
-jni = "^0.12"
+jni = { version = "^0.12", optional = true }
 prost = "^0.5"
 flouze = { path = "../lib" }
 

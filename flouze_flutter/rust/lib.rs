@@ -1,4 +1,5 @@
 extern crate flouze;
+#[cfg(feature = "android")]
 extern crate jni;
 extern crate prost;
 
@@ -14,7 +15,10 @@ use flouze::sync;
 
 use prost::Message;
 
+#[cfg(feature = "android")]
 mod android;
+
+#[cfg(feature = "ios")]
 mod ios;
 
 mod proto {
