@@ -15,7 +15,7 @@ Flouze bindings for Flutter
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/**/*.h'
   s.dependency 'Flutter'
-  
+  s.vendored_libraries = 'Classes/lib/libflouze_flutter_rust.a'
   s.ios.deployment_target = '8.0'
 end
 

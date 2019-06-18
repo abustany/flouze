@@ -15,6 +15,7 @@ use flouze::sync;
 use prost::Message;
 
 mod android;
+mod ios;
 
 mod proto {
     include!(concat!(env!("OUT_DIR"), "/flouze_flutter.rs"));
@@ -71,7 +72,7 @@ unsafe fn sled_repository_destroy(ptr: *mut c_void) {
     let _repo = Box::from_raw(ptr as *mut SledRepository);
 }
 
-unsafe fn add_account(repo: *mut c_void, account_data: &Vec<u8>) -> FFIResult<()> {
+unsafe fn add_account(repo: *mut c_void, account_data: &[u8]) -> FFIResult<()> {
     let repo = &mut *(repo as *mut SledRepository);
     let account = model::Account::decode(account_data)?;
     repo.add_account(&account).map_err(|e| e.into())
@@ -99,9 +100,9 @@ unsafe fn list_accounts(repo: *mut c_void) -> FFIResult<Vec<u8>> {
     Ok(buf)
 }
 
-unsafe fn list_transactions(repo: *mut c_void, account_id: &model::AccountId) -> FFIResult<Vec<u8>> {
+unsafe fn list_transactions(repo: *mut c_void, account_id: &[u8]) -> FFIResult<Vec<u8>> {
     let repo = &mut *(repo as *mut SledRepository);
-    let account = repo.get_account(account_id)?;
+    let account = repo.get_account(&account_id.to_vec())?;
     let mut transactions: Vec<model::Transaction> = Vec::new();
 
     for tx in get_transaction_chain(repo, &account) {
@@ -119,16 +120,17 @@ unsafe fn list_transactions(repo: *mut c_void, account_id: &model::AccountId) ->
     Ok(buf)
 }
 
-unsafe fn add_transaction(repo: *mut c_void, account_id: &model::AccountId, transaction_data: &Vec<u8>) -> FFIResult<()> {
+unsafe fn add_transaction(repo: *mut c_void, account_id: &[u8], transaction_data: &[u8]) -> FFIResult<()> {
     let repo = &mut *(repo as *mut SledRepository);
     let transaction = model::Transaction::decode(transaction_data)?;
-    repo.add_transaction(account_id, &transaction)?;
-    repo.set_latest_transaction(account_id, &transaction.uuid).map_err(|e| e.into())
+    let account_id = account_id.to_vec();
+    repo.add_transaction(&account_id, &transaction)?;
+    repo.set_latest_transaction(&account_id, &transaction.uuid).map_err(|e| e.into())
 }
 
-unsafe fn get_balance(repo: *mut c_void, account_id: &model::AccountId) -> FFIResult<Vec<u8>> {
+unsafe fn get_balance(repo: *mut c_void, account_id: &[u8]) -> FFIResult<Vec<u8>> {
     let repo = &mut *(repo as *mut SledRepository);
-    let account = repo.get_account(account_id)?;
+    let account = repo.get_account(&account_id.to_vec())?;
     let balance_entries: Vec<balance::Entry> = repository::get_balance(repo, &account)?
         .into_iter()
         .map(|(k, v)| balance::Entry{person: k, balance: v})
@@ -144,15 +146,15 @@ fn json_rpc_client_create(url: &str) -> FFIResult<*mut c_void> {
     Client::new(url).map(leak_raw).map_err(|e| e.into())
 }
 
-unsafe fn json_rpc_client_create_account(client: *mut c_void, account_data: &Vec<u8>) -> FFIResult<()> {
+unsafe fn json_rpc_client_create_account(client: *mut c_void, account_data: &[u8]) -> FFIResult<()> {
     let client = &mut *(client as *mut Client);
     let account = model::Account::decode(account_data)?;
     client.create_account(&account).map_err(|e| e.into())
 }
 
-unsafe fn json_rpc_client_get_account_info(client: *mut c_void, account_id: &Vec<u8>) -> FFIResult<Vec<u8>> {
+unsafe fn json_rpc_client_get_account_info(client: *mut c_void, account_id: &[u8]) -> FFIResult<Vec<u8>> {
     let client = &mut *(client as *mut Client);
-    let account = client.get_account_info(account_id)?;
+    let account = client.get_account_info(&account_id.to_vec())?;
 
     let mut buf = Vec::new();
     buf.reserve(account.encoded_len());
@@ -161,16 +163,16 @@ unsafe fn json_rpc_client_get_account_info(client: *mut c_void, account_id: &Vec
     Ok(buf)
 }
 
-unsafe fn sync_clone_remote(repo: *mut c_void, remote: *mut c_void, account_id: &Vec<u8>) -> FFIResult<()> {
+unsafe fn sync_clone_remote(repo: *mut c_void, remote: *mut c_void, account_id: &[u8]) -> FFIResult<()> {
     let repo = &mut *(repo as *mut SledRepository);
     let remote = &mut *(remote as *mut Client);
 
-    sync::clone_remote(repo, remote, &account_id).map_err(|e| e.into())
+    sync::clone_remote(repo, remote, &account_id.to_vec()).map_err(|e| e.into())
 }
 
-unsafe fn sync_sync(repo: *mut c_void, remote: *mut c_void, account_id: &Vec<u8>) -> FFIResult<()> {
+unsafe fn sync_sync(repo: *mut c_void, remote: *mut c_void, account_id: &[u8]) -> FFIResult<()> {
     let repo = &mut *(repo as *mut SledRepository);
     let remote = &mut *(remote as *mut Client);
 
-    sync::sync(repo, remote, &account_id).map_err(|e| e.into())
+    sync::sync(repo, remote, &account_id.to_vec()).map_err(|e| e.into())
 }
