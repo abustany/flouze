@@ -149,6 +149,9 @@ void main() {
       await driver.waitForAbsent(find.byValueKey('action-sync-account'));
       await driver.tap(find.byValueKey('action-share-account'));
 
+      // Leave time for the share dialog to show up
+      await Future.delayed(Duration(seconds: 5));
+
       // Cancel the share dialog
       await pressBackButton();
 
