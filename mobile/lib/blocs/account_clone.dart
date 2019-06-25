@@ -10,11 +10,10 @@ import 'package:flouze/utils/uuid.dart' as UUID;
 import 'package:flouze_flutter/flouze_flutter.dart' as Flouze;
 
 class AccountCloneBloc {
-  var _repository = Services.getRepository();
   var _accountsController = BehaviorSubject<AccountCloneState>();
 
   Future<List<Flouze.Account>> _loadAccountList() =>
-      _repository.then((repo) => repo.listAccounts());
+      Services.getRepository().then((repo) => repo.listAccounts());
 
   Future<Flouze.Account> _loadRemoteAccount(List<int> accountUuid) =>
       getJsonRpcClient()
@@ -52,7 +51,7 @@ class AccountCloneBloc {
 
     Future.wait(<Future<dynamic>>[
       AccountConfigStore.saveAccountConfig(remoteAccount.uuid, accountConfig),
-      _repository,
+      Services.getRepository(),
       getJsonRpcClient(),
     ])
     .then((ctx) {

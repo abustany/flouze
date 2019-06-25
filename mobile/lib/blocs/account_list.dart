@@ -8,7 +8,6 @@ import 'package:flouze/utils/services.dart' as Services;
 import 'package:flouze_flutter/flouze_flutter.dart' as Flouze;
 
 class AccountListBloc {
-  var _repository = Services.getRepository();
   var _accountsController = BehaviorSubject<AccountListState>();
   var _notificationController = StreamController<String>.broadcast();
 
@@ -28,7 +27,7 @@ class AccountListBloc {
     }
 
     _accountsController.add(AccountListLoadingState());
-    _repository
+    Services.getRepository()
         .then((repo) => repo.listAccounts())
         .then((accounts) {
           _accountsController.add(AccountListLoadedState(accounts));
@@ -51,7 +50,7 @@ class AccountListBloc {
     // not be saved, and the user will try again. If account saving fails, we'll
     // leave behind a stray account config, not a huge deal.
     AccountConfigStore.saveAccountConfig(account.uuid, accountConfig)
-      .then((_) => _repository)
+      .then((_) => Services.getRepository())
       .then((repo) => repo.addAccount(account))
       .catchError((e) {
         loadAccounts();

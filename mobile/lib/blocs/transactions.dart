@@ -11,12 +11,11 @@ class TransactionsBloc {
   TransactionsBloc(this._account);
 
   final Flouze.Account _account;
-  final _repository = Services.getRepository();
   final _transactionsController = BehaviorSubject<TransactionsState>();
 
   void loadTransactions() {
     _transactionsController.add(TransactionsLoadingState());
-    _repository
+    Services.getRepository()
         .then((repo) => Future.wait([repo.listTransactions(_account.uuid), repo.getBalance(_account.uuid)]))
         .then((ctx) {
           final List<Flouze.Transaction> transactions = ctx[0];
@@ -39,7 +38,7 @@ class TransactionsBloc {
     _account.latestTransaction = transaction.uuid;
 
     _transactionsController.add(TransactionsLoadedState(flattenHistory([transaction, ...state.transactions]), state.balance));
-    _repository
+    Services.getRepository()
         .then((repo) { repo.addTransaction(_account.uuid, transaction); })
         .then((_) => loadTransactions()) // reload the transactions to upload the balance too
         .catchError((e) {
