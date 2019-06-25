@@ -63,6 +63,8 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
         _scaffoldKey.currentState.showSnackBar(
             SnackBar(content: Text("Synchronized successfully!"))
         );
+
+        _transactionsBloc.loadTransactions();
       }
 
       if (state is AccountSyncSynchronizingState) {
