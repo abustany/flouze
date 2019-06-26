@@ -10,6 +10,12 @@ env:
     - "ANDROID_HOME=$HOME/.local/android-sdk-linux"
     - "JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home"
 
+cache:
+  directories:
+  - "$HOME/.local/flutter/.pub-cache"
+  - "$HOME/.cargo"
+  - "$TRAVIS_BUILD_DIR/target"
+
 script: |-
   set -e
 
@@ -73,7 +79,9 @@ script: |-
   travis_fold_end
 
   travis_fold_start "install-flutter"
+  [ -d ~/.local/flutter/.pub-cache ] && mv ~/.local/flutter/.pub-cache ~/.local/
   git clone https://github.com/flutter/flutter.git -b v1.6.3 ~/.local/flutter
+  [ -d ~/.local/.pub-cache ] && mv ~/.local/.pub-cache ~/.local/flutter/
   # This fails with a broken pipe error for some reason...
   yes | flutter doctor --android-licenses >/dev/null || true
   flutter doctor
