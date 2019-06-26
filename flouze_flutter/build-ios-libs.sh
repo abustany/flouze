@@ -16,4 +16,5 @@ if [ "$1" == "--release" ]; then
 fi
 
 cargo lipo -p flouze-flutter --targets aarch64-apple-ios,x86_64-apple-ios --features ios $CARGO_ARGS
+mkdir -p ios/Classes/lib
 cp ../target/universal/$LIB_DIR/libflouze_flutter.a ios/Classes/lib/libflouze_flutter_rust.a
