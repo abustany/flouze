@@ -1,6 +1,7 @@
 # Flouze, an app to keep track of expenses among friends
 
 [![CircleCI](https://circleci.com/gh/abustany/flouze.svg?style=svg)](https://circleci.com/gh/abustany/flouze)
+[![Build Status](https://travis-ci.com/abustany/flouze.svg?branch=master)](https://travis-ci.com/abustany/flouze)
 
 [Download prebuilt binaries here!](https://flouze.bustany.org)
 
