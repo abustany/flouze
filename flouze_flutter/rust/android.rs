@@ -70,6 +70,13 @@ pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_SledReposito
 
 #[no_mangle]
 #[allow(non_snake_case)]
+pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_SledRepository_deleteAccount(env: JNIEnv, _class: JClass, instance: jlong, jaccount_id: jbyteArray) {
+    let account_id = convert_jbytearray!(env, jaccount_id, ());
+    ok_or_throw(&env, delete_account(instance as *mut c_void, &account_id), ());
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
 pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_SledRepository_getAccount(env: JNIEnv, _class: JClass, instance: jlong, jaccount_id: jbyteArray) -> jbyteArray {
     let account_id = convert_jbytearray!(env, jaccount_id, make_jnull());
 

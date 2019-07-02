@@ -11,6 +11,7 @@ void* flouze_sled_repository_from_file(const char *path, char **error);
 void flouze_sled_repository_destroy(void *repo);
 
 void flouze_sled_repository_add_account(void *repo, const uint8_t *account_data, size_t account_len, char **error);
+void flouze_sled_repository_delete_account(void *repo, const uint8_t *account_id, size_t account_id_len, char **error);
 void flouze_sled_repository_list_accounts(void *repo, uint8_t **account_list, size_t *account_list_len, char **error);
 void flouze_sled_repository_list_transactions(void *repo, const uint8_t *account_id, size_t account_id_len, uint8_t **tx_list, size_t *tx_list_len, char **error);
 void flouze_sled_repository_add_transaction(void *repo, const uint8_t *account_id, size_t account_id_len, const uint8_t *tx, size_t tx_len, char **error);

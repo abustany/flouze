@@ -88,6 +88,12 @@ public class FlouzeAsyncTask extends AsyncTask<MethodCall, Void, FlouzeAsyncTask
                         byteArrayValue(call.argument("account"))
                 );
                 return Result.ok(null).accountListChanged();
+            case "SledRepository::deleteAccount":
+                SledRepository.deleteAccount(
+                        pointerValue(call.argument("ptr")),
+                        byteArrayValue(call.argument("accountId"))
+                );
+                return Result.ok(null).accountListChanged();
             case "SledRepository::listAccounts":
                 return Result.ok(SledRepository.listAccounts(pointerValue(call.argument("ptr"))));
             case "SledRepository::listTransactions":

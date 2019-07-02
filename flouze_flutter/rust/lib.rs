@@ -82,6 +82,12 @@ unsafe fn add_account(repo: *mut c_void, account_data: &[u8]) -> FFIResult<()> {
     repo.add_account(&account).map_err(|e| e.into())
 }
 
+unsafe fn delete_account(repo: *mut c_void, account_id: &[u8]) -> FFIResult<()> {
+    let repo = &mut *(repo as *mut SledRepository);
+    repo.delete_account(&account_id.to_vec())?;
+    Ok(())
+}
+
 unsafe fn get_account(repo: *mut c_void, account_id: &Vec<u8>) -> FFIResult<Vec<u8>> {
     let repo = &mut *(repo as *mut SledRepository);
     let account = repo.get_account(&account_id)?;

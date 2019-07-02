@@ -55,6 +55,15 @@ class SledRepository {
     await _channel.invokeMethod('SledRepository::addAccount', params);
   }
 
+  Future<void> deleteAccount(List<int> accountId) async {
+    final Map<String, dynamic> params = {
+      'ptr': _ptr,
+      'accountId': Uint8List.fromList(accountId),
+    };
+
+    await _channel.invokeMethod('SledRepository::deleteAccount', params);
+  }
+
   Future<List<Account>> listAccounts() async {
     final Map<String, dynamic> params = {
       'ptr': _ptr,

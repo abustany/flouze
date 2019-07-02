@@ -84,6 +84,17 @@ static void returnByteArray(FlutterResult result, uint8_t *data, size_t data_len
       [self accountListChanged];
       result(nil);
     }
+  } else if ([@"SledRepository::deleteAccount" isEqualToString:call.method]) {
+    NSDictionary *arguments = [call arguments];
+    void *repo = getPointer(arguments, @"ptr");
+    FlutterStandardTypedData *accountId = [arguments objectForKey:@"accountId"];
+
+    flouze_sled_repository_delete_account(repo, [[accountId data] bytes], (size_t)[[accountId data] length], &error);
+
+    if (!error) {
+      [self accountListChanged];
+      result(nil);
+    }
   } else if ([@"SledRepository::listAccounts" isEqualToString:call.method]) {
     NSDictionary *arguments = [call arguments];
     void *repo = getPointer(arguments, @"ptr");

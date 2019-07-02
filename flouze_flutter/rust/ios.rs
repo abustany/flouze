@@ -61,6 +61,13 @@ pub extern fn flouze_sled_repository_add_account(repo: *mut c_void, account_data
 }
 
 #[no_mangle]
+pub extern fn flouze_sled_repository_delete_account(repo: *mut c_void, account_id: *const u8, account_id_len: usize, error: *mut *mut c_char) {
+    let account_id = unsafe { std::slice::from_raw_parts(account_id, account_id_len) };
+    let res = unsafe { delete_account(repo, &account_id) };
+    forward_error(&res, error);
+}
+
+#[no_mangle]
 pub extern fn flouze_sled_repository_list_accounts(repo: *mut c_void, account_list: *mut *mut u8, account_list_len: *mut usize, error: *mut *mut c_char) {
     let res = unsafe { list_accounts(repo) };
     forward_error(&res, error);
