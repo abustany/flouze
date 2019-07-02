@@ -45,7 +45,7 @@ pub struct Client {
 impl Client {
     pub fn new(uri: &str) -> errors::Result<Client> {
         let mut runtime = tokio::runtime::Runtime::new()?;
-        let client = runtime.block_on(jsonrpc_core_client::transports::http::http::<self::rpc::gen_client::Client>(uri))?;
+        let client = runtime.block_on(jsonrpc_core_client::transports::http::connect::<self::rpc::gen_client::Client>(uri))?;
 
         Ok(Client {
             runtime: runtime,
