@@ -67,13 +67,6 @@ class AccountListPageState extends State<AccountListPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Padding(
-            padding: new EdgeInsets.all(16.0),
-            child: Text(
-              'Accounts',
-              style: Theme.of(context).textTheme.title,
-            ),
-          ),
           Expanded(
             child: StreamBuilder<AccountListState>(
               stream: _bloc.accounts,
@@ -116,6 +109,7 @@ class AccountListPageState extends State<AccountListPage> {
                 idx,
                 ListTile(
                     key: Key("account-$idx"),
+                    leading: Icon(Icons.attach_money),
                     title: Text(account.label),
                     onTap: () {
                       _openAccount(account);
