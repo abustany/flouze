@@ -4,12 +4,17 @@ import 'package:flouze/utils/amounts.dart';
 import 'package:flouze/utils/config.dart';
 
 class AmountField extends StatelessWidget {
-  final String initialValue;
   final TextEditingController controller;
   final bool notNull;
-  final FormFieldSetter<int> onSaved;
+  final FocusNode _focusNode = FocusNode();
 
-  AmountField({Key key, this.initialValue, this.controller, this.onSaved, this.notNull = false}) : super(key: key);
+  AmountField({Key key, this.controller, this.notNull = false}) : super(key: key) {
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        this.controller.selection = TextSelection(baseOffset: 0, extentOffset: this.controller.text.length);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) =>
@@ -17,13 +22,13 @@ class AmountField extends StatelessWidget {
           children: <Widget>[
             Expanded(
                 child: TextFormField(
-                  initialValue: initialValue,
                   textAlign: TextAlign.end,
                   keyboardType: TextInputType.numberWithOptions(signed: false, decimal: true),
                   controller: controller,
                   decoration: const InputDecoration(
                     hintText: '0',
                   ),
+                  focusNode: _focusNode,
                   validator: (value) {
                     if (value.isEmpty) {
                       return notNull ? 'Amount cannot be empty' : null;
@@ -37,11 +42,6 @@ class AmountField extends StatelessWidget {
 
                     if (notNull && numVal == 0) {
                       return 'Amount should be greater than 0';
-                    }
-                  },
-                  onSaved: (String value) {
-                    if (onSaved != null) {
-                      onSaved(amountFromString(value));
                     }
                   },
                 )

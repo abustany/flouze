@@ -68,7 +68,7 @@ class PayedByMany extends AbstractPayedBy {
 
   @override
   String validate(int amount) {
-    final int total = amounts.values.reduce((acc, v) => acc + v);
+    final int total = amounts.values.reduce((acc, v) => acc + (v ?? 0));
 
     if (amount != total) {
       return 'Sum of "payed by"s does not match total amount';
@@ -121,7 +121,7 @@ class PayedForSplitCustom extends AbstractPayedFor {
 
   @override
   String validate(int amount) {
-    final int total = amounts.values.reduce((acc, v) => acc + v);
+    final int total = amounts.values.reduce((acc, v) => acc + (v ?? 0));
 
     if (amount != total) {
       return 'Sum of "payed by"s does not match total amount';
@@ -153,6 +153,14 @@ class AddTransactionPageState extends State<AddTransactionPage> {
     _payedBy = initPayedBy(this._members, transaction?.payedBy ?? List());
     _payedFor = initPayedFor(this._members, transaction?.payedFor ?? List());
     _replaces = transaction?.uuid ?? [];
+
+    _amountController.addListener(() {
+      try {
+        _amount = amountFromString(_amountController.text);
+      } catch (ignored) {
+        _amount = null;
+      }
+    });
   }
 
   static AbstractPayedBy initPayedBy(List<Person> members, List<PayedBy> payedBy) {
@@ -320,7 +328,6 @@ class AddTransactionPageState extends State<AddTransactionPage> {
                                 label: 'Amount',
                                 child: AmountField(
                                   key: Key('input-amount'),
-                                  onSaved: (value) => _amount = value,
                                   notNull: true,
                                   controller: _amountController
                                 ),
@@ -374,6 +381,8 @@ class AddTransactionPageState extends State<AddTransactionPage> {
     }
 
     formState.save();
+
+    _amount = _amount ?? 0;
 
     String payedByError = _payedBy.validate(_amount);
 

@@ -16,6 +16,15 @@ class PayedTable extends StatelessWidget {
     int i = -1;
     return members.map((person) {
       final int initialValue = amounts[person] ?? 0;
+      final controller = TextEditingController(text: amountToString(initialValue, zeroIsEmpty: true));
+      controller.addListener(() {
+        try {
+          amounts[person] = amountFromString(controller.text);
+        } catch (ignored) {
+          amounts[person] = null;
+        }
+      });
+
       i++;
 
       return TableRow(
@@ -23,8 +32,7 @@ class PayedTable extends StatelessWidget {
             Text(person.name),
             AmountField(
               key: subkey(parentKey, '-member-$i'),
-              initialValue: amountToString(initialValue, zeroIsEmpty: true),
-              onSaved: (value) => amounts[person] = value,
+              controller: controller,
             )
           ]
       );
