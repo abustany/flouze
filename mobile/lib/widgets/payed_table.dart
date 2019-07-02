@@ -15,7 +15,7 @@ class PayedTable extends StatelessWidget {
   static List<TableRow> payedRows(Key parentKey, List<Person> members, Map<Person, int> amounts) {
     int i = -1;
     return members.map((person) {
-      final int initialValue = amounts[person];
+      final int initialValue = amounts[person] ?? 0;
       i++;
 
       return TableRow(
@@ -23,8 +23,7 @@ class PayedTable extends StatelessWidget {
             Text(person.name),
             AmountField(
               key: subkey(parentKey, '-member-$i'),
-              initialValue: (initialValue ?? 0) == 0 ? '' : amountToString(
-                  initialValue),
+              initialValue: amountToString(initialValue, zeroIsEmpty: true),
               onSaved: (value) => amounts[person] = value,
             )
           ]

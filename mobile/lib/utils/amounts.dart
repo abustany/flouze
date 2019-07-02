@@ -14,7 +14,11 @@ int amountFromString(String text) {
   return numVal.truncate();
 }
 
-String amountToString(int amount) {
+String amountToString(int amount, {bool zeroIsEmpty = false}) {
+  if (zeroIsEmpty && amount == 0) {
+    return '';
+  }
+
   double val = amount.toDouble();
 
   for (int i = 0; i < AppConfig.currencyDecimals; i++) {

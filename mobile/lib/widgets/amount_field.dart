@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:flouze/utils/amounts.dart';
 import 'package:flouze/utils/config.dart';
-import 'package:flouze/widgets/currency_input_formatter.dart';
 
 class AmountField extends StatelessWidget {
   final String initialValue;
@@ -20,11 +19,11 @@ class AmountField extends StatelessWidget {
                 child: TextFormField(
                   initialValue: initialValue,
                   textAlign: TextAlign.end,
-                  keyboardType: TextInputType.numberWithOptions(signed: false, decimal: false),
-                  inputFormatters: [
-                    CurrencyInputFormatter(),
-                  ],
+                  keyboardType: TextInputType.numberWithOptions(signed: false, decimal: true),
                   controller: controller,
+                  decoration: const InputDecoration(
+                    hintText: '0',
+                  ),
                   validator: (value) {
                     if (value.isEmpty) {
                       return notNull ? 'Amount cannot be empty' : null;

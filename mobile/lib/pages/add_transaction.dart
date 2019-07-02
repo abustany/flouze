@@ -148,7 +148,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
   AddTransactionPageState(this._members, Transaction transaction) {
     _description = transaction?.label ?? '';
     _amount = transaction?.amount ?? 0;
-    _amountController.text = amountToString(_amount);
+    _amountController.text = amountToString(_amount, zeroIsEmpty: true);
     _date = (transaction != null) ? DateTime.fromMillisecondsSinceEpoch(1000*transaction.timestamp.toInt()) : DateTime.now();
     _payedBy = initPayedBy(this._members, transaction?.payedBy ?? List());
     _payedFor = initPayedFor(this._members, transaction?.payedFor ?? List());
