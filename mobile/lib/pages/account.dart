@@ -20,11 +20,13 @@ class AccountPage extends StatefulWidget {
   State<StatefulWidget> createState() => new AccountPageState(account: account);
 }
 
+enum PopupMenuAction { delete_account }
+
 class AccountPageState extends State<AccountPage> with SingleTickerProviderStateMixin {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   AccountSyncBloc _accountSyncBloc;
   TransactionsBloc _transactionsBloc;
-  StreamSubscription _notificationsSub;
+  StreamSubscription _transactionsSubscription;
   StreamSubscription _syncSubscription;
 
   final Account account;
@@ -41,11 +43,15 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
   void initState() {
     _accountSyncBloc = AccountSyncBloc();
     _transactionsBloc = TransactionsBloc(account);
-    _notificationsSub = _transactionsBloc.transactions.listen((state) {
+    _transactionsSubscription = _transactionsBloc.transactions.listen((state) {
       if (state is TransactionsSaveErrorState) {
         _scaffoldKey.currentState.showSnackBar(
             SnackBar(content: Text(state.error))
         );
+      }
+
+      if (state is TransactionsAccountDeletedState) {
+        Navigator.of(context).pop();
       }
     });
     _accountSyncBloc.loadAccountConfig(account.uuid);
@@ -80,7 +86,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
 
   @override
   void dispose() {
-    _notificationsSub.cancel();
+    _transactionsSubscription.cancel();
     _syncSubscription.cancel();
     _accountSyncBloc.dispose();
     _tabController.dispose();
@@ -104,6 +110,30 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
 
     if (newTransaction != null) {
       _transactionsBloc.saveTransaction(newTransaction);
+    }
+  }
+
+  void _deleteAccount() async {
+    var doDelete = await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Delete the account?'),
+          content: Text('All transactions will be lost. This action cannot be undone.'),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Cancel'),
+              onPressed: () { Navigator.of(context).pop(false); },
+            ),
+            FlatButton(
+              child: Text('Delete the account', style: TextStyle(color: Color(0xFFCC0000))),
+              onPressed: () { Navigator.of(context).pop(true); },
+            )
+          ],
+        )
+    ) ?? false;
+
+    if (doDelete) {
+      _transactionsBloc.deleteAccount();
     }
   }
 
@@ -157,6 +187,10 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
                       return _buildTransactionsLoaded(snapshot.data);
                     }
 
+                    if (snapshot.data is TransactionsAccountDeletedState) {
+                      return _buildTransactionsDeleting();
+                    }
+
                     if (snapshot.data is TransactionsLoadErrorState) {
                       return _buildTransactionsError(snapshot.data);
                     }
@@ -204,6 +238,8 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
     }
   }
 
+  Widget _buildTransactionsDeleting() => Center(child: CircularProgressIndicator(key: Key('transaction-list-deleting')));
+
   Widget _buildTransactionsError(TransactionsLoadErrorState state) => Center(child: Text(state.error));
 
   List<Widget> _buildAppBarActions(AccountSyncState state) {
@@ -230,6 +266,23 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
           onPressed: (state is AccountSyncLoadedState) ?
               () { _accountSyncBloc.share(account); } : null,
       ),
+      PopupMenuButton(
+        key: Key('action-others'),
+        onSelected: (PopupMenuAction action) {
+          switch (action) {
+            case PopupMenuAction.delete_account:
+              _deleteAccount();
+              break;
+          }
+        },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<PopupMenuAction>>[
+            const PopupMenuItem<PopupMenuAction>(
+              key: Key('action-delete-account'),
+              value: PopupMenuAction.delete_account,
+              child: Text('Delete account'),
+            )
+          ]
+      )
     ];
   }
 

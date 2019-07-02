@@ -48,6 +48,15 @@ class TransactionsBloc {
         });
   }
 
+  void deleteAccount() {
+    Services.getRepository()
+        .then((repo) { repo.deleteAccount(_account.uuid); })
+        .then((_) { _transactionsController.add(TransactionsAccountDeletedState()); })
+        .catchError((e) {
+          _transactionsController.add(TransactionsErrorState(e.toString()));
+        });
+  }
+
   Stream<TransactionsState> get transactions => _transactionsController.stream;
 
   void dispose() {
@@ -64,6 +73,8 @@ class TransactionsLoadedState extends TransactionsState {
   final List<Flouze.Transaction> transactions;
   final Map<List<int>, int> balance;
 }
+
+class TransactionsAccountDeletedState extends TransactionsState {}
 
 class TransactionsErrorState extends TransactionsState {
   TransactionsErrorState(this.error);

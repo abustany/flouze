@@ -170,6 +170,51 @@ void main() {
 
       final transactions = await listServerTransactions(account.label);
       expect(transactions.length, 5);
+
+      // Return to the account list page, where we started
+      await pressBackButton();
+    });
+  });
+
+  group('Create and delete an account', () {
+    FlutterDriver driver;
+
+    setUpAll(() async {
+      await enableReversePortForwarding();
+
+      // Connects to the app
+      driver = await FlutterDriver.connect();
+    });
+
+    tearDownAll(() async {
+      if (driver != null) {
+        // Closes the connection
+        driver.close();
+      }
+    });
+
+    test('create an account', () async {
+      await driver.waitForAbsent(find.byValueKey('account-list-loading'));
+      await driver.tap(find.byTooltip('Add a new account'));
+      await driver.tap(find.byValueKey('input-account-name'));
+      await driver.enterText('Delete me');
+      await driver.tap(find.byValueKey('member-0-input-name'));
+      await driver.enterText('Eric');
+      await driver.tap(find.byValueKey('member-add'));
+      await driver.tap(find.byValueKey('member-1-input-name'));
+      await driver.enterText('Mary');
+      await driver.tap(find.byValueKey('action-save-account'));
+      await driver.waitFor(find.byValueKey('account-1'));
+      await driver.waitFor(find.text('Delete me'));
+    });
+
+    test('delete the account', () async {
+      await driver.tap(find.text('Delete me'));
+      await driver.tap(find.byValueKey('action-others'));
+      await driver.tap(find.byValueKey('action-delete-account'));
+      await driver.tap(find.text('Delete the account'));
+      await driver.waitForAbsent(find.byValueKey('account-1'));
+      await driver.waitForAbsent(find.text('Delete me'));
     });
   });
 }
