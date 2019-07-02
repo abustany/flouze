@@ -67,7 +67,7 @@ script: |-
   travis_fold_start "install-rust-ios-toolchains"
   rustup target add aarch64-apple-ios
   rustup target add x86_64-apple-ios
-  cargo install --git https://github.com/abustany/cargo-lipo --branch normalize-lib-name cargo-lipo
+  which cargo-lipo || cargo install --git https://github.com/abustany/cargo-lipo --branch normalize-lib-name cargo-lipo
   travis_fold_end
 
   travis_fold_start "install-flutter-dependencies"
