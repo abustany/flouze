@@ -10,7 +10,9 @@ class SimplePayedBy extends StatelessWidget {
   final void Function() onSplit;
   final Person selected;
 
-  SimplePayedBy({Key key, @required this.members, this.onSelected, this.onSplit, this.selected}) : super(key: key);
+  SimplePayedBy({Key key, @required this.members, this.onSelected, this.onSplit, this.selected}) : super(key: key) {
+    members.sort((p1, p2) => p1.name.toLowerCase().compareTo(p2.name.toLowerCase()));
+  }
 
   @override
   Widget build(BuildContext context) {

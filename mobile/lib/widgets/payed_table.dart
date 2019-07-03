@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 
 import 'package:flouze_flutter/flouze_flutter.dart';
@@ -31,7 +33,7 @@ class PayedTableState extends State<PayedTable> {
   PayedTableState(this.key, this.members, this.amounts, this.onChanged);
 
   static Map<Person, TextEditingController> _makeControllers(List<Person> members, Map<Person, int> amounts, void Function(Person, int) onChanged) {
-    return Map.fromEntries(members.map((p) {
+    return SplayTreeMap.fromIterable(members.map((p) {
       final initialValue = amounts[p] ?? 0;
       final controller = TextEditingController(text: amountToString(initialValue, zeroIsEmpty: true));
 
@@ -49,7 +51,11 @@ class PayedTableState extends State<PayedTable> {
       });
 
       return MapEntry(p, controller);
-    }));
+    }),
+        key: (e) => e.key,
+        value: (e) => e.value,
+        compare: (p1, p2) => p1.name.toLowerCase().compareTo(p2.name.toLowerCase())
+    );
 
   }
 
