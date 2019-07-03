@@ -43,9 +43,10 @@ void main() {
       await driver.tap(find.byValueKey('account-0'));
 
       txcheck.expectedTransactions.add(TxDescription('Burgers', 20));
+      txcheck.expectedTransactions.add(TxDescription('Kites', 35));
       txcheck.expectedTransactions.add(TxDescription('Waffles', 15));
-      txcheck.expectedBalance['John'] = -3.5;
-      txcheck.expectedBalance['Bob'] = 3.5;
+      txcheck.expectedBalance['John'] = 31.5;
+      txcheck.expectedBalance['Bob'] = -31.5;
 
       await txcheck.checkTransactionsMatch();
       await txcheck.checkBalance();

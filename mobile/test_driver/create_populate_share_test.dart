@@ -90,6 +90,24 @@ void main() {
       await txcheck.checkBalance();
     });
 
+    test('add a transaction - payed for one person', () async {
+      await driver.tap(find.byTooltip('Add a new transaction'));
+      await driver.tap(find.byValueKey('input-description'));
+      await driver.enterText('Kites');
+      await driver.tap(find.byValueKey('input-amount'));
+      await driver.enterText('35');
+      await driver.tap(find.byValueKey('payed-by-member-0')); // Payed by John
+      await driver.tap(find.byValueKey('payed-for-member-0')); // Uncheck John
+      await driver.tap(find.byValueKey('action-save-transaction'));
+
+      txcheck.expectedTransactions.insert(0, TxDescription('Kites', 35));
+      txcheck.expectedBalance['John'] = 33.5;
+      txcheck.expectedBalance['Bob'] = -33.5;
+
+      await txcheck.checkTransactionsMatch();
+      await txcheck.checkBalance();
+    });
+
     test('add a transaction - payed by several people, split spending', () async {
       await driver.tap(find.byTooltip('Add a new transaction'));
       await driver.tap(find.byValueKey('input-description'));
@@ -109,35 +127,35 @@ void main() {
       await driver.tap(find.byValueKey('action-save-transaction'));
 
       txcheck.expectedTransactions.insert(0, TxDescription('Burgers', 20));
-      txcheck.expectedBalance['John'] = -7.5;
-      txcheck.expectedBalance['Bob'] = 7.5;
+      txcheck.expectedBalance['John'] = 27.5;
+      txcheck.expectedBalance['Bob'] = -27.5;
 
       await txcheck.checkTransactionsMatch();
       await txcheck.checkBalance();
     });
 
     test('edit a transaction', () async {
-      await driver.tap(find.byValueKey('transactions-2'));
+      await driver.tap(find.byValueKey('transactions-3'));
       await driver.tap(find.byValueKey('input-amount'));
       await driver.enterText('6');
       await driver.tap(find.byValueKey('action-save-transaction'));
 
-      txcheck.expectedTransactions[2].amount = 6;
-      txcheck.expectedBalance['John'] = -6.5;
-      txcheck.expectedBalance['Bob'] = 6.5;
+      txcheck.expectedTransactions[3].amount = 6;
+      txcheck.expectedBalance['John'] = 28.5;
+      txcheck.expectedBalance['Bob'] = -28.5;
 
       await txcheck.checkTransactionsMatch();
       await txcheck.checkBalance();
     });
 
     test('delete a transaction', () async {
-      await driver.tap(find.byValueKey('transactions-2'));
+      await driver.tap(find.byValueKey('transactions-3'));
       await driver.tap(find.byValueKey('action-delete-transaction'));
       await driver.tap(find.text('Delete'));
 
-      txcheck.expectedTransactions.removeAt(2);
-      txcheck.expectedBalance['John'] = -3.5;
-      txcheck.expectedBalance['Bob'] = 3.5;
+      txcheck.expectedTransactions.removeAt(3);
+      txcheck.expectedBalance['John'] = 31.5;
+      txcheck.expectedBalance['Bob'] = -31.5;
 
       await txcheck.checkTransactionsMatch();
       await txcheck.checkBalance();
@@ -169,7 +187,7 @@ void main() {
       expect(account.members.map((p) => p.name).toList()..sort(), ['Bob', 'John']);
 
       final transactions = await listServerTransactions(account.label);
-      expect(transactions.length, 5);
+      expect(transactions.length, 6);
 
       // Return to the account list page, where we started
       await pressBackButton();
