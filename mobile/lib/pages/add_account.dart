@@ -64,7 +64,7 @@ class AddAccountPageState extends State<AddAccountPage> {
         body: ListView(
           children: <Widget>[
             Padding(
-                padding: new EdgeInsets.all(16.0),
+                padding: new EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
                 child: new Center(
                     child: StreamBuilder<AddAccountState>(
                       stream: _bloc.account,
