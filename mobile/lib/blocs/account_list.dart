@@ -30,6 +30,7 @@ class AccountListBloc {
     Services.getRepository()
         .then((repo) => repo.listAccounts())
         .then((accounts) {
+          accounts.sort((a1, a2) => a1.label.toLowerCase().compareTo(a2.label.toLowerCase()));
           _accountsController.add(AccountListLoadedState(accounts));
         })
         .catchError((e) => _accountsController.add(AccountListErrorState("Error while loading accounts: ${e.toString()}")));
