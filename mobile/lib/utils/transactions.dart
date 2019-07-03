@@ -1,5 +1,7 @@
 import 'package:collection/collection.dart';
 
+import 'package:fixnum/fixnum.dart';
+
 import 'package:flouze_flutter/flouze_flutter.dart';
 
 final Function _listEquality = ListEquality().equals;
@@ -36,3 +38,9 @@ List<Transaction> flattenHistory(List<Transaction> transactions) {
 
 bool transactionHasId(Transaction transaction, List<int> id) =>
     _listEquality(transaction?.uuid, id);
+
+DateTime dateFromTimestamp(Int64 ts) =>
+  DateTime.fromMillisecondsSinceEpoch(1000*ts.toInt());
+
+Int64 timestampFromDate(DateTime dt) =>
+  Int64(dt.millisecondsSinceEpoch~/1000);
