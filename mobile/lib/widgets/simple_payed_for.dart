@@ -26,8 +26,8 @@ class SimplePayedFor extends StatelessWidget {
           key: subkey(key, '-member-$i'),
           selected: (selected ?? Set()).contains(person),
           onSelected: (selected) {
-            if (onChanged != null && selected) {
-              onChanged(this.selected.union(Set.from([person])));
+            if (onChanged != null) {
+              onChanged(selected ? this.selected.union({person}) : this.selected.difference({person}));
             }
           },
           avatar: Icon(Icons.account_circle),
