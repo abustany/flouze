@@ -39,6 +39,8 @@ class AddAccountBloc {
   Flouze.Account makeAccount() {
     final state = _accountController.value;
 
+    assert(state.isNameValid && state.members.isNotEmpty);
+
     return Flouze.Account.create()
       ..uuid = generateUuid()
       ..label = state.name

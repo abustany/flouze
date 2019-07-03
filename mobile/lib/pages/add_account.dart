@@ -56,7 +56,9 @@ class AddAccountPageState extends State<AddAccountPage> {
               key: Key('action-save-account'),
               icon: Icon(Icons.check),
               onPressed: () {
-                Navigator.of(context).pop(_bloc.makeAccount());
+                if (_formKey.currentState.validate()) {
+                  Navigator.of(context).pop(_bloc.makeAccount());
+                }
               }
             )
           ],
