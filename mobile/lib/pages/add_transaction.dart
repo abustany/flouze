@@ -164,7 +164,6 @@ class AddTransactionPageState extends State<AddTransactionPage> {
 
                           AmountField(
                             key: Key('input-amount'),
-                            notNull: true,
                             label: 'Amount',
                             controller: _amountController
                           ),
