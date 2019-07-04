@@ -44,10 +44,10 @@ jobs:
             flutter packages get
             ./l10n-merge-translations.sh
             flutter packages pub run build_runner build
-            ./build-apk-for-arch.sh android-arm
-            cp build/app/outputs/apk/release/app-release.apk ../artifacts/flouze-${RELEASE_NAME}-arm.apk
-            ./build-apk-for-arch.sh android-arm64
-            cp build/app/outputs/apk/release/app-release.apk ../artifacts/flouze-${RELEASE_NAME}-arm64.apk
+            # Only keep arm libs in the APK
+            rm -rf ../flouze_flutter/android/src/main/jniLibs/x*
+            flutter build apk
+            cp build/app/outputs/apk/release/app-release.apk ../artifacts/flouze-${RELEASE_NAME}.apk
       - store_artifacts:
           path: "artifacts"
       # Clean our own artifacts so that they don't clutter the cache
