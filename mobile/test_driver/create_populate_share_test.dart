@@ -58,7 +58,7 @@ void main() {
       await driver.enterText('Ice cream');
       await driver.tap(find.byValueKey('input-amount'));
       await driver.enterText('8');
-      await driver.tap(find.byValueKey('payed-by-member-1')); // Payed by John
+      await driver.tap(find.byValueKey('payed-by-member-0')); // Payed by Bob
       await driver.tap(find.byValueKey('action-save-transaction'));
 
       txcheck.expectedTransactions.add(TxDescription('Ice cream', 8));
@@ -77,9 +77,9 @@ void main() {
       await driver.enterText('15');
       await driver.tap(find.byValueKey('payed-by-split'));
       await driver.tap(find.byValueKey('payed-by-member-0'));
-      await driver.enterText('10');
-      await driver.tap(find.byValueKey('payed-by-member-1'));
       await driver.enterText('5');
+      await driver.tap(find.byValueKey('payed-by-member-1'));
+      await driver.enterText('10');
       await driver.tap(find.byValueKey('action-save-transaction'));
 
       txcheck.expectedTransactions.insert(0, TxDescription('Waffles', 15));
@@ -96,8 +96,8 @@ void main() {
       await driver.enterText('Kites');
       await driver.tap(find.byValueKey('input-amount'));
       await driver.enterText('35');
-      await driver.tap(find.byValueKey('payed-by-member-0')); // Payed by John
-      await driver.tap(find.byValueKey('payed-for-member-0')); // Uncheck John
+      await driver.tap(find.byValueKey('payed-by-member-1')); // Payed by John
+      await driver.tap(find.byValueKey('payed-for-member-1')); // Uncheck John
       await driver.tap(find.byValueKey('action-save-transaction'));
 
       txcheck.expectedTransactions.insert(0, TxDescription('Kites', 35));
@@ -116,14 +116,14 @@ void main() {
       await driver.enterText('20');
       await driver.tap(find.byValueKey('payed-by-split'));
       await driver.tap(find.byValueKey('payed-by-member-0'));
-      await driver.enterText('7');
-      await driver.tap(find.byValueKey('payed-by-member-1'));
       await driver.enterText('13');
+      await driver.tap(find.byValueKey('payed-by-member-1'));
+      await driver.enterText('7');
       await driver.tap(find.byValueKey('payed-for-split'));
       await driver.tap(find.byValueKey('payed-for-member-0'));
-      await driver.enterText('13');
-      await driver.tap(find.byValueKey('payed-for-member-1'));
       await driver.enterText('7');
+      await driver.tap(find.byValueKey('payed-for-member-1'));
+      await driver.enterText('13');
       await driver.tap(find.byValueKey('action-save-transaction'));
 
       txcheck.expectedTransactions.insert(0, TxDescription('Burgers', 20));
