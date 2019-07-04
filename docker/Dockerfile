@@ -41,7 +41,7 @@ ENV PATH="/home/ci/.local/flutter/bin:$PATH"
 RUN \
   echo yes | sdkmanager --install "build-tools;28.0.3" "platform-tools" "platforms;android-28" && \
   cd ~/.local && \
-  git clone https://github.com/flutter/flutter.git -b v1.6.3 && \
+  git clone https://github.com/flutter/flutter.git -b "v1.7.8+hotfix.2" && \
   flutter doctor
 
 RUN \

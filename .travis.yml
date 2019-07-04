@@ -80,7 +80,7 @@ script: |-
 
   travis_fold_start "install-flutter"
   [ -d ~/.local/flutter/.pub-cache ] && mv ~/.local/flutter/.pub-cache ~/.local/
-  git clone https://github.com/flutter/flutter.git -b v1.6.3 ~/.local/flutter
+  git clone https://github.com/flutter/flutter.git -b "v1.7.8+hotfix.2" ~/.local/flutter
   [ -d ~/.local/.pub-cache ] && mv ~/.local/.pub-cache ~/.local/flutter/
   # This fails with a broken pipe error for some reason...
   yes | flutter doctor --android-licenses >/dev/null || true
