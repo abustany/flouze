@@ -46,7 +46,20 @@ jobs:
             flutter packages pub run build_runner build
             # Only keep arm libs in the APK
             rm -rf ../flouze_flutter/android/src/main/jniLibs/x*
+
+            # Setup app signing
+            KEYSTORE_PATH=$(pwd)/keystore.jks
+            echo $KEYSTORE | base64 -di > $KEYSTORE_PATH
+
+            cat >android/key.properties <<EOF
+            storePassword=$KEYSTORE_PASSWORD
+            keyPassword=$KEYSTORE_PASSWORD
+            keyAlias=key
+            storeFile=$KEYSTORE_PATH
+            EOF
+
             flutter build apk
+
             cp build/app/outputs/apk/release/app-release.apk ../artifacts/flouze-${RELEASE_NAME}.apk
       - store_artifacts:
           path: "artifacts"
