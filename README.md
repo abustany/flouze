@@ -127,3 +127,8 @@ are stored in ARB files in `mobile/lib/l10n`, those ARB files are edited using
 [CrowdIn](https://crowdin.com/project/flouze) and (at the moment) imported
 manually into Git when changes happen. Contact me to get added to the project if
 you want to add new languages.
+
+## Signing releases
+
+Follow the [official Flutter documentation](https://flutter.dev/docs/deployment/android#signing-the-app)
+and add a `key.properties` file in `mobile/android/`.
