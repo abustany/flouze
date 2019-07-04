@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flouze_flutter/flouze_flutter.dart' as Flouze;
 
+import 'package:flouze/localization.dart';
 import 'package:flouze/pages/add_account.dart';
 import 'package:flouze/pages/account.dart';
 import 'package:flouze/blocs/account_list.dart';
@@ -41,10 +42,13 @@ class AccountListPageState extends State<AccountListPage> {
   void initState() {
     _bloc = AccountListBloc();
     _bloc.loadAccounts();
-    _notificationsSub = _bloc.notifications.listen((notification) {
-      _scaffoldKey.currentState.showSnackBar(
-          SnackBar(content: Text(notification))
-      );
+    _notificationsSub = _bloc.accounts.listen((state) {
+      if (state is AccountListSaveErrorState) {
+        final prefix = FlouzeLocalizations.of(context).accountListPageErrorSaving;
+        _scaffoldKey.currentState.showSnackBar(
+            SnackBar(content: Text('$prefix: ${state.message}'))
+        );
+      }
     });
 
     super.initState();
@@ -72,7 +76,7 @@ class AccountListPageState extends State<AccountListPage> {
               stream: _bloc.accounts,
               initialData: AccountListLoadingState(),
               builder: (context, snapshot) {
-                if (snapshot.data is AccountListLoadingState) {
+                if (snapshot.data is AccountListLoadingState || snapshot.data is AccountListSaveErrorState) {
                   return _buildLoading();
                 }
 
@@ -80,7 +84,7 @@ class AccountListPageState extends State<AccountListPage> {
                   return _buildLoaded(snapshot.data);
                 }
 
-                if (snapshot.data is AccountListErrorState) {
+                if (snapshot.data is AccountListLoadErrorState) {
                   return _buildError(snapshot.data);
                 }
               }
@@ -90,7 +94,7 @@ class AccountListPageState extends State<AccountListPage> {
       ),
       floatingActionButton: new FloatingActionButton(
         onPressed: _saveAccount,
-        tooltip: 'Add a new account',
+        tooltip: FlouzeLocalizations.of(context).accountListPageAddAccountButtonTooltip,
         child: new Icon(Icons.add),
       ),
     );
@@ -100,7 +104,7 @@ class AccountListPageState extends State<AccountListPage> {
 
   Widget _buildLoaded(AccountListLoadedState state) {
     if (state.accounts.isEmpty) {
-      return Center(child: Text("Get started by creating a new account"));
+      return Center(child: Text(FlouzeLocalizations.of(context).accountListPageEmptyStateText));
     } else {
       return ListView(
         shrinkWrap: true,
@@ -120,5 +124,8 @@ class AccountListPageState extends State<AccountListPage> {
     }
   }
 
-  Widget _buildError(AccountListErrorState state) => Text(state.error);
+  Widget _buildError(AccountListLoadErrorState state) {
+    final prefix = FlouzeLocalizations.of(context).accountListPageErrorLoading;
+    return Text('$prefix: ${state.message}');
+  }
 }

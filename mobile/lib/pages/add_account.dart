@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:flouze/blocs/add_account.dart';
+import 'package:flouze/localization.dart';
 import 'package:flouze/widgets/member_entry.dart';
 
 class AddAccountPage extends StatefulWidget {
@@ -50,10 +51,11 @@ class AddAccountPageState extends State<AddAccountPage> {
   Widget build(BuildContext context) {
     return new Scaffold(
         appBar: new AppBar(
-          title: new Text("Create an account"),
+          title: new Text(FlouzeLocalizations.of(context).addAccountPageTitle),
           actions: <Widget>[
             IconButton(
               key: Key('action-save-account'),
+              tooltip: FlouzeLocalizations.of(context).addAccountPageSaveAccountButtonTooltip,
               icon: Icon(Icons.check),
               onPressed: () {
                 if (_formKey.currentState.validate()) {
@@ -82,17 +84,18 @@ class AddAccountPageState extends State<AddAccountPage> {
                               textCapitalization: TextCapitalization.sentences,
                               controller: _nameController,
                               autovalidate: true,
-                              validator: (_) => snapshot.data.isNameValid ? null : 'Account name cannot be empty',
+                              validator: (_) =>
+                                snapshot.data.isNameValid ? null
+                                    : FlouzeLocalizations.of(context).addAccountPageValidationErrorAccountNameEmpty,
                               decoration: InputDecoration(
-                                labelText: "Title",
+                                  labelText: FlouzeLocalizations.of(context).addAccountPageTitleLabel,
                               ),
                             ),
 
                             MemberEntryWidget(
                               key: Key('member-0'),
                               controller: _membersController[0],
-                              hint: '',
-                              label: 'Your name',
+                              label: FlouzeLocalizations.of(context).addAccountPageAccountOwnerLabel,
                             ),
 
                             Column(
@@ -104,7 +107,7 @@ class AddAccountPageState extends State<AddAccountPage> {
                               margin: EdgeInsets.only(top: 8.0, left: 38.0),
                               child: RaisedButton(
                                 key: Key('member-add'),
-                                child: Text('Add member'),
+                                child: Text(FlouzeLocalizations.of(context).addAccountPageAddMemberButton),
                                 onPressed: () { _bloc.addMember(); }
                               )
                             ),
@@ -135,7 +138,7 @@ class AddAccountPageState extends State<AddAccountPage> {
         MemberEntryWidget(
           key: Key('member-$idx'),
           controller: _membersController[idx],
-          label: 'Member name',
+          label: FlouzeLocalizations.of(context).addAccountPageAccountMemberLabel,
           onRemove: () {
             _bloc.removeMember(idx);
             _removeMemberController(idx);

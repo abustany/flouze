@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:flouze_flutter/flouze_flutter.dart';
 
 import 'package:flouze/blocs/transaction.dart';
+import 'package:flouze/localization.dart';
 import 'package:flouze/utils/amounts.dart';
 import 'package:flouze/widgets/amount_field.dart';
 import 'package:flouze/widgets/simple_payed_by.dart';
@@ -89,6 +90,22 @@ class AddTransactionPageState extends State<AddTransactionPage> {
         ],
       );
 
+  String _errorLabel(ValidationError error) {
+    switch (error) {
+      case ValidationError.DescriptionEmpty:
+        return FlouzeLocalizations.of(context).addTransactionPageValidationErrorDescriptionEmpty;
+      case ValidationError.PayedByOneNoOneSelected:
+        return FlouzeLocalizations.of(context).addTransactionPageValidationErrorPayedByOneNoneSelected;
+      case ValidationError.PayedByManyAmountsNotMatch:
+        return FlouzeLocalizations.of(context).addTransactionPageValidationErrorPayedByManyAmountNotMatch;
+      case ValidationError.PayedForSplitEvenNoOneSelected:
+        return FlouzeLocalizations.of(context).addTransactionPageValidationErrorPayedSplitEvenNoneSelected;
+      case ValidationError.PayedForSplitCustomAmountsNotMatch:
+        return FlouzeLocalizations.of(context).addTransactionPageValidationErrorPayedForCustomAmountNotMatch;
+      default:
+        return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) =>
@@ -140,7 +157,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
     return Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
-          title: Text("Add a transaction"),
+          title: Text(FlouzeLocalizations.of(context).addTransactionPageTitle),
           actions: _actionButtons(state),
         ),
         body: Padding(
@@ -156,15 +173,17 @@ class AddTransactionPageState extends State<AddTransactionPage> {
                             key: Key('input-description'),
                             autofocus: true,
                             controller: _descriptionController,
-                            decoration: InputDecoration(labelText: 'Description'),
+                            decoration: InputDecoration(
+                                labelText: FlouzeLocalizations.of(context).addTransactionPageDescriptionLabel,
+                            ),
                             textCapitalization: TextCapitalization.sentences,
                             autovalidate: true,
-                            validator: (_) => state.label.error,
+                            validator: (_) => _errorLabel(state.label.error),
                           ),
 
                           AmountField(
                             key: Key('input-amount'),
-                            label: 'Amount',
+                            label: FlouzeLocalizations.of(context).addTransactionPageAmountLabel,
                             controller: _amountController
                           ),
 
@@ -172,25 +191,27 @@ class AddTransactionPageState extends State<AddTransactionPage> {
                               key: Key('input-date'),
                               onTap: () => _pickDate(context, state.date),
                               child: InputDecorator(
-                                  decoration: InputDecoration(labelText: 'Date'),
+                                  decoration: InputDecoration(
+                                      labelText: FlouzeLocalizations.of(context).addTransactionPageDateLabel,
+                                  ),
                                   child: Text(_dateFormat.format(state.date), textAlign: TextAlign.end),
                               )
                           ),
 
                           InputDecorator(
                             decoration: InputDecoration(
-                              labelText: 'Payed by',
+                              labelText: FlouzeLocalizations.of(context).addTransactionPagePayedByLabel,
                               border: InputBorder.none,
-                              errorText: state.payedBy.error,
+                              errorText: _errorLabel(state.payedBy.error),
                             ),
                             child: payedByWidget,
                           ),
 
                           InputDecorator(
                             decoration: InputDecoration(
-                              labelText: 'Payed for',
+                              labelText: FlouzeLocalizations.of(context).addTransactionPagePayedForLabel,
                               border: InputBorder.none,
-                              errorText: state.payedFor.error,
+                              errorText: _errorLabel(state.payedFor.error),
                             ),
                             child: payedForWidget,
                           ),
@@ -211,14 +232,17 @@ class AddTransactionPageState extends State<AddTransactionPage> {
             final doDelete = await showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  content: Text('Delete the transaction?'),
+                  content: Text(FlouzeLocalizations.of(context).addTransactionPageDeleteDialogTitle),
                   actions: <Widget>[
                     FlatButton(
-                      child: Text('Cancel'),
+                      child: Text(FlouzeLocalizations.of(context).confirmDialogCancelButton),
                       onPressed: () { Navigator.of(context).pop(false); },
                     ),
                     FlatButton(
-                      child: Text('Delete', style: TextStyle(color: Color(0xFFCC0000))),
+                      child: Text(
+                          FlouzeLocalizations.of(context).addTransactionPageDeleteDialogDeleteButton,
+                          style: TextStyle(color: Color(0xFFCC0000)),
+                      ),
                       onPressed: () { Navigator.of(context).pop(true); },
                     )
                   ],
@@ -233,6 +257,7 @@ class AddTransactionPageState extends State<AddTransactionPage> {
       IconButton(
         key: Key('action-save-transaction'),
         icon: Icon(Icons.check),
+        tooltip: FlouzeLocalizations.of(context).addTransactionPageSaveButtonTooltip,
         onPressed: () {
           if (_formKey.currentState.validate()) {
             _bloc.saveTransaction();

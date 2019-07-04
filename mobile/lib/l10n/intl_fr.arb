@@ -1,0 +1,454 @@
+{
+    "@@last_modified": "2019-07-04T18:50:31.801424",
+    "accountPageTransactionsTab": "Dépenses",
+    "@accountPageTransactionsTab": {
+        "description": "Title of the \"Transactions\" tab on the account page",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountPageBalanceTab": "Équilibre",
+    "@accountPageBalanceTab": {
+        "description": "Title of the \"Balance\" tab on the account page",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountPageSynchronizedSuccessfullySnack": "Tout est synchronisé!",
+    "@accountPageSynchronizedSuccessfullySnack": {
+        "description": "The snack shown after a synchronization succeeds",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountPageDeleteDialogTitle": "Supprimer le compte?",
+    "@accountPageDeleteDialogTitle": {
+        "description": "Title of the \"Delete account\" confirmation dialog",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountPageDeleteDialogBody": "Toutes les transactions seront perdues. Cette action ne peut être annulée.",
+    "@accountPageDeleteDialogBody": {
+        "description": "Body of the \"Delete account\" confirmation dialog",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountPageDeleteDialogDeleteButton": "Supprimer le compte",
+    "@accountPageDeleteDialogDeleteButton": {
+        "description": "Delete button label in \"Delete account\" confirmation dialog",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountPageAddTransactionButtonTooltip": "Ajouter une dépense",
+    "@accountPageAddTransactionButtonTooltip": {
+        "description": "Tooltip of the \"Add transaction\" button",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountPageSynchronizeButtonTooltip": "Synchroniser le compte",
+    "@accountPageSynchronizeButtonTooltip": {
+        "description": "Tooltip of the \"Synchronize\" button",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountPageShareButtonTooltip": "Partager le compte",
+    "@accountPageShareButtonTooltip": {
+        "description": "Tooltip of the \"Share\" button",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountPageDeleteActionLabel": "Supprimer le compte",
+    "@accountPageDeleteActionLabel": {
+        "description": "Label of the \"Delete account\" action",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountPageEmptyStateText": "Pas encore de dépenses...",
+    "@accountPageEmptyStateText": {
+        "description": "Background text of the account page when there are no transactions",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountPageErrorLoadingAccountConfig": "Erreur lors du chargement de la configuration du compte",
+    "@accountPageErrorLoadingAccountConfig": {
+        "description": "Error prefix when loading the account configuration failed",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountPageErrorSavingAccountConfig": "Erreur lors de l'enregistrement de la configuration du compte",
+    "@accountPageErrorSavingAccountConfig": {
+        "description": "Error prefix when saving the account configuration failed",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountPageErrorSharing": "Erreur lors du partage du compte",
+    "@accountPageErrorSharing": {
+        "description": "Error prefix when sharing an account failed",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountPageErrorSynchronizing": "Erreur lors de la synchronisation du compte",
+    "@accountPageErrorSynchronizing": {
+        "description": "Error prefix when sychronizing an account failed",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountClonePageLoading": "Récupération des informations du compte distant...",
+    "@accountClonePageLoading": {
+        "description": "Text shown while retrieving remote account information",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountClonePageAccountAlreadyExists": "Vous avez déjà le compte \"{name}\" sur votre appareil",
+    "@accountClonePageAccountAlreadyExists": {
+        "description": "Text shown when the account being imported is already present on the device",
+        "type": "text",
+        "placeholders": {
+            "name": {
+
+            }
+        }
+    },
+    "accountClonePageReadyToImport": "Prêt à importer le compte \"{name}\"",
+    "@accountClonePageReadyToImport": {
+        "description": "Text shown when the account is ready to be imported",
+        "type": "text",
+        "placeholders": {
+            "name": {
+
+            }
+        }
+    },
+    "accountClonePageImportButton": "Importer",
+    "@accountClonePageImportButton": {
+        "description": "Label of the import button",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountClonePageImporting": "Importation du compte \"{name}\"...",
+    "@accountClonePageImporting": {
+        "description": "Text shown while the account is importing",
+        "type": "text",
+        "placeholders": {
+            "name": {
+
+            }
+        }
+    },
+    "accountClonePageErrorPreparingImport": "Erreur lors de la préparation de l'importation",
+    "@accountClonePageErrorPreparingImport": {
+        "description": "Error prefix when preparing the import failed",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountClonePageErrorImport": "Erreur lors de l'importation",
+    "@accountClonePageErrorImport": {
+        "description": "Error prefix when the import failed",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountListPageAddAccountButtonTooltip": "Ajouter un compte",
+    "@accountListPageAddAccountButtonTooltip": {
+        "description": "Tooltip of the \"Add account\" button",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountListPageEmptyStateText": "Commencez par créer un compte",
+    "@accountListPageEmptyStateText": {
+        "description": "Background text of the account list page when there are no accounts",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountListPageErrorLoading": "Erreur lors du chargement des comptes",
+    "@accountListPageErrorLoading": {
+        "description": "Error prefix when loading the account list failed",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "accountListPageErrorSaving": "Erreur lors de l'enregistrement du compte",
+    "@accountListPageErrorSaving": {
+        "description": "Error prefix when saving an account failed",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addAccountPageTitle": "Créer un compte",
+    "@addAccountPageTitle": {
+        "description": "Title of the \"Add account\" page",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addAccountPageSaveAccountButtonTooltip": "Enregistrer le compte",
+    "@addAccountPageSaveAccountButtonTooltip": {
+        "description": "Tooltip of the \"Save account\" button",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addAccountPageValidationErrorAccountNameEmpty": "Le nom du compte ne peut pas être vide",
+    "@addAccountPageValidationErrorAccountNameEmpty": {
+        "description": "Validation error when an empty account name is given",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addAccountPageTitleLabel": "Nom",
+    "@addAccountPageTitleLabel": {
+        "description": "Label of the account title field",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addAccountPageAccountOwnerLabel": "Votre nom",
+    "@addAccountPageAccountOwnerLabel": {
+        "description": "Label of the account owner field",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addAccountPageAddMemberButton": "Ajouter un membre",
+    "@addAccountPageAddMemberButton": {
+        "description": "Label of the \"Add member\" button",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addAccountPageAccountMemberLabel": "Nom",
+    "@addAccountPageAccountMemberLabel": {
+        "description": "Label of an account member field",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addTransactionPageTitle": "Ajouter une dépense",
+    "@addTransactionPageTitle": {
+        "description": "Title of the \"Add a transaction\" page",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addTransactionPageDescriptionLabel": "Description",
+    "@addTransactionPageDescriptionLabel": {
+        "description": "Label of the description field",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addTransactionPageAmountLabel": "Montant",
+    "@addTransactionPageAmountLabel": {
+        "description": "Label of the amount field",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addTransactionPageDateLabel": "Date",
+    "@addTransactionPageDateLabel": {
+        "description": "Label of the date field",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addTransactionPagePayedByLabel": "Payé par",
+    "@addTransactionPagePayedByLabel": {
+        "description": "Label of the \"Payed by\" field",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addTransactionPagePayedForLabel": "Payé pour",
+    "@addTransactionPagePayedForLabel": {
+        "description": "Label of the \"Payed for\" field",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addTransactionPageDeleteDialogTitle": "Supprimer la dépense ?",
+    "@addTransactionPageDeleteDialogTitle": {
+        "description": "Title of the \"Delete transaction\" confirmation dialog",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addTransactionPageDeleteDialogDeleteButton": "Supprimer",
+    "@addTransactionPageDeleteDialogDeleteButton": {
+        "description": "Delete button label in \"Delete transaction\" confirmation dialog",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addTransactionPageSaveButtonTooltip": "Enregistrer la dépense",
+    "@addTransactionPageSaveButtonTooltip": {
+        "description": "Tooltip of the \"Save transaction\" button",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addTransactionPageValidationErrorDescriptionEmpty": "La description ne peut pas être vide",
+    "@addTransactionPageValidationErrorDescriptionEmpty": {
+        "description": "Validation error when the description is empty",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addTransactionPageValidationErrorPayedByOneNoneSelected": "Veuillez sélectionner la personne qui a payé",
+    "@addTransactionPageValidationErrorPayedByOneNoneSelected": {
+        "description": "Validation error when no paying person was selected",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addTransactionPageValidationErrorPayedByManyAmountNotMatch": "Les montants saisis ne correspondent pas au montant total",
+    "@addTransactionPageValidationErrorPayedByManyAmountNotMatch": {
+        "description": "Validation error when the entered amounts don't match the total amount",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addTransactionPageValidationErrorPayedSplitEvenNoneSelected": "Veuillez sélectionner au moins une personne",
+    "@addTransactionPageValidationErrorPayedSplitEvenNoneSelected": {
+        "description": "Validation error when no payed for person was selected",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "addTransactionPageValidationErrorPayedForCustomAmountNotMatch": "Les montants saisis ne correspondent pas au montant total",
+    "@addTransactionPageValidationErrorPayedForCustomAmountNotMatch": {
+        "description": "Validation error when the entered amounts don't match the total amount",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "amountFieldValidationErrorAmountEmpty": "Le montant ne peut pas être nul",
+    "@amountFieldValidationErrorAmountEmpty": {
+        "description": "Validation error when an empty amount is given",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "amountFieldValidationErrorAmountNotANumber": "Le montant n'est pas un nombre valide",
+    "@amountFieldValidationErrorAmountNotANumber": {
+        "description": "Validation error when an invalid amount is given",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "amountFieldValidationErrorAmountZero": "Le montant doit être plus que 0",
+    "@amountFieldValidationErrorAmountZero": {
+        "description": "Validation error when a null amount is given",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "memberEntryWidgetValidationErrorNameEmpty": "Le nom ne peut pas être vide",
+    "@memberEntryWidgetValidationErrorNameEmpty": {
+        "description": "Validation error when an empty member name is given",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "simplePayedBySplitButton": "Séparer...",
+    "@simplePayedBySplitButton": {
+        "description": "Label of the split button",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "simplePayedForAdvancedButton": "Avancé...",
+    "@simplePayedForAdvancedButton": {
+        "description": "Label of the advanced button",
+        "type": "text",
+        "placeholders": {
+
+        }
+    },
+    "transactionListOnBy": "Le {date} par {who}",
+    "@transactionListOnBy": {
+        "description": "Description line under the transaction title",
+        "type": "text",
+        "placeholders": {
+            "date": {
+
+            },
+            "who": {
+
+            }
+        }
+    },
+    "confirmDialogCancelButton": "Annuler",
+    "@confirmDialogCancelButton": {
+        "description": "Cancel button label in confirmation dialogs",
+        "type": "text",
+        "placeholders": {
+
+        }
+    }
+}

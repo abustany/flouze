@@ -3,8 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'package:sentry/sentry.dart';
 
+import 'package:flouze/localization.dart';
 import 'package:flouze/pages/account_clone.dart';
 import 'package:flouze/pages/account_list.dart';
 import 'package:flouze/utils/applinks.dart' as applinks;
@@ -112,6 +115,15 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       ),
       home: AccountListPage(),
       navigatorKey: _navigatorKey,
+      localizationsDelegates: [
+        const FlouzeLocalizationsDelegate(),
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: [
+        const Locale('en'),
+        const Locale('fr'),
+      ],
     );
   }
 }

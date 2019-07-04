@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:flouze/localization.dart';
 import 'package:flouze/utils/config.dart';
 
 class AmountField extends StatelessWidget {
@@ -30,17 +31,17 @@ class AmountField extends StatelessWidget {
         focusNode: _focusNode,
         validator: (value) {
           if (value.isEmpty) {
-            return notNull ? 'Amount cannot be empty' : null;
+            return notNull ? FlouzeLocalizations.of(context).amountFieldValidationErrorAmountEmpty : null;
           }
 
           final double numVal = double.tryParse(value.replaceFirst(String.fromCharCode(AppConfig.decimalSeparator), '.'));
 
           if (numVal == null) {
-            return 'Amount is not a valid number';
+            return FlouzeLocalizations.of(context).amountFieldValidationErrorAmountNotANumber;
           }
 
           if (notNull && numVal == 0) {
-            return 'Amount should be greater than 0';
+            return FlouzeLocalizations.of(context).amountFieldValidationErrorAmountZero;
           }
         },
       );

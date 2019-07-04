@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:flouze/localization.dart';
 import 'package:flouze/utils/keys.dart';
 
 class MemberEntryWidget extends StatelessWidget {
@@ -22,7 +23,8 @@ class MemberEntryWidget extends StatelessWidget {
             controller: controller,
             textCapitalization: TextCapitalization.words,
             autovalidate: true,
-            validator: (text) => text.isNotEmpty ? null : 'Member name cannot be empty',
+            validator: (text) =>
+              text.isNotEmpty ? null : FlouzeLocalizations.of(context).memberEntryWidgetValidationErrorNameEmpty,
           ),
         ),
         if (onRemove != null)

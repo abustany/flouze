@@ -11,8 +11,16 @@ import 'package:flouze/utils/amounts.dart';
 import 'package:flouze/utils/transactions.dart';
 import 'package:flouze/utils/uuid.dart' as UUID;
 
+enum ValidationError {
+  DescriptionEmpty,
+  PayedByOneNoOneSelected,
+  PayedByManyAmountsNotMatch,
+  PayedForSplitEvenNoOneSelected,
+  PayedForSplitCustomAmountsNotMatch,
+}
+
 abstract class AbstractPayedBy{
-  String validate(int amount);
+  ValidationError validate(int amount);
   List<Flouze.PayedBy> asPayedBy(int amount);
 }
 
@@ -35,9 +43,9 @@ class PayedByOne extends AbstractPayedBy {
   ];
 
   @override
-  String validate(int amount) {
+  ValidationError validate(int amount) {
     if (person == null) {
-      return 'Please select the person who paid';
+      return ValidationError.PayedByOneNoOneSelected;
     }
 
     return null;
@@ -69,11 +77,11 @@ class PayedByMany extends AbstractPayedBy {
       ).toList();
 
   @override
-  String validate(int amount) {
+  ValidationError validate(int amount) {
     final int total = amounts.isEmpty ? 0 : amounts.values.reduce((acc, v) => acc + (v ?? 0));
 
     if (amount != total) {
-      return 'Sum of "payed by"s does not match total amount';
+      return ValidationError.PayedByManyAmountsNotMatch;
     }
 
     return null;
@@ -81,7 +89,7 @@ class PayedByMany extends AbstractPayedBy {
 }
 
 abstract class AbstractPayedFor {
-  String validate(int amount); // Returns null if no error, error message else
+  ValidationError validate(int amount); // Returns null if no error, error message else
   Iterable<Flouze.Person> members();
   List<Flouze.PayedFor> asPayedFor(int amount);
 }
@@ -97,9 +105,9 @@ class PayedSplitEven extends AbstractPayedFor {
   }
 
   @override
-  String validate(int amount) {
+  ValidationError validate(int amount) {
     if (persons.isEmpty) {
-      return 'Please select at least one payment recipient';
+      return ValidationError.PayedForSplitEvenNoOneSelected;
     }
 
     return null;
@@ -143,11 +151,11 @@ class PayedForSplitCustom extends AbstractPayedFor {
       ).toList();
 
   @override
-  String validate(int amount) {
+  ValidationError validate(int amount) {
     final int total = amounts.isEmpty ? 0 : amounts.values.reduce((acc, v) => acc + (v ?? 0));
 
     if (amount != total) {
-      return 'Sum of "payed by"s does not match total amount';
+      return ValidationError.PayedForSplitCustomAmountsNotMatch;
     }
 
     return null;
@@ -156,12 +164,12 @@ class PayedForSplitCustom extends AbstractPayedFor {
 
 class ValidatedValue<T> {
   final T value;
-  final String error;
+  final ValidationError error;
 
   ValidatedValue._(this.value, this.error);
 
   factory ValidatedValue.ok(T value) => ValidatedValue._(value, null);
-  factory ValidatedValue.error(T value, String error) => ValidatedValue._(value, error);
+  factory ValidatedValue.error(T value, ValidationError error) => ValidatedValue._(value, error);
 }
 
 class TransactionBloc {
@@ -315,7 +323,7 @@ class TransactionBloc {
 class TransactionState {}
 
 ValidatedValue<String> _validateLabel(String label) =>
-  label.isNotEmpty ? ValidatedValue.ok(label) : ValidatedValue.error(label, 'Description cannot be empty');
+  label.isNotEmpty ? ValidatedValue.ok(label) : ValidatedValue.error(label, ValidationError.DescriptionEmpty);
 
 ValidatedValue<AbstractPayedBy> _validatePayedBy(AbstractPayedBy payedBy, int amount) =>
   ValidatedValue.error(payedBy, payedBy.validate(amount));

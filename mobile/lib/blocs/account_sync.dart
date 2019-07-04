@@ -9,6 +9,13 @@ import 'package:flouze/utils/account_config_store.dart' as AccountConfigStore;
 import 'package:flouze/utils/rpc_client.dart' as RpcClient;
 import 'package:flouze/utils/services.dart';
 
+enum AccountSyncError {
+  LoadAccountConfigError,
+  SaveAccountConfigError,
+  ShareError,
+  SynchronizationError,
+}
+
 class AccountSyncBloc {
   AccountSyncBloc();
 
@@ -21,7 +28,7 @@ class AccountSyncBloc {
           _syncController.add(AccountSyncLoadedState(accountConfig));
         })
         .catchError((e) {
-          _syncController.add(AccountSyncErrorState(e.toString()));
+          _syncController.add(AccountSyncErrorState(AccountSyncError.LoadAccountConfigError, e.toString()));
         });
   }
 
@@ -42,7 +49,7 @@ class AccountSyncBloc {
       (_syncController.value.runtimeType == AccountSyncLoadedState) ?
         (_syncController.value as AccountSyncLoadedState).accountConfig : null;
 
-  void share(Flouze.Account account) {
+  void share(Flouze.Account account, String Function(String uri) shareMessage) {
     final AccountConfig config = _getLoadedAccountConfig();
 
     if (config == null) {
@@ -54,11 +61,10 @@ class AccountSyncBloc {
       .then((_) {
         return shareAccountUri(account.uuid)
           .then((uri) {
-            Share.share('Get the Flouze app and share the account "${account.label}" with me!'
-                '\n\n$uri');
+            Share.share(shareMessage(uri));
           })
           .catchError((e) {
-            _syncController.add(AccountSyncErrorState("Error while sharing account: ${e.toString()}"));
+            _syncController.add(AccountSyncErrorState(AccountSyncError.ShareError, e.toString()));
             _syncController.add(AccountSyncLoadedState(config));
           });
       }).catchError((_) {});
@@ -77,7 +83,7 @@ class AccountSyncBloc {
     AccountConfigStore.saveAccountConfig(account.uuid, newAccountConfig)
       .then((_) => _syncController.add(AccountSyncLoadedState(newAccountConfig)))
       .catchError((e) {
-        _syncController.add(AccountSyncErrorState("Error while saving account config: ${e.toString()}"));
+        _syncController.add(AccountSyncErrorState(AccountSyncError.SaveAccountConfigError, e.toString()));
         _syncController.add(AccountSyncLoadedState(config));
       });
   }
@@ -99,7 +105,7 @@ class AccountSyncBloc {
         _syncController.add(AccountSyncLoadedState(newConfig));
       })
       .catchError((e) {
-        _syncController.add(AccountSyncErrorState('Error while synchronizing account: ${e.toString()}'));
+        _syncController.add(AccountSyncErrorState(AccountSyncError.SynchronizationError, e.toString()));
         _syncController.add(AccountSyncLoadedState(config));
         return Future.error(e);
       });
@@ -139,6 +145,7 @@ class AccountSyncSynchronizingState extends AccountSyncLoadedState {
 }
 
 class AccountSyncErrorState extends AccountSyncState {
-  AccountSyncErrorState(this.error);
-  final String error;
+  AccountSyncErrorState(this.errorKind, this.message);
+  final AccountSyncError errorKind;
+  final String message;
 }

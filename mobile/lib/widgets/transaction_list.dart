@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import 'package:flouze_flutter/flouze_flutter.dart';
 
+import 'package:flouze/localization.dart';
 import 'package:flouze/utils/account_members.dart';
 import 'package:flouze/utils/amounts.dart';
 import 'package:flouze/utils/config.dart';
@@ -31,6 +32,7 @@ class TransactionList extends StatelessWidget {
   Widget build(BuildContext context) {
     int transactionIndex = -1;
     final List<Widget> transactionWidgets = (transactions ?? []).map((tx) {
+      final String date = dateFormat.format(DateTime.fromMillisecondsSinceEpoch(1000*tx.timestamp.toInt()));
       final String payedBy = formatPayedBy(tx.payedBy);
 
       transactionIndex++;
@@ -43,7 +45,7 @@ class TransactionList extends StatelessWidget {
             Text('${amountToString(tx.amount)} ${AppConfig.currencySymbol}', key: subkey(key, '-$transactionIndex-amount'))
           ],
         ),
-        subtitle: Text('On ${dateFormat.format(DateTime.fromMillisecondsSinceEpoch(1000*tx.timestamp.toInt()))} by $payedBy'),
+        subtitle: Text(FlouzeLocalizations.of(context).transactionListOnBy(date, payedBy)),
         onTap: () {
           if (onTap != null) {
             onTap(tx);

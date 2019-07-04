@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flouze_flutter/flouze_flutter.dart';
 
+import 'package:flouze/localization.dart';
 import 'package:flouze/utils/keys.dart';
 
 class SimplePayedFor extends StatelessWidget {
@@ -46,7 +47,7 @@ class SimplePayedFor extends StatelessWidget {
               }
             },
             avatar: Icon(Icons.donut_small),
-            label: Text('Advanced...'))
+            label: Text(FlouzeLocalizations.of(context).simplePayedForAdvancedButton))
       ],
     );
   }

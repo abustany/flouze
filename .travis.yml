@@ -93,5 +93,6 @@ script: |-
 
   cd mobile
   flutter packages get
+  ./l10n-merge-translations.sh
   flutter packages pub run build_runner build
   flutter build ios --no-codesign

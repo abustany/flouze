@@ -6,6 +6,7 @@ import 'package:flouze_flutter/flouze_flutter.dart';
 
 import 'package:flouze/blocs/account_sync.dart';
 import 'package:flouze/blocs/transactions.dart';
+import 'package:flouze/localization.dart';
 import 'package:flouze/pages/add_transaction.dart';
 import 'package:flouze/widgets/transaction_list.dart';
 import 'package:flouze/widgets/sync_indicator.dart';
@@ -31,11 +32,8 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
 
   final Account account;
 
+  final List<Tab> _tabs = [null, null]; // Will be set in didChangeDependencies
   TabController _tabController;
-  final List<Tab> _tabs = [
-    Tab(key: Key('tab-transactions'),text: "Transactions"),
-    Tab(key: Key('tab-reports'), text: "Reports"),
-  ];
 
   AccountPageState({@required this.account});
 
@@ -61,13 +59,13 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
     _syncSubscription = _accountSyncBloc.sync.listen((state) {
       if (state is AccountSyncErrorState) {
         _scaffoldKey.currentState.showSnackBar(
-            SnackBar(content: Text(state.error))
+            SnackBar(content: Text(_syncErrorLabel(state)))
         );
       }
 
       if (state is AccountSyncLoadedState && wasSynchronizing) {
         _scaffoldKey.currentState.showSnackBar(
-            SnackBar(content: Text("Synchronized successfully!"))
+            SnackBar(content: Text(FlouzeLocalizations.of(context).accountPageSynchronizedSuccessfullySnack))
         );
 
         _transactionsBloc.loadTransactions();
@@ -82,6 +80,14 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
     _transactionsBloc.loadTransactions();
     _tabController = TabController(length: _tabs.length, vsync: this);
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    _tabs[0] = Tab(key: Key('tab-transactions'),text: FlouzeLocalizations.of(context).accountPageTransactionsTab);
+    _tabs[1] = Tab(key: Key('tab-reports'), text: FlouzeLocalizations.of(context).accountPageBalanceTab);
+
+    super.didChangeDependencies();
   }
 
   @override
@@ -117,15 +123,18 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
     var doDelete = await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Delete the account?'),
-          content: Text('All transactions will be lost. This action cannot be undone.'),
+          title: Text(FlouzeLocalizations.of(context).accountPageDeleteDialogTitle),
+          content: Text(FlouzeLocalizations.of(context).accountPageDeleteDialogBody),
           actions: <Widget>[
             FlatButton(
-              child: Text('Cancel'),
+              child: Text(FlouzeLocalizations.of(context).confirmDialogCancelButton),
               onPressed: () { Navigator.of(context).pop(false); },
             ),
             FlatButton(
-              child: Text('Delete the account', style: TextStyle(color: Color(0xFFCC0000))),
+              child: Text(
+                  FlouzeLocalizations.of(context).accountPageDeleteDialogDeleteButton,
+                  style: TextStyle(color: Color(0xFFCC0000))
+              ),
               onPressed: () { Navigator.of(context).pop(true); },
             )
           ],
@@ -217,7 +226,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
           ),
           floatingActionButton: new FloatingActionButton(
             onPressed: _addTransaction,
-            tooltip: 'Add a new transaction',
+            tooltip: FlouzeLocalizations.of(context).accountPageAddTransactionButtonTooltip,
             child: new Icon(Icons.add),
           ),
         )
@@ -227,7 +236,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
 
   Widget _buildTransactionsLoaded(TransactionsLoadedState state) {
     if (state.transactions.isEmpty) {
-      return Center(child: Text("No transactions yet..."));
+      return Center(child: Text(FlouzeLocalizations.of(context).accountPageEmptyStateText));
     } else {
       return TransactionList(
           key: Key('transactions'),
@@ -256,15 +265,16 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
       if (synchronized)
         IconButton(
           key: Key('action-sync-account'),
+          tooltip: FlouzeLocalizations.of(context).accountPageSynchronizeButtonTooltip,
           icon: (state is AccountSyncSynchronizingState) ? SyncIndicator() : Icon(Icons.sync),
           onPressed: (state is AccountSyncLoadedState) ?
               () { _accountSyncBloc.synchronize(account); } : null
         ),
       IconButton(
           key: Key('action-share-account'),
+        tooltip: FlouzeLocalizations.of(context).accountPageShareButtonTooltip,
           icon: Icon(Icons.share),
-          onPressed: (state is AccountSyncLoadedState) ?
-              () { _accountSyncBloc.share(account); } : null,
+          onPressed: (state is AccountSyncLoadedState) ? () { _accountSyncBloc.share(account, _shareMessage); } : null,
       ),
       PopupMenuButton(
         key: Key('action-others'),
@@ -276,10 +286,10 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
           }
         },
           itemBuilder: (BuildContext context) => <PopupMenuEntry<PopupMenuAction>>[
-            const PopupMenuItem<PopupMenuAction>(
+            PopupMenuItem<PopupMenuAction>(
               key: Key('action-delete-account'),
               value: PopupMenuAction.delete_account,
-              child: Text('Delete account'),
+              child: Text(FlouzeLocalizations.of(context).accountPageDeleteActionLabel),
             )
           ]
       )
@@ -296,4 +306,27 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
       );
 
   Widget _buildReportsError(TransactionsErrorState state) => Center(child: Text(state.error));
+
+  String _syncErrorLabel(AccountSyncErrorState state) {
+    String prefix;
+
+    switch (state.errorKind) {
+      case AccountSyncError.LoadAccountConfigError:
+        prefix = FlouzeLocalizations.of(context).accountPageErrorLoadingAccountConfig;
+        break;
+      case AccountSyncError.SaveAccountConfigError:
+        prefix = FlouzeLocalizations.of(context).accountPageErrorSavingAccountConfig;
+        break;
+      case AccountSyncError.ShareError:
+        prefix = FlouzeLocalizations.of(context).accountPageErrorSharing;
+        break;
+      case AccountSyncError.SynchronizationError:
+        prefix = FlouzeLocalizations.of(context).accountPageErrorSynchronizing;
+        break;
+    }
+
+    return '$prefix: ${state.message}';
+  }
+
+  String _shareMessage(String uri) => 'Get the Flouze app and share the account "${account.label}" with me!\n\n$uri';
 }

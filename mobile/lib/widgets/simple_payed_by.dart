@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flouze_flutter/flouze_flutter.dart';
 
+import 'package:flouze/localization.dart';
 import 'package:flouze/utils/keys.dart';
 
 class SimplePayedBy extends StatelessWidget {
@@ -45,7 +46,7 @@ class SimplePayedBy extends StatelessWidget {
               }
             },
             avatar: Icon(Icons.donut_small),
-            label: Text('Split...'))
+            label: Text(FlouzeLocalizations.of(context).simplePayedBySplitButton))
       ],
     );
   }

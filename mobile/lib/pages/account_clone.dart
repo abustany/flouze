@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:flouze/localization.dart';
 import 'package:flouze/blocs/account_clone.dart';
 
 class AccountClonePage extends StatefulWidget {
@@ -95,25 +96,28 @@ class AccountClonePageState extends State<AccountClonePage> {
     child: Column(
       children: <Widget>[
         CircularProgressIndicator(key: Key('account-clone-loading')),
-        Text('Retrieving remote account information...')
+        Text(FlouzeLocalizations.of(context).accountClonePageLoading)
       ]
     )
   );
 
   Widget _buildAlreadyExists(AccountCloneAlreadyExistsState state) => Center(
     child: Text(
-     'You already have the account "${state.remoteAccount.label}" on your device',
+      FlouzeLocalizations.of(context).accountClonePageAccountAlreadyExists(state.remoteAccount.label),
      key: Key('account-clone-already-exists')
    )
   );
 
   Widget _buildReady(AccountCloneReadyState state) => Column(
     children: <Widget>[
-      Text('Ready to import account ${state.remoteAccount.label}', key: Key('account-clone-ready-label')),
+      Text(
+          FlouzeLocalizations.of(context).accountClonePageReadyToImport(state.remoteAccount.label),
+          key: Key('account-clone-ready-label')
+      ),
       Center(
         child: RaisedButton(
           key: Key('account-clone-ready-import'),
-          child: Text('Import'),
+          child: Text(FlouzeLocalizations.of(context).accountClonePageImportButton),
           // FIXME: Allow picking meUuid here
           onPressed: () { _bloc.import(state.remoteAccount, null); }
         )
@@ -125,11 +129,27 @@ class AccountClonePageState extends State<AccountClonePage> {
     crossAxisAlignment: CrossAxisAlignment.center,
     children: <Widget>[
       CircularProgressIndicator(),
-      Text('Importing account ${state.remoteAccount.label}...', key: Key('account-clone-importing-label'))
+      Text(
+          FlouzeLocalizations.of(context).accountClonePageImporting(state.remoteAccount.label),
+          key: Key('account-clone-importing-label')
+      )
     ],
   );
 
-  Widget _buildError(AccountCloneErrorState state) => Center(
-    child: Text(state.error),
-  );
+  Widget _buildError(AccountCloneErrorState state) {
+    String prefix;
+
+    switch (state.errorKind) {
+      case AccountCloneError.ImportPreparationError:
+        prefix = FlouzeLocalizations.of(context).accountClonePageErrorPreparingImport;
+        break;
+      case AccountCloneError.ImportError:
+        prefix = FlouzeLocalizations.of(context).accountClonePageErrorImport;
+        break;
+    }
+
+    return Center(
+      child: Text('$prefix: ${state.message}'),
+    );
+  }
 }

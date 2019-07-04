@@ -72,8 +72,19 @@ beforehand). Once this is in place, the `build-openssl.sh` compiles OpenSSL for
 various Android architectures, and the `build-jni-libs.sh` script in the same
 directory builds the library for all targets.
 
-After the native libraries are built, the normal Flutter commands can be used
-from the `mobile/` folder to run/develop/debug the application.
+After the native libraries are built, the following commands can be used
+from the `mobile/` folder to run/develop/debug the application:
+
+```bash
+# Get the dependencies
+flutter packages get
+
+# Generate the Dart files with language translations
+./l10n-merge-translations.sh
+
+# Run the code generation
+flutter packages pub run build_runner build
+```
 
 ## Synchronization server
 
@@ -108,3 +119,11 @@ app. Remember, the server that will be contacted for the cloning is the
 The mobile application can be configured to report crashes to Sentry (for now in
 the Dart part only, the Rust part needs to be done). To do so, place your Sentry
 DSN in `mobile/assets/sentry_dsn.txt`, and rebuild the application.
+
+## Internationalization (i18n)
+
+Flouze is using Dart's `intl` package for internationalization. The translations
+are stored in ARB files in `mobile/lib/l10n`, those ARB files are edited using
+[CrowdIn](https://crowdin.com/project/flouze) and (at the moment) imported
+manually into Git when changes happen. Contact me to get added to the project if
+you want to add new languages.

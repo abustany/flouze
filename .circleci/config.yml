@@ -42,6 +42,7 @@ jobs:
             echo "$SHARE_SERVER_URI" > assets/share_server_uri.txt
             echo "$SYNC_SERVER_URI" > assets/sync_server_uri.txt
             flutter packages get
+            ./l10n-merge-translations.sh
             flutter packages pub run build_runner build
             ./build-apk-for-arch.sh android-arm
             cp build/app/outputs/apk/release/app-release.apk ../artifacts/flouze-${RELEASE_NAME}-arm.apk

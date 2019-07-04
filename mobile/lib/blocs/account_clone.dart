@@ -9,6 +9,11 @@ import 'package:flouze/utils/services.dart' as Services;
 import 'package:flouze/utils/uuid.dart' as UUID;
 import 'package:flouze_flutter/flouze_flutter.dart' as Flouze;
 
+enum AccountCloneError {
+  ImportPreparationError,
+  ImportError,
+}
+
 class AccountCloneBloc {
   var _accountsController = BehaviorSubject<AccountCloneState>();
 
@@ -32,7 +37,8 @@ class AccountCloneBloc {
           _accountsController.add(AccountCloneReadyState(remoteAccount));
         }
       })
-      .catchError((e) => _accountsController.add(AccountCloneErrorState("Error while preparing import: ${e.toString()}")));
+      .catchError((e) =>
+        _accountsController.add(AccountCloneErrorState(AccountCloneError.ImportPreparationError, e.toString())));
   }
 
   void import(Flouze.Account remoteAccount, List<int> meUuid) {
@@ -61,7 +67,7 @@ class AccountCloneBloc {
       return Flouze.Sync.cloneRemote(repository, client, remoteAccount.uuid);
     })
     .then((_) => _accountsController.add(AccountCloneDoneState()))
-    .catchError((e) => _accountsController.add(AccountCloneErrorState("Error while importing: ${e.toString()}")));
+    .catchError((e) => _accountsController.add(AccountCloneErrorState(AccountCloneError.ImportError, e.toString())));
   }
 
   Stream<AccountCloneState> get accounts => _accountsController.stream;
@@ -93,6 +99,7 @@ class AccountCloneCloningState extends AccountCloneState {
 class AccountCloneDoneState extends AccountCloneState {}
 
 class AccountCloneErrorState extends AccountCloneState{
-  AccountCloneErrorState(this.error);
-  final String error;
+  AccountCloneErrorState(this.errorKind, this.message);
+  final AccountCloneError errorKind;
+  final String message;
 }

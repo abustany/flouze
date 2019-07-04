@@ -9,7 +9,6 @@ import 'package:flouze_flutter/flouze_flutter.dart' as Flouze;
 
 class AccountListBloc {
   var _accountsController = BehaviorSubject<AccountListState>();
-  var _notificationController = StreamController<String>.broadcast();
 
   StreamSubscription<String> _accountEvents;
 
@@ -33,7 +32,7 @@ class AccountListBloc {
           accounts.sort((a1, a2) => a1.label.toLowerCase().compareTo(a2.label.toLowerCase()));
           _accountsController.add(AccountListLoadedState(accounts));
         })
-        .catchError((e) => _accountsController.add(AccountListErrorState("Error while loading accounts: ${e.toString()}")));
+        .catchError((e) => _accountsController.add(AccountListLoadErrorState(e.toString())));
   }
 
   void saveAccount(Flouze.Account account) {
@@ -54,18 +53,16 @@ class AccountListBloc {
       .then((_) => Services.getRepository())
       .then((repo) => repo.addAccount(account))
       .catchError((e) {
+        _accountsController.add(AccountListSaveErrorState(e.toString()));
         loadAccounts();
-        _notificationController.add("Error while adding account: ${e.toString()}");
       });
   }
 
   Stream<AccountListState> get accounts => _accountsController.stream;
-  Stream<String> get notifications => _notificationController.stream;
 
   void dispose() {
     _accountEvents.cancel();
     _accountsController.close();
-    _notificationController.close();
   }
 }
 
@@ -78,7 +75,15 @@ class AccountListLoadedState extends AccountListState {
   final List<Flouze.Account> accounts;
 }
 
-class AccountListErrorState extends AccountListState{
-  AccountListErrorState(this.error);
-  final String error;
+class AccountListErrorState extends AccountListState {
+  AccountListErrorState(this.message);
+  final String message;
+}
+
+class AccountListLoadErrorState extends AccountListErrorState{
+  AccountListLoadErrorState(String message) : super(message);
+}
+
+class AccountListSaveErrorState extends AccountListErrorState{
+  AccountListSaveErrorState(String message) : super(message);
 }
