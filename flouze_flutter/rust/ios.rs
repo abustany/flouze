@@ -134,6 +134,11 @@ pub extern fn flouze_json_rpc_client_create(url: *const c_char, error: *mut *mut
 }
 
 #[no_mangle]
+pub extern fn flouze_json_rpc_client_destroy(client: *mut c_void) {
+    unsafe { json_rpc_client_destroy(client) };
+}
+
+#[no_mangle]
 pub extern fn flouze_json_rpc_client_create_account(client: *mut c_void, account_data: *const u8, account_len: usize, error: *mut *mut c_char) {
     let account_data = unsafe { std::slice::from_raw_parts(account_data, account_len as usize) };
     let res = unsafe { json_rpc_client_create_account(client, &account_data) };

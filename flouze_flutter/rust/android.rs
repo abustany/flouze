@@ -120,6 +120,12 @@ pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_JsonRpcClien
 
 #[no_mangle]
 #[allow(non_snake_case)]
+pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_JsonRpcClient_destroy(env: JNIEnv, _class: JClass, instance: jlong) {
+    json_rpc_client_destroy(instance as *mut c_void);
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
 pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_JsonRpcClient_createAccount(env: JNIEnv, _class: JClass, instance: jlong, account: jbyteArray) {
     let account_bytes = convert_jbytearray!(env, account, ());
     ok_or_throw(&env, json_rpc_client_create_account(instance as *mut c_void, &account_bytes), ());

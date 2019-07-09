@@ -127,6 +127,11 @@ public class FlouzeAsyncTask extends AsyncTask<MethodCall, Void, FlouzeAsyncTask
                         pointerValue(call.argument("ptr")),
                         byteArrayValue(call.argument("accountId")))
                 );
+            case "JsonRpcClient::destroy":
+                JsonRpcClient.destroy(
+                        pointerValue(call.argument("ptr"))
+                );
+                return Result.ok(null);
             case "Sync::cloneRemote":
                 Sync.cloneRemote(
                         pointerValue(call.argument("repoPtr")),

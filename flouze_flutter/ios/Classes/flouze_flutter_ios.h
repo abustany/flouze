@@ -17,6 +17,7 @@ void flouze_sled_repository_list_transactions(void *repo, const uint8_t *account
 void flouze_sled_repository_add_transaction(void *repo, const uint8_t *account_id, size_t account_id_len, const uint8_t *tx, size_t tx_len, char **error);
 void flouze_sled_repository_get_balance(void *repo, const uint8_t *account_id, size_t account_id_len, uint8_t **balance, size_t *balance_len, char **error);
 void* flouze_json_rpc_client_create(const char *url, char **error);
+void flouze_json_rpc_client_destroy(void *client);
 void flouze_json_rpc_client_create_account(void *client, const uint8_t *account, size_t account_len, char **error);
 void flouze_json_rpc_client_get_account_info(void *client, const uint8_t *account_id, size_t account_id_len, uint8_t **account, size_t *account_len, char **error);
 void flouze_sync_clone_remote(void *repo, void *client, const uint8_t *account_id, size_t account_id_len, char **error);

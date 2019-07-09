@@ -159,6 +159,13 @@ static void returnByteArray(FlutterResult result, uint8_t *data, size_t data_len
     if (!error) {
       result(nil);
     }
+  } else if ([@"JsonRpcClient::destroy" isEqualToString:call.method]) {
+    NSDictionary *arguments = [call arguments];
+    void *client = getPointer(arguments, @"ptr");
+
+    flouze_json_rpc_client_destroy(client);
+
+    result(nil);
   } else if ([@"JsonRpcClient::getAccountInfo" isEqualToString:call.method]) {
     NSDictionary *arguments = [call arguments];
     void *client = getPointer(arguments, @"ptr");

@@ -156,6 +156,14 @@ fn json_rpc_client_create(url: &str) -> FFIResult<*mut c_void> {
     Client::new(url).map(leak_raw).map_err(|e| e.into())
 }
 
+unsafe fn json_rpc_client_destroy(client: *mut c_void) {
+    if client == std::ptr::null_mut() {
+        return;
+    }
+
+    let _client = Box::from_raw(client as *mut Client);
+}
+
 unsafe fn json_rpc_client_create_account(client: *mut c_void, account_data: &[u8]) -> FFIResult<()> {
     let client = &mut *(client as *mut Client);
     let account = model::Account::decode(account_data)?;
