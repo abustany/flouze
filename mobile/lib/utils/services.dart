@@ -10,7 +10,7 @@ import 'package:flouze_flutter/flouze_flutter.dart';
 
 import 'package:flouze/utils/uuid.dart' as UUID;
 
-Future<SledRepository> _repository;
+SledRepository _repository;
 Future<String> _cachedShareServerUri;
 Navigator _navigator;
 
@@ -33,8 +33,7 @@ Future<SledRepository> getRepository() async {
 
 void closeRepository() async {
   if (_repository != null) {
-    await (await _repository).close();
-    _repository = null;
+    _repository.close();
   }
 }
 

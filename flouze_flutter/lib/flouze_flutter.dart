@@ -19,36 +19,57 @@ class FlouzeFlutter {
   }
 }
 
+class _ClosablePointer {
+  Future<int> _ptr;
+
+  Future<int> Function() _factory;
+  void Function(int) _close;
+
+  _ClosablePointer(this._factory, this._close);
+
+  Future<int> get ptr {
+    if (_ptr == null) {
+      _ptr = _factory();
+    }
+
+    return _ptr;
+  }
+
+  void close() {
+    if (_ptr != null) {
+      _ptr.then((ptr) => _close(ptr));
+      _ptr = null;
+    }
+  }
+}
+
 class SledRepository {
-  int _ptr;
+  final _ClosablePointer _handle;
 
-  SledRepository._(this._ptr);
+  SledRepository._(this._handle);
 
-  static Future<SledRepository> temporary() async {
-    return SledRepository._(
-        await _channel.invokeMethod('SledRepository::temporary'));
-  }
+  static void Function(int) _closer() =>
+      (ptr) => _channel.invokeMethod('SledRepository::close', {'ptr': ptr});
 
-  static Future<SledRepository> fromFile(String path) async {
-    final Map<String, dynamic> params = {
-      'path': path,
-    };
+  static Future<int> Function() _temporaryFactory() =>
+      () => _channel.invokeMethod('SledRepository::temporary');
 
-    return SledRepository._(
-        await _channel.invokeMethod('SledRepository::fromFile', params));
-  }
+  static Future<int> Function() _fromFileFactory(String path) =>
+      () => _channel.invokeMethod('SledRepository::fromFile', {'path': path});
 
-  Future<void> close() async {
-    final Map<String, dynamic> params = {
-      'ptr': _ptr,
-    };
+  factory SledRepository.temporary() =>
+    SledRepository._(_ClosablePointer(_temporaryFactory(), _closer()));
 
-    await _channel.invokeMethod('SledRepository::close', params);
+  factory SledRepository.fromFile(String path) =>
+    SledRepository._(_ClosablePointer(_fromFileFactory(path), _closer()));
+
+  void close() {
+    _handle.close();
   }
 
   Future<void> addAccount(Account account) async {
     final Map<String, dynamic> params = {
-      'ptr': _ptr,
+      'ptr': await _handle.ptr,
       'account': account.writeToBuffer(),
     };
 
@@ -57,7 +78,7 @@ class SledRepository {
 
   Future<void> deleteAccount(List<int> accountId) async {
     final Map<String, dynamic> params = {
-      'ptr': _ptr,
+      'ptr': await _handle.ptr,
       'accountId': Uint8List.fromList(accountId),
     };
 
@@ -66,7 +87,7 @@ class SledRepository {
 
   Future<List<Account>> listAccounts() async {
     final Map<String, dynamic> params = {
-      'ptr': _ptr,
+      'ptr': await _handle.ptr,
     };
 
     return _channel
@@ -76,7 +97,7 @@ class SledRepository {
 
   Future<List<Transaction>> listTransactions(List<int> accountId) async {
     final Map<String, dynamic> params = {
-      'ptr': _ptr,
+      'ptr': await _handle.ptr,
       'accountId': Uint8List.fromList(accountId),
     };
 
@@ -88,7 +109,7 @@ class SledRepository {
   Future<void> addTransaction(
       List<int> accountId, Transaction transaction) async {
     final Map<String, dynamic> params = {
-      'ptr': _ptr,
+      'ptr': await _handle.ptr,
       'accountId': Uint8List.fromList(accountId),
       'transaction': transaction.writeToBuffer(),
     };
@@ -98,7 +119,7 @@ class SledRepository {
 
   Future<Map<List<int>, int>> getBalance(List<int> accountId) async {
     final Map<String, dynamic> params = {
-      'ptr': _ptr,
+      'ptr': await _handle.ptr,
       'accountId': Uint8List.fromList(accountId),
     };
 
@@ -110,24 +131,22 @@ class SledRepository {
 }
 
 class JsonRpcClient {
-  int _ptr;
+  final _ClosablePointer _handle;
 
-  JsonRpcClient._(this._ptr);
+  JsonRpcClient._(this._handle);
 
-  static Future<JsonRpcClient> create(String url) async {
-    final Map<String, dynamic> params = {
-      'url': url,
-    };
+  static Future<int> Function() _urlFactory(String url) =>
+          () => _channel.invokeMethod('JsonRpcClient::create', {'url': url});
 
-    print('Creating API client with URL "$url"');
+  static void Function(int) _closer() =>
+          (ptr) => _channel.invokeMethod('JsonRpcClient::destroy', {'ptr': ptr});
 
-    return JsonRpcClient._(
-        await _channel.invokeMethod('JsonRpcClient::create', params));
-  }
+  factory JsonRpcClient.create(String url) =>
+      JsonRpcClient._(_ClosablePointer(_urlFactory(url), _closer()));
 
   Future<void> createAccount(Account account) async {
     final Map<String, dynamic> params = {
-      'ptr': _ptr,
+      'ptr': await _handle.ptr,
       'account': account.writeToBuffer(),
     };
 
@@ -136,7 +155,7 @@ class JsonRpcClient {
 
   Future<Account> getAccountInfo(List<int> accountId) async {
     final Map<String, dynamic> params = {
-      'ptr': _ptr,
+      'ptr': await _handle.ptr,
       'accountId': Uint8List.fromList(accountId),
     };
 
@@ -150,8 +169,8 @@ class Sync {
   static Future<void> cloneRemote(SledRepository repository,
       JsonRpcClient client, List<int> accountId) async {
     final Map<String, dynamic> params = {
-      'repoPtr': repository._ptr,
-      'remotePtr': client._ptr,
+      'repoPtr': await repository._handle.ptr,
+      'remotePtr': await client._handle.ptr,
       'accountId': Uint8List.fromList(accountId),
     };
 
@@ -161,8 +180,8 @@ class Sync {
   static Future<void> sync(SledRepository repository, JsonRpcClient client,
       List<int> accountId) async {
     final Map<String, dynamic> params = {
-      'repoPtr': repository._ptr,
-      'remotePtr': client._ptr,
+      'repoPtr': await repository._handle.ptr,
+      'remotePtr': await client._handle.ptr,
       'accountId': Uint8List.fromList(accountId),
     };
 
