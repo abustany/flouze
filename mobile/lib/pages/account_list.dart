@@ -110,7 +110,8 @@ class AccountListPageState extends State<AccountListPage> {
     } else {
       return ListView(
         shrinkWrap: true,
-        children: state.accounts.asMap().map((idx, account) =>
+        children: [
+          ...state.accounts.asMap().map((idx, account) =>
             MapEntry(
                 idx,
                 ListTile(
@@ -121,7 +122,12 @@ class AccountListPageState extends State<AccountListPage> {
                       _openAccount(account);
                     })
             )
-        ).values.toList(),
+          ).values.toList(),
+          ListTile(
+              enabled: false,
+              title: Container(height: 32,)
+          )
+        ]
       );
     }
   }

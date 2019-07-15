@@ -56,7 +56,13 @@ class TransactionList extends StatelessWidget {
 
     return ListView(
       shrinkWrap: false,
-      children: transactionWidgets,
+      children: [
+        ...transactionWidgets,
+        ListTile(
+          enabled: false,
+          title: Container(height: 32,)
+        )
+      ],
     );
   }
 }
