@@ -87,6 +87,8 @@ class AccountListPageState extends State<AccountListPage> {
                 if (snapshot.data is AccountListLoadErrorState) {
                   return _buildError(snapshot.data);
                 }
+
+                return null;
               }
             )
           )

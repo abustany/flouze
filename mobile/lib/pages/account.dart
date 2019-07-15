@@ -203,6 +203,8 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
                     if (snapshot.data is TransactionsLoadErrorState) {
                       return _buildTransactionsError(snapshot.data);
                     }
+
+                    return null;
                   }
                 ),
                 StreamBuilder<TransactionsState>(
@@ -220,6 +222,8 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
                     if (snapshot.data is TransactionsErrorState) {
                       return _buildReportsError(snapshot.data);
                     }
+
+                    return null;
                   }
                 ),
               ]
