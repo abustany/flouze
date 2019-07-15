@@ -8,6 +8,8 @@ import 'package:flouze/blocs/account_sync.dart';
 import 'package:flouze/blocs/transactions.dart';
 import 'package:flouze/localization.dart';
 import 'package:flouze/pages/add_transaction.dart';
+import 'package:flouze/utils/amounts.dart';
+import 'package:flouze/utils/config.dart';
 import 'package:flouze/widgets/transaction_list.dart';
 import 'package:flouze/widgets/sync_indicator.dart';
 import 'package:flouze/widgets/reports.dart';
@@ -233,6 +235,35 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
             tooltip: FlouzeLocalizations.of(context).accountPageAddTransactionButtonTooltip,
             child: new Icon(Icons.add),
           ),
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor,
+                boxShadow: kElevationToShadow[6],
+            ),
+            height: 48,
+            child: Padding(
+              padding: EdgeInsets.all(12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  StreamBuilder<TransactionsState>(
+                    stream: _transactionsBloc.transactions,
+                    initialData: TransactionsLoadingState(),
+                    builder: (context, snapshot) {
+                      final totalAmount = (snapshot.data is TransactionsLoadedState) ?
+                        (snapshot.data as TransactionsLoadedState).totalAmount : 0;
+
+                      return Text(
+                        FlouzeLocalizations.of(context).accountPageTotalAmount(amountToString(totalAmount), AppConfig.currencySymbol),
+                        key: Key('total-amount'),
+                        style: Theme.of(context).accentTextTheme.body2,
+                      );
+                    }
+                  )
+                ],
+              ),
+            ),
+          )
         )
     );
 

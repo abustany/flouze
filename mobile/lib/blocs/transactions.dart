@@ -69,9 +69,11 @@ class TransactionsState {}
 class TransactionsLoadingState extends TransactionsState {}
 
 class TransactionsLoadedState extends TransactionsState {
-  TransactionsLoadedState(this.transactions, this.balance);
+  TransactionsLoadedState(this.transactions, this.balance)
+    : totalAmount = transactions.isEmpty ? 0 : transactions.map((t) => t.amount).reduce((a, b) => a + b);
   final List<Flouze.Transaction> transactions;
   final Map<List<int>, int> balance;
+  final int totalAmount;
 }
 
 class TransactionsAccountDeletedState extends TransactionsState {}

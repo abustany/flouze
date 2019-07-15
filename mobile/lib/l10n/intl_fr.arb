@@ -1,5 +1,5 @@
 {
-    "@@last_modified": "2019-07-04T18:50:31.801424",
+    "@@last_modified": "2019-07-15T17:51:13.684367",
     "accountPageTransactionsTab": "Dépenses",
     "@accountPageTransactionsTab": {
         "description": "Title of the \"Transactions\" tab on the account page",
@@ -86,6 +86,19 @@
         "type": "text",
         "placeholders": {
 
+        }
+    },
+    "accountPageTotalAmount": "Total : {amount} {currency}",
+    "@accountPageTotalAmount": {
+        "description": "Text in the bottom bar showing the total amount spent",
+        "type": "text",
+        "placeholders": {
+            "amount": {
+
+            },
+            "currency": {
+
+            }
         }
     },
     "accountPageErrorLoadingAccountConfig": "Erreur lors du chargement de la configuration du compte",

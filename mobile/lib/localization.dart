@@ -90,6 +90,13 @@ class FlouzeLocalizations {
     desc: 'Background text of the account page when there are no transactions',
   );
 
+  String accountPageTotalAmount(String amount, String currency) => Intl.message(
+    'Total: $amount $currency',
+    name: 'accountPageTotalAmount',
+    desc: 'Text in the bottom bar showing the total amount spent',
+    args: [amount, currency],
+  );
+
   String get accountPageErrorLoadingAccountConfig => Intl.message(
     'Error while loading account configuration',
     name: 'accountPageErrorLoadingAccountConfig',

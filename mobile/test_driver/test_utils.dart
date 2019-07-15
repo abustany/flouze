@@ -59,6 +59,11 @@ class TransactionCheck {
 
     // Check that we don't have more transactions than expected
     await driver.waitForAbsent(find.byValueKey('transactions-${expectedTransactions.length}'));
+
+    // Check that the total matches
+    final expectedTotal = expectedTransactions.isEmpty ? 0 : expectedTransactions.map((t) => t.amount).reduce((a, b) => a + b);
+    final expectedTotalText = 'Total: ${amountToString(amountFromString(expectedTotal.toString()))} ${AppConfig.currencySymbol}';
+    expect(await driver.getText(find.byValueKey('total-amount')), equals(expectedTotalText));
   }
 }
 
