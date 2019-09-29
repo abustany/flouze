@@ -230,6 +230,32 @@ pub fn get_child_transactions(
     Ok(transactions)
 }
 
+#[macro_use]
+pub mod testmacros {
+    #[macro_export]
+    macro_rules! repository_test {
+        ($name: ident, $factory: expr) => {
+            #[test]
+            fn $name() {
+                let mut repo = $factory();
+
+                use repository::tests;
+                tests::$name(&mut repo);
+            }
+        };
+    }
+
+    #[macro_export]
+    macro_rules! repository_tests {
+        ($factory: expr) => {
+            ::repository_test!(test_account_crud, $factory);
+            ::repository_test!(test_transaction_insert, $factory);
+            ::repository_test!(test_transaction_chain, $factory);
+            ::repository_test!(test_balance, $factory);
+        };
+    }
+}
+
 #[cfg(test)]
 pub mod tests {
     use std::fmt::Debug;

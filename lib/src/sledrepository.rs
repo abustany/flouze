@@ -166,30 +166,5 @@ fn tx_key(account_id: &[u8], tx_id: &[u8]) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::repository::tests;
-    use super::*;
-
-    #[test]
-    fn test_account_crud() {
-        let mut repo = SledRepository::temporary().unwrap();
-        tests::test_account_crud(&mut repo);
-    }
-
-    #[test]
-    fn test_transaction_insert() {
-        let mut repo = SledRepository::temporary().unwrap();
-        tests::test_transaction_insert(&mut repo);
-    }
-
-    #[test]
-    fn test_transaction_chain() {
-        let mut repo = SledRepository::temporary().unwrap();
-        tests::test_transaction_chain(&mut repo);
-    }
-
-    #[test]
-    fn test_balance() {
-        let mut repo = SledRepository::temporary().unwrap();
-        tests::test_balance(&mut repo);
-    }
+    ::repository_tests!(|| ::sledrepository::SledRepository::temporary().unwrap());
 }
