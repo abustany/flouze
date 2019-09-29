@@ -53,13 +53,13 @@ fn rebase_local_transactions(
         rebase_transactions(local, &account, &remote_transactions.last().unwrap().uuid)?;
     let latest_id = rebased_transactions
         .last()
-        .or(remote_transactions.last())
+        .or_else(|| remote_transactions.last())
         .map(|tx| tx.uuid.clone())
         .unwrap();
     let latest_synchronized_id = rebased_transactions
         .first()
         .map(|tx| tx.parent.clone())
-        .unwrap_or(remote_transactions.last().unwrap().uuid.clone());
+        .unwrap_or_else(|| remote_transactions.last().unwrap().uuid.clone());
 
     for tx in remote_transactions {
         debug!(
@@ -120,7 +120,7 @@ fn check_transaction_id_uniqueness(
         }
     }
 
-    return Ok(());
+    Ok(())
 }
 
 pub fn sync(
@@ -138,7 +138,7 @@ pub fn sync(
     for tx in get_transaction_chain(local, &account) {
         let tx = tx?;
 
-        if &tx.uuid == &account.latest_synchronized_transaction {
+        if tx.uuid == account.latest_synchronized_transaction {
             break;
         }
 
@@ -200,7 +200,7 @@ fn rebase_transactions(
     for tx in get_transaction_chain(repo, account) {
         let tx = tx?;
 
-        if &tx.uuid == &account.latest_synchronized_transaction {
+        if tx.uuid == account.latest_synchronized_transaction {
             break;
         }
 

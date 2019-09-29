@@ -6,9 +6,9 @@ use super::*;
 fn forward_error<T>(res: &FFIResult<T>, c_err: *mut *mut c_char) {
     if !c_err.is_null() {
         unsafe {
-            *c_err = match res {
-                &Ok(_) => std::ptr::null_mut(),
-                &Err(ref e) => CString::new(e.as_ref()).unwrap().into_raw(),
+            *c_err = match *res {
+                Ok(_) => std::ptr::null_mut(),
+                Err(ref e) => CString::new(e.as_ref()).unwrap().into_raw(),
             }
         }
     }

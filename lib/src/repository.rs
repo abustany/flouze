@@ -49,7 +49,7 @@ impl<'a> TransactionChain<'a> {
         id: &model::TransactionId,
     ) -> TransactionChain<'a> {
         TransactionChain {
-            repo: repo,
+            repo,
             account_id: account_id.to_owned(),
             id: id.to_owned(),
         }
@@ -66,7 +66,7 @@ impl<'a> Iterator for TransactionChain<'a> {
 
         let tx = match self.repo.get_transaction(&self.account_id, &self.id) {
             Err(e) => {
-                return Some(Err(e.into()));
+                return Some(Err(e));
             }
             Ok(tx) => tx,
         };
@@ -99,7 +99,7 @@ pub fn check_chain_consistency(transactions: &[&model::Transaction]) -> bool {
         base = &tx.uuid;
     }
 
-    return true;
+    true
 }
 
 fn update_balance(
@@ -109,15 +109,15 @@ fn update_balance(
     factor: i64,
 ) {
     for p in payed_by {
-        balance
-            .get_mut(&p.person)
-            .map(|b| *b += p.amount as i64 * factor);
+        if let Some(b) = balance.get_mut(&p.person) {
+            *b += i64::from(p.amount) * factor;
+        }
     }
 
     for p in payed_for {
-        balance
-            .get_mut(&p.person)
-            .map(|b| *b -= p.amount as i64 * factor);
+        if let Some(b) = balance.get_mut(&p.person) {
+            *b -= i64::from(p.amount) * factor;
+        }
     }
 }
 
@@ -129,7 +129,7 @@ fn get_first_non_deleted_ancestor(
     let mut cur = deleted;
 
     loop {
-        if cur.replaces.len() == 0 {
+        if cur.replaces.is_empty() {
             return Err(errors::ErrorKind::NoSuchTransaction(cur.replaces.clone()).into());
         }
 
@@ -157,7 +157,7 @@ pub fn get_balance(
     for tx in chain {
         let tx = tx?;
 
-        if tx.replaces.len() > 0 || tx.deleted {
+        if !tx.replaces.is_empty() || tx.deleted {
             if !tx.deleted {
                 update_balance(&mut balance, &tx.payed_by, &tx.payed_for, 1);
             }
@@ -192,7 +192,7 @@ pub fn receive_transactions(
     }
 
     for tx in transactions {
-        repo.add_transaction(&account.uuid, tx.clone())?;
+        repo.add_transaction(&account.uuid, &model::Transaction::clone(tx))?;
     }
 
     repo.set_latest_transaction(&account.uuid, &transactions.last().unwrap().uuid)?;

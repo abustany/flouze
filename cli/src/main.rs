@@ -203,7 +203,7 @@ fn run() -> Result<()> {
         Command::AddAccount { label, members, id } => {
             let mut store = SledRepository::new(&opt.file)?;
 
-            if members.len() == 0 {
+            if members.is_empty() {
                 bail!("We need at least one member in the account");
             }
 
@@ -222,14 +222,14 @@ fn run() -> Result<()> {
 
             let account = model::Account {
                 uuid: account_id,
-                label: label,
+                label,
                 latest_transaction: vec![],
                 latest_synchronized_transaction: vec![],
                 members: members
                     .into_iter()
                     .map(|name| model::Person {
                         uuid: model::generate_person_id(),
-                        name: name,
+                        name,
                     })
                     .collect(),
             };
@@ -317,14 +317,14 @@ fn run() -> Result<()> {
             let tx = model::Transaction {
                 uuid: model::generate_transaction_id(),
                 parent: account.latest_transaction.clone(),
-                amount: amount,
+                amount,
                 payed_by: vec![model::PayedBy {
                     person: member,
                     amount: amount,
                 }],
-                payed_for: payed_for,
-                label: label,
-                timestamp: timestamp,
+                payed_for,
+                label,
+                timestamp,
                 deleted: false,
                 replaces: vec![],
             };
@@ -426,11 +426,11 @@ fn run() -> Result<()> {
             members,
             id,
         } => {
-            if remote_address.len() == 0 {
+            if remote_address.is_empty() {
                 bail!("No remote address specified");
             }
 
-            if members.len() == 0 {
+            if members.is_empty() {
                 bail!("We need at least one member in the account");
             }
 
@@ -444,14 +444,14 @@ fn run() -> Result<()> {
 
             let account = model::Account {
                 uuid: account_id,
-                label: label,
+                label,
                 latest_transaction: vec![],
                 latest_synchronized_transaction: vec![],
                 members: members
                     .into_iter()
                     .map(|name| model::Person {
                         uuid: model::generate_person_id(),
-                        name: name,
+                        name,
                     })
                     .collect(),
             };

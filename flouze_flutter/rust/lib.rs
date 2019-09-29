@@ -76,7 +76,7 @@ fn sled_repository_from_file(path: &str) -> FFIResult<*mut c_void> {
 }
 
 unsafe fn sled_repository_destroy(ptr: *mut c_void) {
-    if ptr == std::ptr::null_mut() {
+    if ptr.is_null() {
         return;
     }
 
@@ -95,9 +95,9 @@ unsafe fn delete_account(repo: *mut c_void, account_id: &[u8]) -> FFIResult<()> 
     Ok(())
 }
 
-unsafe fn get_account(repo: *mut c_void, account_id: &Vec<u8>) -> FFIResult<Vec<u8>> {
+unsafe fn get_account(repo: *mut c_void, account_id: &[u8]) -> FFIResult<Vec<u8>> {
     let repo = &mut *(repo as *mut SledRepository);
-    let account = repo.get_account(&account_id)?;
+    let account = repo.get_account(&account_id.to_owned())?;
 
     let mut buf = Vec::new();
     buf.reserve(account.encoded_len());
@@ -127,9 +127,7 @@ unsafe fn list_transactions(repo: *mut c_void, account_id: &[u8]) -> FFIResult<V
         transactions.push(tx);
     }
 
-    let transaction_list = TransactionList {
-        transactions: transactions,
-    };
+    let transaction_list = TransactionList { transactions };
 
     let mut buf = Vec::new();
     buf.reserve(transaction_list.encoded_len());
@@ -174,7 +172,7 @@ fn json_rpc_client_create(url: &str) -> FFIResult<*mut c_void> {
 }
 
 unsafe fn json_rpc_client_destroy(client: *mut c_void) {
-    if client == std::ptr::null_mut() {
+    if client.is_null() {
         return;
     }
 

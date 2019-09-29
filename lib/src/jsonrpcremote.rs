@@ -59,7 +59,7 @@ impl Client {
         >(uri))?;
 
         Ok(Client {
-            runtime: runtime,
+            runtime,
             client: RefCell::new(client),
         })
     }
@@ -99,7 +99,7 @@ impl Remote for Client {
         transactions: &[&model::Transaction],
     ) -> errors::Result<()> {
         let owned_transactions: Vec<model::Transaction> =
-            transactions.into_iter().map(|&t| t.clone()).collect();
+            transactions.iter().map(|&t| t.clone()).collect();
         self.client
             .borrow_mut()
             .receive_transactions(account_id.clone(), owned_transactions)
@@ -137,7 +137,7 @@ fn validate_person(person: &model::Person) -> Result<(), String> {
         return Err("Person has invalid UUID".to_owned());
     }
 
-    if person.name.len() == 0 {
+    if person.name.is_empty() {
         return Err("Person has no name".to_owned());
     }
 
@@ -147,11 +147,11 @@ fn validate_person(person: &model::Person) -> Result<(), String> {
 fn validate_account(account: &model::Account) -> Result<(), String> {
     Uuid::from_slice(&account.uuid).map_err(|_| "Invalid account UUID")?;
 
-    if account.label.len() == 0 {
+    if account.label.is_empty() {
         return Err("Missing account label".to_owned());
     }
 
-    if account.members.len() == 0 {
+    if account.members.is_empty() {
         return Err("Account has no members".to_owned());
     }
 
@@ -204,7 +204,7 @@ impl<T: Repository + Send + Sync + 'static> rpc::Api for ServerRpcImpl<T> {
 
         let res: jsonrpc_core::Result<()> = repo.add_account(&account).map_err(|e| e.into());
 
-        if let Ok(_) = res {
+        if res.is_ok() {
             info!("Created account with UUID {}", &account_uuid);
         } else if let Err(ref e) = res {
             warn!(
@@ -275,7 +275,7 @@ fn log_request_start(call: &jsonrpc_core::Call) {
 }
 
 fn log_request_end(output: &jsonrpc_core::Output, request_time: &Duration) {
-    let request_time_ms = 1000 * request_time.as_secs() + request_time.subsec_millis() as u64;
+    let request_time_ms = 1000 * request_time.as_secs() + u64::from(request_time.subsec_millis());
     let success = match output {
         jsonrpc_core::Output::Success(_) => true,
         _ => false,

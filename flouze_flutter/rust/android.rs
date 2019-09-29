@@ -4,7 +4,7 @@ use jni::JNIEnv;
 
 use super::*;
 
-const FLOUZE_EXCEPTION_CLASS: &'static str = "org/bustany/flouze/flouzeflutter/FlouzeException";
+const FLOUZE_EXCEPTION_CLASS: &str = "org/bustany/flouze/flouzeflutter/FlouzeException";
 
 fn ok_or_throw<T>(env: &JNIEnv, res: FFIResult<T>, default: T) -> T {
     res.unwrap_or_else(|e| {
@@ -206,7 +206,7 @@ pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_JsonRpcClien
 #[no_mangle]
 #[allow(non_snake_case)]
 pub unsafe extern "system" fn Java_org_bustany_flouze_flouzeflutter_JsonRpcClient_destroy(
-    env: JNIEnv,
+    _env: JNIEnv,
     _class: JClass,
     instance: jlong,
 ) {

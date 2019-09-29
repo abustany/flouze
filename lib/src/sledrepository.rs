@@ -8,10 +8,10 @@ use super::model;
 use super::repository::Repository;
 
 // account:
-const ACCOUNT_KEY_PREFIX: &'static [u8] = &[0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x3a];
+const ACCOUNT_KEY_PREFIX: &[u8] = &[0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x3a];
 
 // tx:
-const TX_KEY_PREFIX: &'static [u8] = &[0x74, 0x78, 0x3a];
+const TX_KEY_PREFIX: &[u8] = &[0x74, 0x78, 0x3a];
 
 impl From<sled::Error> for errors::Error {
     fn from(err: sled::Error) -> Self {
@@ -150,17 +150,17 @@ fn account_key(id: &[u8]) -> Vec<u8> {
     key.append(ACCOUNT_KEY_PREFIX.to_owned().as_mut());
     key.append(id.to_owned().as_mut());
 
-    return key;
+    key
 }
 
 fn tx_key(account_id: &[u8], tx_id: &[u8]) -> Vec<u8> {
     let mut key = Vec::with_capacity(TX_KEY_PREFIX.len() + account_id.len() + 1 + tx_id.len());
     key.append(TX_KEY_PREFIX.to_owned().as_mut());
     key.append(account_id.to_owned().as_mut());
-    key.push(':' as u8);
+    key.push(b':');
     key.append(tx_id.to_owned().as_mut());
 
-    return key;
+    key
 }
 
 #[cfg(test)]
