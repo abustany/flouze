@@ -2,7 +2,7 @@ os: osx
 osx_image: xcode10.2
 language: rust
 rust:
-  - 1.35.0
+  - 1.38.0
 
 env:
   global:

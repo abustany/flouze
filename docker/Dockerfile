@@ -14,7 +14,7 @@ ENV PATH="/home/ci/.cargo/bin:$PATH"
 ENV JAVA_HOME="/usr/lib/jvm/java-1.8.0"
 
 RUN \
-  curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.35.0 -y && \
+  curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.38.0 -y && \
   rustup target add aarch64-linux-android && \
   rustup target add armv7-linux-androideabi && \
   rustup target add i686-linux-android && \
