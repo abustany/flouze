@@ -45,7 +45,7 @@ impl Repository for SledRepository {
         buf.reserve(account.encoded_len());
         account.encode(&mut buf).unwrap();
 
-        self.db.set(account_key(&account.uuid), buf)?;
+        self.db.insert(account_key(&account.uuid), buf)?;
 
         Ok(())
     }
@@ -60,7 +60,7 @@ impl Repository for SledRepository {
     }
 
     fn delete_account(&mut self, account_id: &model::AccountId) -> errors::Result<()> {
-        match self.db.del(&account_key(account_id))? {
+        match self.db.remove(&account_key(account_id))? {
             Some(_) => Ok(()),
             None => Err(errors::ErrorKind::NoSuchAccount(account_id.clone()).into()),
         }
@@ -69,7 +69,7 @@ impl Repository for SledRepository {
     fn list_accounts(&self) -> errors::Result<Vec<model::Account>> {
         let mut accounts = vec![];
 
-        for it in self.db.scan(ACCOUNT_KEY_PREFIX) {
+        for it in self.db.scan_prefix(ACCOUNT_KEY_PREFIX) {
             if let Err(e) = it {
                 return Err(e.into());
             }
@@ -116,7 +116,8 @@ impl Repository for SledRepository {
         buf.reserve(transaction.encoded_len());
         transaction.encode(&mut buf).unwrap();
 
-        self.db.set(tx_key(&account_uuid, &transaction.uuid), buf)?;
+        self.db
+            .insert(tx_key(&account_uuid, &transaction.uuid), buf)?;
         Ok(())
     }
 
@@ -138,7 +139,7 @@ impl Repository for SledRepository {
         account_id: &model::AccountId,
         transaction_id: &model::TransactionId,
     ) -> errors::Result<()> {
-        match self.db.del(&tx_key(account_id, transaction_id))? {
+        match self.db.remove(&tx_key(account_id, transaction_id))? {
             Some(_) => Ok(()),
             None => Err(errors::ErrorKind::NoSuchTransaction(transaction_id.clone()).into()),
         }
