@@ -66,7 +66,7 @@ jobs:
       # Clean our own artifacts so that they don't clutter the cache
       - run:
           name: Clean Rust build directory before caching it
-          command: cargo clean -p flouze && cargo clean -p flouze-cli && cargo clean -p flouze-jni && cargo clean -p flouze-flutter
+          command: cargo clean -p flouze && cargo clean -p flouze-cli && cargo clean -p flouze-flutter
       - save_cache:
           key: "v1-rust"
           paths:
