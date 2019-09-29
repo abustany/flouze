@@ -42,6 +42,13 @@ pub struct TransactionChain<'a> {
     id: model::TransactionId,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct Transfer {
+    pub debitor: model::PersonId,
+    pub creditor: model::PersonId,
+    pub amount: i64,
+}
+
 impl<'a> TransactionChain<'a> {
     fn new(
         repo: &'a dyn Repository,
@@ -170,6 +177,66 @@ pub fn get_balance(
     }
 
     Ok(balance)
+}
+
+fn is_solution_better(candidate: &Vec<Transfer>, existing: &Vec<Transfer>) -> bool {
+    candidate.len() < existing.len()
+}
+
+fn get_transfers_helper<S: Clone + ::std::hash::BuildHasher>(
+    solution: &mut Option<Vec<Transfer>>,
+    balance: &HashMap<model::PersonId, i64, S>,
+    transfers: &mut Vec<Transfer>,
+) {
+    let (creditor, credit) = match balance.iter().find(|&(_, amount)| *amount > 0) {
+        // Someone still needs to get reimbursed
+        Some(x) => x,
+        // No more creditors, we're done!
+        None => {
+            if solution.is_none() || is_solution_better(transfers, solution.as_ref().unwrap()) {
+                *solution = Some(transfers.to_owned());
+            }
+
+            return;
+        }
+    };
+
+    // Don't try to find a new transfer for a solution that is already as long
+    // as the best one
+    if let Some(solution) = solution {
+        if transfers.len() >= solution.len() {
+            return;
+        }
+    }
+
+    for (debitor, debit) in balance.iter().filter(|&(_, amount)| *amount < 0) {
+        let transfer_amount = i64::min(*credit, -debit);
+        let transfer = Transfer {
+            debitor: debitor.to_owned(),
+            creditor: creditor.to_owned(),
+            amount: transfer_amount,
+        };
+
+        let mut new_balance = HashMap::clone(balance);
+        new_balance
+            .entry(transfer.creditor.to_owned())
+            .and_modify(|b| *b -= transfer.amount);
+        new_balance
+            .entry(transfer.debitor.to_owned())
+            .and_modify(|b| *b += transfer.amount);
+
+        transfers.push(transfer);
+        get_transfers_helper(solution, &new_balance, transfers);
+        transfers.pop();
+    }
+}
+
+pub fn get_transfers<S: Clone + ::std::hash::BuildHasher>(
+    balance: &HashMap<model::PersonId, i64, S>,
+) -> Vec<Transfer> {
+    let mut solution: Option<Vec<Transfer>> = None;
+    get_transfers_helper(&mut solution, balance, &mut vec![]);
+    solution.unwrap()
 }
 
 pub fn receive_transactions(
@@ -479,5 +546,118 @@ pub mod tests {
         let balance = get_balance(repo, &account).unwrap();
         assert_eq!(balance.get(&account.members[0].uuid).unwrap(), &3);
         assert_eq!(balance.get(&account.members[1].uuid).unwrap(), &-3);
+    }
+
+    fn sort_transfers(transfers: &mut [Transfer]) {
+        transfers.sort_unstable_by(|a, b| {
+            a.creditor
+                .cmp(&b.creditor)
+                .then_with(|| a.debitor.cmp(&b.debitor))
+                .then_with(|| a.amount.cmp(&b.amount))
+        })
+    }
+
+    #[test]
+    pub fn test_get_transfers_trivial() {
+        let person_1: model::PersonId = vec![0x01];
+        let person_2: model::PersonId = vec![0x02];
+        let person_3: model::PersonId = vec![0x03];
+
+        let mut balance: HashMap<model::PersonId, i64> = HashMap::new();
+        balance.insert(person_1.clone(), 5);
+        balance.insert(person_2.clone(), -5);
+
+        let transfers = get_transfers(&balance);
+        let expected_transfer = Transfer {
+            debitor: person_2.clone(),
+            creditor: person_1.clone(),
+            amount: 5,
+        };
+
+        assert_eq!(transfers.len(), 1);
+        assert_eq!(transfers[0], expected_transfer);
+
+        balance.clear();
+        balance.insert(person_1.clone(), 5);
+        balance.insert(person_2.clone(), -3);
+        balance.insert(person_3.clone(), -2);
+
+        let mut transfers = get_transfers(&balance);
+        sort_transfers(&mut transfers);
+        assert_eq!(transfers.len(), 2);
+        assert_eq!(
+            transfers[0],
+            Transfer {
+                debitor: person_2.clone(),
+                creditor: person_1.clone(),
+                amount: 3,
+            }
+        );
+        assert_eq!(
+            transfers[1],
+            Transfer {
+                debitor: person_3.clone(),
+                creditor: person_1.clone(),
+                amount: 2,
+            }
+        );
+    }
+
+    pub fn test_get_transfers_less_trivial_i() {
+        let persons: Vec<model::PersonId> = vec![
+            vec![0x01],
+            vec![0x02],
+            vec![0x03],
+            vec![0x04],
+            vec![0x05],
+            vec![0x06],
+        ];
+
+        let mut balance: HashMap<model::PersonId, i64> = HashMap::new();
+        balance.insert(persons[0].clone(), 1);
+        balance.insert(persons[1].clone(), 2);
+        balance.insert(persons[2].clone(), 3);
+        balance.insert(persons[3].clone(), -1);
+        balance.insert(persons[4].clone(), -2);
+        balance.insert(persons[5].clone(), -3);
+
+        let mut transfers = get_transfers(&balance);
+        sort_transfers(&mut transfers);
+        assert_eq!(transfers.len(), 3);
+        assert_eq!(
+            transfers[0],
+            Transfer {
+                debitor: persons[3].clone(),
+                creditor: persons[0].clone(),
+                amount: 1,
+            }
+        );
+        assert_eq!(
+            transfers[1],
+            Transfer {
+                debitor: persons[4].clone(),
+                creditor: persons[1].clone(),
+                amount: 2,
+            }
+        );
+        assert_eq!(
+            transfers[2],
+            Transfer {
+                debitor: persons[5].clone(),
+                creditor: persons[2].clone(),
+                amount: 3,
+            }
+        );
+    }
+
+    #[test]
+    pub fn test_get_transfers_less_trivial() {
+        // We repeat the tests several times since HashMap's iteration order is
+        // undefined, so a stupid algorithm might be "lucky" and find the best
+        // solution just because the entries were iterated in a particular
+        // order.
+        for _ in 0..100 {
+            test_get_transfers_less_trivial_i();
+        }
     }
 }
