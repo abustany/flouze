@@ -20,10 +20,10 @@ use structopt::StructOpt;
 
 use uuid::Uuid;
 
-use flouze::model;
 use flouze::jsonrpcremote::{Client, Server};
+use flouze::model;
 use flouze::remote::Remote;
-use flouze::repository::{Repository, get_transaction_chain};
+use flouze::repository::{get_transaction_chain, Repository};
 use flouze::sledrepository::SledRepository;
 use flouze::sync;
 
@@ -63,32 +63,32 @@ use errors::*;
 
 #[derive(StructOpt)]
 enum Command {
-    #[structopt(name="add-account")]
+    #[structopt(name = "add-account")]
     /// Create a new account
     AddAccount {
         /// Name of the account
         label: String,
         /// UUID of the account (by default auto generated)
-        #[structopt(long="id")]
+        #[structopt(long = "id")]
         id: Option<String>,
         /// List of members of this account
         members: Vec<String>,
     },
-    #[structopt(name="list-accounts")]
+    #[structopt(name = "list-accounts")]
     /// List all accounts in the file
     ListAccounts {
         /// Output accounts as JSON, one per line
-        #[structopt(long="json")]
+        #[structopt(long = "json")]
         json: bool,
     },
-    #[structopt(name="delete-account")]
+    #[structopt(name = "delete-account")]
     /// Delete an existing account and all its transactions
     DeleteAccount {
         /// Name of the account
-        label: String
+        label: String,
     },
 
-    #[structopt(name="add-transaction")]
+    #[structopt(name = "add-transaction")]
     /// Add a new transaction into an account
     AddTransaction {
         account_name: String,
@@ -97,22 +97,22 @@ enum Command {
         payed_by: String,
     },
 
-    #[structopt(name="list-transactions")]
+    #[structopt(name = "list-transactions")]
     /// List the transactions in an account
     ListTransactions {
         account_name: String,
-        #[structopt(long="json")]
+        #[structopt(long = "json")]
         json: bool,
     },
 
-    #[structopt(name="serve")]
+    #[structopt(name = "serve")]
     /// Start the synchronization server
     Serve {
-        #[structopt(default_value="127.0.0.1:3142")]
+        #[structopt(default_value = "127.0.0.1:3142")]
         listen_address: String,
     },
 
-    #[structopt(name="clone")]
+    #[structopt(name = "clone")]
     /// Clone an account and its transactions from a remote server
     Clone {
         /// Address of the remote peer in the form IP:PORT
@@ -121,7 +121,7 @@ enum Command {
         account_id: String,
     },
 
-    #[structopt(name="sync")]
+    #[structopt(name = "sync")]
     /// Synchronize a local account with a remote peer
     Sync {
         /// Name of the account
@@ -130,7 +130,7 @@ enum Command {
         remote_address: String,
     },
 
-    #[structopt(name="add-remote-account")]
+    #[structopt(name = "add-remote-account")]
     /// Create a new account on a remote server
     AddRemoteAccount {
         /// Address of the remote peer in the form IP:PORT
@@ -138,7 +138,7 @@ enum Command {
         /// Name of the account
         label: String,
         /// UUID of the account (by default auto generated)
-        #[structopt(long="id")]
+        #[structopt(long = "id")]
         id: Option<String>,
         /// List of members of this account
         members: Vec<String>,
@@ -146,7 +146,12 @@ enum Command {
 }
 
 #[derive(StructOpt)]
-#[structopt(name="flouze-cli", author="Adrien Bustany <adrien@bustany.org>", about="CLI to access flouze accounts", version="0.1")]
+#[structopt(
+    name = "flouze-cli",
+    author = "Adrien Bustany <adrien@bustany.org>",
+    about = "CLI to access flouze accounts",
+    version = "0.1"
+)]
 struct App {
     /// Path to the flouze file
     file: String,
@@ -155,17 +160,23 @@ struct App {
 }
 
 fn find_account_by_label<T: Repository>(store: &T, label: &str) -> Result<Option<model::Account>> {
-    Ok(store.list_accounts()?.into_iter().find(|a| a.label == label))
+    Ok(store
+        .list_accounts()?
+        .into_iter()
+        .find(|a| a.label == label))
 }
 
 fn find_member_by_name(members: &[model::Person], name: &str) -> Option<model::AccountId> {
-    members.iter().find(|m| m.name == name).map(|m| m.uuid.to_owned())
+    members
+        .iter()
+        .find(|m| m.name == name)
+        .map(|m| m.uuid.to_owned())
 }
 
 fn split_amount(amount: u32, n: usize) -> Vec<u32> {
     assert!(n > 0, "The amount must be split in at least once part");
 
-    let slice = ((amount as usize)/n) as u32;
+    let slice = ((amount as usize) / n) as u32;
     let mut res = vec![slice; n];
     let missing = amount - (((slice as usize) * n) as u32);
 
@@ -180,16 +191,16 @@ fn seq_shuffle<T>(items: &mut [T]) {
     let mut rng = rand::thread_rng();
 
     for i in (1..items.len()).rev() {
-        let j = rng.gen_range(0, 1+i);
+        let j = rng.gen_range(0, 1 + i);
         items.swap(i, j);
     }
 }
 
 fn run() -> Result<()> {
     let opt = App::from_args();
-    
+
     match opt.command {
-        Command::AddAccount{label, members, id} => {
+        Command::AddAccount { label, members, id } => {
             let mut store = SledRepository::new(&opt.file)?;
 
             if members.len() == 0 {
@@ -205,38 +216,51 @@ fn run() -> Result<()> {
                 Some(s) => {
                     let uuid = Uuid::parse_str(&s)?;
                     uuid.as_bytes().to_vec()
-                },
+                }
                 None => model::generate_account_id(),
             };
 
-            let account = model::Account{
+            let account = model::Account {
                 uuid: account_id,
                 label: label,
-                latest_transaction: vec!(),
-                latest_synchronized_transaction: vec!(),
-                members: members.into_iter().map(|name| model::Person{
-                    uuid: model::generate_person_id(),
-                    name: name,
-                }).collect(),
+                latest_transaction: vec![],
+                latest_synchronized_transaction: vec![],
+                members: members
+                    .into_iter()
+                    .map(|name| model::Person {
+                        uuid: model::generate_person_id(),
+                        name: name,
+                    })
+                    .collect(),
             };
 
             store.add_account(&account).map_err(|e| e.into())
-        },
-        Command::ListAccounts{json} => {
+        }
+        Command::ListAccounts { json } => {
             let store = SledRepository::new(&opt.file)?;
 
             for account in store.list_accounts()? {
                 if json {
                     println!("{}", serde_json::to_string(&account)?);
                 } else {
-                    let member_names = account.members.iter().map(|m| m.name.as_str()).collect::<Vec<&str>>().join(", ");
-                    println!("{} (members: {}) - {}", &account.label, member_names, model::IdAsHex(&account.uuid));
+                    let member_names = account
+                        .members
+                        .iter()
+                        .map(|m| m.name.as_str())
+                        .collect::<Vec<&str>>()
+                        .join(", ");
+                    println!(
+                        "{} (members: {}) - {}",
+                        &account.label,
+                        member_names,
+                        model::IdAsHex(&account.uuid)
+                    );
                 }
             }
 
             Ok(())
-        },
-        Command::DeleteAccount{label} => {
+        }
+        Command::DeleteAccount { label } => {
             let mut store = SledRepository::new(&opt.file)?;
 
             let account = find_account_by_label(&store, &label)?;
@@ -245,9 +269,16 @@ fn run() -> Result<()> {
                 bail!("No such account in the file");
             }
 
-            store.delete_account(&account.unwrap().uuid).map_err(|e| e.into())
+            store
+                .delete_account(&account.unwrap().uuid)
+                .map_err(|e| e.into())
         }
-        Command::AddTransaction{account_name, label, amount, payed_by} => {
+        Command::AddTransaction {
+            account_name,
+            label,
+            amount,
+            payed_by,
+        } => {
             let mut store = SledRepository::new(&opt.file)?;
 
             let account = find_account_by_label(&store, &account_name)?;
@@ -270,34 +301,40 @@ fn run() -> Result<()> {
             // Shuffle the sequence for fairness
             seq_shuffle(&mut amounts);
 
-            let payed_for = amounts.iter()
+            let payed_for = amounts
+                .iter()
                 .zip(&account.members)
-                .map(|(amount, member)| model::PayedFor{
+                .map(|(amount, member)| model::PayedFor {
                     person: member.uuid.to_owned(),
                     amount: amount.to_owned(),
                 })
                 .collect();
-            let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+            let timestamp = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
 
-            let tx = model::Transaction{
+            let tx = model::Transaction {
                 uuid: model::generate_transaction_id(),
                 parent: account.latest_transaction.clone(),
                 amount: amount,
-                payed_by: vec!(model::PayedBy{
+                payed_by: vec![model::PayedBy {
                     person: member,
                     amount: amount,
-                }),
+                }],
                 payed_for: payed_for,
                 label: label,
                 timestamp: timestamp,
                 deleted: false,
-                replaces: vec!(),
+                replaces: vec![],
             };
 
             store.add_transaction(&account.uuid, &tx)?;
-            store.set_latest_transaction(&account.uuid, &tx.uuid).map_err(|e| e.into())
+            store
+                .set_latest_transaction(&account.uuid, &tx.uuid)
+                .map_err(|e| e.into())
         }
-        Command::ListTransactions{account_name, json} => {
+        Command::ListTransactions { account_name, json } => {
             let store = SledRepository::new(&opt.file)?;
 
             let account = find_account_by_label(&store, &account_name)?;
@@ -308,7 +345,11 @@ fn run() -> Result<()> {
 
             let account = account.unwrap();
 
-            let persons: HashMap<&model::PersonId, &str> = account.members.iter().map(|p| (&p.uuid, p.name.as_str())).collect();
+            let persons: HashMap<&model::PersonId, &str> = account
+                .members
+                .iter()
+                .map(|p| (&p.uuid, p.name.as_str()))
+                .collect();
 
             for tx in get_transaction_chain(&store, &account) {
                 if tx.is_err() {
@@ -319,7 +360,9 @@ fn run() -> Result<()> {
 
                 let payed_by = match tx.payed_by.len() {
                     0 => "noone?",
-                    1 => persons.get(&tx.payed_by[0].person).unwrap_or(&"someone unknown"),
+                    1 => persons
+                        .get(&tx.payed_by[0].person)
+                        .unwrap_or(&"someone unknown"),
                     _ => "many people",
                 };
 
@@ -332,14 +375,17 @@ fn run() -> Result<()> {
 
             Ok(())
         }
-        Command::Serve{listen_address} => {
+        Command::Serve { listen_address } => {
             let store = SledRepository::new(&opt.file)?;
 
             info!("Listening on {}", listen_address);
             Server::new(store, &listen_address)?.wait()?;
             Ok(())
-        },
-        Command::Clone{remote_address, account_id} => {
+        }
+        Command::Clone {
+            remote_address,
+            account_id,
+        } => {
             let mut store = SledRepository::new(&opt.file)?;
 
             let id = Uuid::parse_str(&account_id)?.as_bytes().to_vec();
@@ -353,8 +399,11 @@ fn run() -> Result<()> {
             sync::clone_remote(&mut store, &mut remote, &id)?;
             remote.shutdown()?;
             Ok(())
-        },
-        Command::Sync{account_name, remote_address} => {
+        }
+        Command::Sync {
+            account_name,
+            remote_address,
+        } => {
             let mut store = SledRepository::new(&opt.file)?;
 
             let account = find_account_by_label(&store, &account_name)?;
@@ -370,8 +419,13 @@ fn run() -> Result<()> {
             remote.shutdown()?;
 
             Ok(())
-        },
-        Command::AddRemoteAccount{remote_address, label, members, id} => {
+        }
+        Command::AddRemoteAccount {
+            remote_address,
+            label,
+            members,
+            id,
+        } => {
             if remote_address.len() == 0 {
                 bail!("No remote address specified");
             }
@@ -384,19 +438,22 @@ fn run() -> Result<()> {
                 Some(s) => {
                     let uuid = Uuid::parse_str(&s)?;
                     uuid.as_bytes().to_vec()
-                },
+                }
                 None => model::generate_account_id(),
             };
 
-            let account = model::Account{
+            let account = model::Account {
                 uuid: account_id,
                 label: label,
-                latest_transaction: vec!(),
-                latest_synchronized_transaction: vec!(),
-                members: members.into_iter().map(|name| model::Person{
-                    uuid: model::generate_person_id(),
-                    name: name,
-                }).collect(),
+                latest_transaction: vec![],
+                latest_synchronized_transaction: vec![],
+                members: members
+                    .into_iter()
+                    .map(|name| model::Person {
+                        uuid: model::generate_person_id(),
+                        name: name,
+                    })
+                    .collect(),
             };
 
             let http_address = "http://".to_owned() + &remote_address;
@@ -404,7 +461,7 @@ fn run() -> Result<()> {
             remote.create_account(&account)?;
             remote.shutdown()?;
             Ok(())
-        },
+        }
     }
 }
 

@@ -25,21 +25,17 @@ pub struct SledRepository {
 
 impl SledRepository {
     pub fn new(path: &str) -> errors::Result<SledRepository> {
-        let config = sled::ConfigBuilder::new()
-            .path(path.to_owned())
-            .build();
+        let config = sled::ConfigBuilder::new().path(path.to_owned()).build();
         let db = sled::Db::start(config)?;
 
-        Ok(SledRepository{db})
+        Ok(SledRepository { db })
     }
 
     pub fn temporary() -> errors::Result<SledRepository> {
-        let config = sled::ConfigBuilder::new()
-            .temporary(true)
-            .build();
+        let config = sled::ConfigBuilder::new().temporary(true).build();
         let db = sled::Db::start(config)?;
 
-        Ok(SledRepository{db})
+        Ok(SledRepository { db })
     }
 }
 
@@ -71,7 +67,7 @@ impl Repository for SledRepository {
     }
 
     fn list_accounts(&self) -> errors::Result<Vec<model::Account>> {
-        let mut accounts = vec!();
+        let mut accounts = vec![];
 
         for it in self.db.scan(ACCOUNT_KEY_PREFIX) {
             if let Err(e) = it {
@@ -91,19 +87,31 @@ impl Repository for SledRepository {
         Ok(accounts)
     }
 
-    fn set_latest_transaction(&mut self, account_id: &model::AccountId, tx_id: &model::TransactionId) -> errors::Result<()> {
+    fn set_latest_transaction(
+        &mut self,
+        account_id: &model::AccountId,
+        tx_id: &model::TransactionId,
+    ) -> errors::Result<()> {
         let mut account = self.get_account(account_id)?;
         account.latest_transaction = tx_id.to_owned();
         self.add_account(&account)
     }
 
-    fn set_latest_synchronized_transaction(&mut self, account_id: &model::AccountId, tx_id: &model::TransactionId) -> errors::Result<()> {
+    fn set_latest_synchronized_transaction(
+        &mut self,
+        account_id: &model::AccountId,
+        tx_id: &model::TransactionId,
+    ) -> errors::Result<()> {
         let mut account = self.get_account(account_id)?;
         account.latest_synchronized_transaction = tx_id.to_owned();
         self.add_account(&account)
     }
 
-    fn add_transaction(&mut self, account_uuid: &model::AccountId, transaction: &model::Transaction) -> errors::Result<()> {
+    fn add_transaction(
+        &mut self,
+        account_uuid: &model::AccountId,
+        transaction: &model::Transaction,
+    ) -> errors::Result<()> {
         let mut buf = Vec::new();
         buf.reserve(transaction.encoded_len());
         transaction.encode(&mut buf).unwrap();
@@ -112,16 +120,24 @@ impl Repository for SledRepository {
         Ok(())
     }
 
-    fn get_transaction(&self, account_uuid: &model::AccountId, transaction_id: &model::TransactionId) -> errors::Result<model::Transaction> {
+    fn get_transaction(
+        &self,
+        account_uuid: &model::AccountId,
+        transaction_id: &model::TransactionId,
+    ) -> errors::Result<model::Transaction> {
         let buf = self.db.get(&tx_key(&account_uuid, &transaction_id))?;
-        
+
         match buf {
             None => Err(errors::ErrorKind::NoSuchTransaction(transaction_id.clone()).into()),
             Some(ref data) => model::Transaction::decode(data.as_ref()).map_err(|e| e.into()),
         }
     }
 
-    fn delete_transaction(&mut self, account_id: &model::AccountId, transaction_id: &model::TransactionId) -> errors::Result<()> {
+    fn delete_transaction(
+        &mut self,
+        account_id: &model::AccountId,
+        transaction_id: &model::TransactionId,
+    ) -> errors::Result<()> {
         match self.db.del(&tx_key(account_id, transaction_id))? {
             Some(_) => Ok(()),
             None => Err(errors::ErrorKind::NoSuchTransaction(transaction_id.clone()).into()),
@@ -149,8 +165,8 @@ fn tx_key(account_id: &[u8], tx_id: &[u8]) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::repository::tests;
+    use super::*;
 
     #[test]
     fn test_account_crud() {

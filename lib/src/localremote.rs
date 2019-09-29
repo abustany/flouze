@@ -1,7 +1,7 @@
 use super::errors;
 use super::model;
-use super::remote::{Remote};
-use super::repository::{Repository, get_child_transactions, receive_transactions};
+use super::remote::Remote;
+use super::repository::{get_child_transactions, receive_transactions, Repository};
 
 pub struct LocalRemote<'a> {
     repo: &'a mut dyn Repository,
@@ -9,7 +9,7 @@ pub struct LocalRemote<'a> {
 
 impl<'a> LocalRemote<'a> {
     pub fn new(repo: &'a mut dyn Repository) -> LocalRemote<'a> {
-        LocalRemote{ repo }
+        LocalRemote { repo }
     }
 }
 
@@ -22,25 +22,36 @@ impl<'a> Remote for LocalRemote<'a> {
         self.repo.get_account(account_id)
     }
 
-    fn get_latest_transaction(&self, account_id: &model::AccountId) -> errors::Result<model::TransactionId> {
+    fn get_latest_transaction(
+        &self,
+        account_id: &model::AccountId,
+    ) -> errors::Result<model::TransactionId> {
         let account = self.repo.get_account(account_id)?;
         Ok(account.latest_transaction.clone())
     }
 
-    fn receive_transactions(&mut self, account_id: &model::AccountId, transactions: &[&model::Transaction]) -> errors::Result<()> {
+    fn receive_transactions(
+        &mut self,
+        account_id: &model::AccountId,
+        transactions: &[&model::Transaction],
+    ) -> errors::Result<()> {
         receive_transactions(self.repo, account_id, transactions)
     }
 
-    fn get_child_transactions(&self, account_id: &model::AccountId, base: &model::TransactionId) -> errors::Result<Vec<model::Transaction>> {
+    fn get_child_transactions(
+        &self,
+        account_id: &model::AccountId,
+        base: &model::TransactionId,
+    ) -> errors::Result<Vec<model::Transaction>> {
         get_child_transactions(self.repo, account_id, base)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use super::super::sledrepository::{SledRepository};
     use super::super::remote::tests;
+    use super::super::sledrepository::SledRepository;
+    use super::*;
 
     #[test]
     fn test_initial_sync_to_remote() {

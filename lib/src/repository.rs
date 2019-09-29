@@ -8,12 +8,32 @@ pub trait Repository {
     fn get_account(&self, account_id: &model::AccountId) -> errors::Result<model::Account>;
     fn delete_account(&mut self, account_id: &model::AccountId) -> errors::Result<()>;
     fn list_accounts(&self) -> errors::Result<Vec<model::Account>>;
-    fn set_latest_transaction(&mut self, account_id: &model::AccountId, tx_id: &model::TransactionId) -> errors::Result<()>;
-    fn set_latest_synchronized_transaction(&mut self, account_id: &model::AccountId, tx_id: &model::TransactionId) -> errors::Result<()>;
+    fn set_latest_transaction(
+        &mut self,
+        account_id: &model::AccountId,
+        tx_id: &model::TransactionId,
+    ) -> errors::Result<()>;
+    fn set_latest_synchronized_transaction(
+        &mut self,
+        account_id: &model::AccountId,
+        tx_id: &model::TransactionId,
+    ) -> errors::Result<()>;
 
-    fn add_transaction(&mut self, account_uuid: &model::AccountId, transaction: &model::Transaction) -> errors::Result<()>;
-    fn get_transaction(&self, account_uuid: &model::AccountId, transaction_id: &model::TransactionId) -> errors::Result<model::Transaction>;
-    fn delete_transaction(&mut self, account_uuid: &model::AccountId, transaction_id: &model::TransactionId) -> errors::Result<()>;
+    fn add_transaction(
+        &mut self,
+        account_uuid: &model::AccountId,
+        transaction: &model::Transaction,
+    ) -> errors::Result<()>;
+    fn get_transaction(
+        &self,
+        account_uuid: &model::AccountId,
+        transaction_id: &model::TransactionId,
+    ) -> errors::Result<model::Transaction>;
+    fn delete_transaction(
+        &mut self,
+        account_uuid: &model::AccountId,
+        transaction_id: &model::TransactionId,
+    ) -> errors::Result<()>;
 }
 
 pub struct TransactionChain<'a> {
@@ -23,11 +43,15 @@ pub struct TransactionChain<'a> {
 }
 
 impl<'a> TransactionChain<'a> {
-    fn new(repo: &'a dyn Repository, account_id: &model::AccountId, id: &model::TransactionId) -> TransactionChain<'a> {
-        TransactionChain{
+    fn new(
+        repo: &'a dyn Repository,
+        account_id: &model::AccountId,
+        id: &model::TransactionId,
+    ) -> TransactionChain<'a> {
+        TransactionChain {
             repo: repo,
             account_id: account_id.to_owned(),
-            id: id.to_owned()
+            id: id.to_owned(),
         }
     }
 }
@@ -41,7 +65,9 @@ impl<'a> Iterator for TransactionChain<'a> {
         }
 
         let tx = match self.repo.get_transaction(&self.account_id, &self.id) {
-            Err(e) => { return Some(Err(e.into())); },
+            Err(e) => {
+                return Some(Err(e.into()));
+            }
             Ok(tx) => tx,
         };
 
@@ -51,7 +77,10 @@ impl<'a> Iterator for TransactionChain<'a> {
     }
 }
 
-pub fn get_transaction_chain<'a>(repo: &'a dyn Repository, account: &model::Account) -> TransactionChain<'a> {
+pub fn get_transaction_chain<'a>(
+    repo: &'a dyn Repository,
+    account: &model::Account,
+) -> TransactionChain<'a> {
     TransactionChain::new(repo, &account.uuid, &account.latest_transaction)
 }
 
@@ -73,17 +102,30 @@ pub fn check_chain_consistency(transactions: &[&model::Transaction]) -> bool {
     return true;
 }
 
-fn update_balance(balance: &mut HashMap<model::PersonId, i64>, payed_by: &[model::PayedBy], payed_for: &[model::PayedFor], factor: i64) {
+fn update_balance(
+    balance: &mut HashMap<model::PersonId, i64>,
+    payed_by: &[model::PayedBy],
+    payed_for: &[model::PayedFor],
+    factor: i64,
+) {
     for p in payed_by {
-        balance.get_mut(&p.person).map(|b| *b += p.amount as i64 * factor);
+        balance
+            .get_mut(&p.person)
+            .map(|b| *b += p.amount as i64 * factor);
     }
 
     for p in payed_for {
-        balance.get_mut(&p.person).map(|b| *b -= p.amount as i64 * factor);
+        balance
+            .get_mut(&p.person)
+            .map(|b| *b -= p.amount as i64 * factor);
     }
 }
 
-fn get_first_non_deleted_ancestor(repo: &dyn Repository, account: &model::Account, deleted: model::Transaction) -> errors::Result<model::Transaction> {
+fn get_first_non_deleted_ancestor(
+    repo: &dyn Repository,
+    account: &model::Account,
+    deleted: model::Transaction,
+) -> errors::Result<model::Transaction> {
     let mut cur = deleted;
 
     loop {
@@ -101,8 +143,15 @@ fn get_first_non_deleted_ancestor(repo: &dyn Repository, account: &model::Accoun
     Ok(cur)
 }
 
-pub fn get_balance(repo: &dyn Repository, account: &model::Account) -> errors::Result<HashMap<model::PersonId, i64>> {
-    let mut balance: HashMap<model::PersonId, i64> = account.members.iter().map(|m| (m.uuid.clone(), 0)).collect();
+pub fn get_balance(
+    repo: &dyn Repository,
+    account: &model::Account,
+) -> errors::Result<HashMap<model::PersonId, i64>> {
+    let mut balance: HashMap<model::PersonId, i64> = account
+        .members
+        .iter()
+        .map(|m| (m.uuid.clone(), 0))
+        .collect();
     let chain = get_transaction_chain(repo, account);
 
     for tx in chain {
@@ -115,7 +164,6 @@ pub fn get_balance(repo: &dyn Repository, account: &model::Account) -> errors::R
 
             let original = get_first_non_deleted_ancestor(repo, account, tx)?;
             update_balance(&mut balance, &original.payed_by, &original.payed_for, -1);
-
         } else {
             update_balance(&mut balance, &tx.payed_by, &tx.payed_for, 1);
         }
@@ -124,7 +172,11 @@ pub fn get_balance(repo: &dyn Repository, account: &model::Account) -> errors::R
     Ok(balance)
 }
 
-pub fn receive_transactions(repo: &mut dyn Repository, account_id: &model::AccountId, transactions: &[&model::Transaction]) -> errors::Result<()> {
+pub fn receive_transactions(
+    repo: &mut dyn Repository,
+    account_id: &model::AccountId,
+    transactions: &[&model::Transaction],
+) -> errors::Result<()> {
     let account = repo.get_account(account_id)?;
 
     if transactions.is_empty() {
@@ -148,7 +200,11 @@ pub fn receive_transactions(repo: &mut dyn Repository, account_id: &model::Accou
     Ok(())
 }
 
-pub fn get_child_transactions(repo: &dyn Repository, account_id: &model::AccountId, base: &model::TransactionId) -> errors::Result<Vec<model::Transaction>> {
+pub fn get_child_transactions(
+    repo: &dyn Repository,
+    account_id: &model::AccountId,
+    base: &model::TransactionId,
+) -> errors::Result<Vec<model::Transaction>> {
     // Check that the base transaction ID is valid, else we'll get a
     // NoSuchTransaction error.
     if !base.is_empty() {
@@ -182,97 +238,101 @@ pub mod tests {
 
     pub fn expect_no_such_account<T: Debug>(r: errors::Result<T>) {
         match r {
-            Err(errors::Error(errors::ErrorKind::NoSuchAccount(_), _)) => {},
-            _ => { panic!("Expected NoSuchAccount error, got {:?}", r); }
+            Err(errors::Error(errors::ErrorKind::NoSuchAccount(_), _)) => {}
+            _ => {
+                panic!("Expected NoSuchAccount error, got {:?}", r);
+            }
         }
     }
 
     pub fn expect_no_such_transaction<T: Debug>(r: errors::Result<T>) {
         match r {
-            Err(errors::Error(errors::ErrorKind::NoSuchTransaction(_), _)) => {},
-            _ => { panic!("Expected NoSuchTransaction error, got {:?}", r); }
+            Err(errors::Error(errors::ErrorKind::NoSuchTransaction(_), _)) => {}
+            _ => {
+                panic!("Expected NoSuchTransaction error, got {:?}", r);
+            }
         }
     }
 
     pub fn make_test_account() -> model::Account {
-        model::Account{
+        model::Account {
             uuid: model::generate_account_id(),
             label: "Test account".to_owned(),
-            latest_transaction: vec!(),
-            latest_synchronized_transaction: vec!(),
-            members: vec!(model::Person{
-                uuid: model::generate_person_id(),
-                name: "Member 1".to_owned(),
-            }, model::Person{
-                uuid: model::generate_person_id(),
-                name: "Member 2".to_owned(),
-            }),
+            latest_transaction: vec![],
+            latest_synchronized_transaction: vec![],
+            members: vec![
+                model::Person {
+                    uuid: model::generate_person_id(),
+                    name: "Member 1".to_owned(),
+                },
+                model::Person {
+                    uuid: model::generate_person_id(),
+                    name: "Member 2".to_owned(),
+                },
+            ],
         }
     }
 
     pub fn make_test_transaction_1(account: &model::Account) -> model::Transaction {
-         model::Transaction{
+        model::Transaction {
             uuid: model::generate_transaction_id(),
-            parent: vec!(),
+            parent: vec![],
             amount: 35,
-            payed_by: vec!(
-                model::PayedBy{
-                    person: account.members[0].uuid.to_owned(),
-                    amount: 35,
-                }
-            ),
-            payed_for: vec!(
-                model::PayedFor{
+            payed_by: vec![model::PayedBy {
+                person: account.members[0].uuid.to_owned(),
+                amount: 35,
+            }],
+            payed_for: vec![
+                model::PayedFor {
                     person: account.members[0].uuid.to_owned(),
                     amount: 17,
                 },
-                model::PayedFor{
+                model::PayedFor {
                     person: account.members[1].uuid.to_owned(),
                     amount: 18,
                 },
-            ),
+            ],
             label: "Fish & Chips".to_owned(),
             timestamp: 1530288593,
             deleted: false,
-            replaces: vec!(),
+            replaces: vec![],
         }
     }
 
-    pub fn make_test_transaction_2(account: &model::Account, parent: &model::TransactionId) -> model::Transaction {
-         model::Transaction{
+    pub fn make_test_transaction_2(
+        account: &model::Account,
+        parent: &model::TransactionId,
+    ) -> model::Transaction {
+        model::Transaction {
             uuid: model::generate_transaction_id(),
             parent: parent.to_owned(),
             amount: 10,
-            payed_by: vec!(
-                model::PayedBy{
-                    person: account.members[1].uuid.to_owned(),
-                    amount: 10,
-                }
-            ),
-            payed_for: vec!(
-                model::PayedFor{
-                    person: account.members[0].uuid.to_owned(),
-                    amount: 10,
-                },
-            ),
+            payed_by: vec![model::PayedBy {
+                person: account.members[1].uuid.to_owned(),
+                amount: 10,
+            }],
+            payed_for: vec![model::PayedFor {
+                person: account.members[0].uuid.to_owned(),
+                amount: 10,
+            }],
             label: "Book".to_owned(),
             timestamp: 1530289903,
             deleted: false,
-            replaces: vec!(),
+            replaces: vec![],
         }
     }
 
     pub fn make_test_transaction_3(parent: &model::TransactionId) -> model::Transaction {
-         model::Transaction{
+        model::Transaction {
             uuid: model::generate_transaction_id(),
             parent: parent.to_owned(),
             amount: 0,
-            payed_by: vec!(),
-            payed_for: vec!(),
+            payed_by: vec![],
+            payed_for: vec![],
             label: "TX".to_owned(),
             timestamp: 0,
             deleted: false,
-            replaces: vec!(),
+            replaces: vec![],
         }
     }
 

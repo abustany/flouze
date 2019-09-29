@@ -9,7 +9,7 @@ pub type PersonId = Vec<u8>;
 
 include!(concat!(env!("OUT_DIR"), "/flouze.model.rs"));
 
-pub const INVALID_ID: [u8;0] = [];
+pub const INVALID_ID: [u8; 0] = [];
 
 pub fn generate_account_id() -> AccountId {
     uuid::Uuid::new_v4().as_bytes().to_vec()

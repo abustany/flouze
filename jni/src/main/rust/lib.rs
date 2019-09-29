@@ -2,9 +2,9 @@ extern crate flouze;
 extern crate jni;
 extern crate prost;
 
-use jni::JNIEnv;
 use jni::objects::*;
 use jni::sys::*;
+use jni::JNIEnv;
 
 use flouze::model;
 use flouze::repository::Repository;
@@ -23,26 +23,33 @@ fn ok_or_throw<T>(env: &JNIEnv, res: ::flouze::errors::Result<T>, default: T) ->
         Err(e) => {
             throw_err(env, e);
             default
-        },
-        Ok(v) => v
+        }
+        Ok(v) => v,
     }
 }
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern "system" fn Java_flouze_SledRepository__1newSledTemporary(env: JNIEnv, _class: JClass) -> jlong {
+pub extern "system" fn Java_flouze_SledRepository__1newSledTemporary(
+    env: JNIEnv,
+    _class: JClass,
+) -> jlong {
     match SledRepository::temporary() {
         Ok(repo) => Box::into_raw(Box::new(repo)) as jlong,
         _ => {
             let _ = env.throw((FLOUZE_EXCEPTION_CLASS, "Error while creating repository"));
             0
-        },
+        }
     }
 }
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub unsafe extern "system" fn Java_flouze_SledRepository__1destroy(_env: JNIEnv, _instance: JObject, ptr: jlong) {
+pub unsafe extern "system" fn Java_flouze_SledRepository__1destroy(
+    _env: JNIEnv,
+    _instance: JObject,
+    ptr: jlong,
+) {
     if ptr == 0 {
         return;
     }
@@ -57,11 +64,18 @@ fn add_account(repo: &mut SledRepository, account_data: &Vec<u8>) -> ::flouze::e
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub unsafe extern "system" fn Java_flouze_SledRepository__1addAccount(env: JNIEnv, _class: JClass, instance: jlong, account: jbyteArray) {
+pub unsafe extern "system" fn Java_flouze_SledRepository__1addAccount(
+    env: JNIEnv,
+    _class: JClass,
+    instance: jlong,
+    account: jbyteArray,
+) {
     let mut repo = &mut *(instance as *mut SledRepository);
     let account_bytes = match env.convert_byte_array(account) {
         Ok(bytes) => bytes,
-        Err(_) => { return; } // An exception has been raised
+        Err(_) => {
+            return;
+        } // An exception has been raised
     };
     ok_or_throw(&env, add_account(&mut repo, &account_bytes), ());
 }
@@ -78,18 +92,25 @@ fn get_account(repo: &SledRepository, account_id: &Vec<u8>) -> ::flouze::errors:
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub unsafe extern "system" fn Java_flouze_SledRepository__1getAccount(env: JNIEnv, _class: JClass, instance: jlong, jaccount_id: jbyteArray) -> jbyteArray {
+pub unsafe extern "system" fn Java_flouze_SledRepository__1getAccount(
+    env: JNIEnv,
+    _class: JClass,
+    instance: jlong,
+    jaccount_id: jbyteArray,
+) -> jbyteArray {
     let repo = &mut *(instance as *mut SledRepository);
     let account_id = match env.convert_byte_array(jaccount_id) {
         Ok(bytes) => bytes,
-        Err(_) => { return env.byte_array_from_slice(&vec!()).unwrap(); } // An exception has been raised
+        Err(_) => {
+            return env.byte_array_from_slice(&vec![]).unwrap();
+        } // An exception has been raised
     };
 
     match get_account(&repo, &account_id) {
         Ok(bytes) => env.byte_array_from_slice(&bytes).unwrap(),
         Err(e) => {
             throw_err(&env, e);
-            return env.byte_array_from_slice(&vec!()).unwrap()
+            return env.byte_array_from_slice(&vec![]).unwrap();
         }
     }
 }
