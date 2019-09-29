@@ -223,7 +223,7 @@ fn run() -> Result<()> {
             store.add_account(&account).map_err(|e| e.into())
         },
         Command::ListAccounts{json} => {
-            let mut store = SledRepository::new(&opt.file)?;
+            let store = SledRepository::new(&opt.file)?;
 
             for account in store.list_accounts()? {
                 if json {
@@ -298,7 +298,7 @@ fn run() -> Result<()> {
             store.set_latest_transaction(&account.uuid, &tx.uuid).map_err(|e| e.into())
         }
         Command::ListTransactions{account_name, json} => {
-            let mut store = SledRepository::new(&opt.file)?;
+            let store = SledRepository::new(&opt.file)?;
 
             let account = find_account_by_label(&store, &account_name)?;
 
@@ -333,7 +333,7 @@ fn run() -> Result<()> {
             Ok(())
         }
         Command::Serve{listen_address} => {
-            let mut store = SledRepository::new(&opt.file)?;
+            let store = SledRepository::new(&opt.file)?;
 
             info!("Listening on {}", listen_address);
             Server::new(store, &listen_address)?.wait()?;

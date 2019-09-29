@@ -3,7 +3,7 @@ use super::model;
 use super::remote::Remote;
 use super::repository::{Repository, check_chain_consistency, get_transaction_chain};
 
-fn rebase_local_transactions(local: &mut Repository, remote: &Remote, account: &mut model::Account) -> errors::Result<()> {
+fn rebase_local_transactions(local: &mut dyn Repository, remote: &dyn Remote, account: &mut model::Account) -> errors::Result<()> {
     let latest_remote = remote.get_latest_transaction(&account.uuid)?;
     debug!("Latest remote transaction is {}", model::IdAsHex(&latest_remote));
 
@@ -59,7 +59,7 @@ fn rebase_local_transactions(local: &mut Repository, remote: &Remote, account: &
     Ok(())
 }
 
-fn check_transaction_id_uniqueness(repo: &Repository, account_id: &model::AccountId, ids: &[&model::TransactionId]) -> errors::Result<()> {
+fn check_transaction_id_uniqueness(repo: &dyn Repository, account_id: &model::AccountId, ids: &[&model::TransactionId]) -> errors::Result<()> {
     for id in ids {
         match repo.get_transaction(account_id, id) {
             Err(errors::Error(errors::ErrorKind::NoSuchTransaction(_), _)) => { continue; },
@@ -71,7 +71,7 @@ fn check_transaction_id_uniqueness(repo: &Repository, account_id: &model::Accoun
     return Ok(())
 }
 
-pub fn sync(local: &mut Repository, remote: &mut Remote, account_id: &model::AccountId) -> errors::Result<()> {
+pub fn sync(local: &mut dyn Repository, remote: &mut dyn Remote, account_id: &model::AccountId) -> errors::Result<()> {
     let mut account = local.get_account(account_id)?;
 
     debug!("Fetching remote transactions and rebasing local ones");
@@ -80,7 +80,7 @@ pub fn sync(local: &mut Repository, remote: &mut Remote, account_id: &model::Acc
     let mut local_transactions: Vec<model::Transaction> = Vec::new();
 
     for tx in get_transaction_chain(local, &account) {
-        let mut tx = tx?;
+        let tx = tx?;
 
         if &tx.uuid == &account.latest_synchronized_transaction {
             break;
@@ -109,7 +109,7 @@ pub fn sync(local: &mut Repository, remote: &mut Remote, account_id: &model::Acc
     Ok(())
 }
 
-pub fn clone_remote(local: &mut Repository, remote: &mut Remote, account_id: &model::AccountId) -> errors::Result<()> {
+pub fn clone_remote(local: &mut dyn Repository, remote: &mut dyn Remote, account_id: &model::AccountId) -> errors::Result<()> {
     let mut account = remote.get_account_info(account_id)?;
     account.latest_transaction = vec!();
     account.latest_synchronized_transaction = vec!();
@@ -117,7 +117,7 @@ pub fn clone_remote(local: &mut Repository, remote: &mut Remote, account_id: &mo
     sync(local, remote, account_id)
 }
 
-fn rebase_transactions(repo: &Repository, account: &model::Account, new_base: &model::TransactionId) -> errors::Result<(Vec<model::Transaction>, Vec<model::TransactionId>)> {
+fn rebase_transactions(repo: &dyn Repository, account: &model::Account, new_base: &model::TransactionId) -> errors::Result<(Vec<model::Transaction>, Vec<model::TransactionId>)> {
     let mut to_rebase: Vec<model::Transaction> = Vec::new();
     let mut rebased: Vec<model::Transaction> = Vec::new();
     let mut old_ids: Vec<model::TransactionId> = Vec::new();
@@ -126,7 +126,7 @@ fn rebase_transactions(repo: &Repository, account: &model::Account, new_base: &m
     debug!("Rebasing local transactions from {} onto {}", model::IdAsHex(&account.latest_synchronized_transaction), model::IdAsHex(&new_base));
 
     for tx in get_transaction_chain(repo, account) {
-        let mut tx = tx?;
+        let tx = tx?;
 
         if &tx.uuid == &account.latest_synchronized_transaction {
             break;

@@ -45,7 +45,7 @@ pub mod tests {
         }
     }
 
-    pub fn test_initial_sync_to_remote_prepare_repo(remote_repo: &mut Repository) -> model::Account {
+    pub fn test_initial_sync_to_remote_prepare_repo(remote_repo: &mut dyn Repository) -> model::Account {
         let account = model::Account{
             uuid: model::generate_account_id(),
             label: "Account".to_owned(),
@@ -68,7 +68,7 @@ pub mod tests {
         account
     }
 
-    pub fn test_initial_sync_to_remote(remote: &mut Remote, account_id: &model::AccountId) {
+    pub fn test_initial_sync_to_remote(remote: &mut dyn Remote, account_id: &model::AccountId) {
         assert_eq!(remote.get_latest_transaction(&account_id).unwrap(), model::INVALID_ID);
         assert_eq!(remote.get_child_transactions(&account_id, &vec!()).unwrap(), vec!());
 

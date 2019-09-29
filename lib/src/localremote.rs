@@ -4,11 +4,11 @@ use super::remote::{Remote};
 use super::repository::{Repository, get_child_transactions, receive_transactions};
 
 pub struct LocalRemote<'a> {
-    repo: &'a mut Repository,
+    repo: &'a mut dyn Repository,
 }
 
 impl<'a> LocalRemote<'a> {
-    pub fn new(repo: &'a mut Repository) -> LocalRemote<'a> {
+    pub fn new(repo: &'a mut dyn Repository) -> LocalRemote<'a> {
         LocalRemote{ repo }
     }
 }

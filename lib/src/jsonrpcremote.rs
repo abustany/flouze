@@ -126,7 +126,7 @@ impl<T: Repository + Send + Sync + 'static> rpc::Api for ServerRpcImpl<T> {
         })?;
 
         let mut lock = self.repo.write().unwrap();
-        let repo: &mut Repository = lock.deref_mut();
+        let repo: &mut dyn Repository = lock.deref_mut();
         let account_uuid = Uuid::from_slice(&account.uuid).unwrap_or_else(|_| Uuid::nil()).to_hyphenated();
 
         // Check that we don't already have an account with this UUID
@@ -162,27 +162,27 @@ impl<T: Repository + Send + Sync + 'static> rpc::Api for ServerRpcImpl<T> {
 
     fn get_account_info(&self, account_id: model::AccountId) -> jsonrpc_core::Result<model::Account> {
         let lock = self.repo.read().unwrap();
-        let repo: &Repository = lock.deref();
+        let repo: &dyn Repository = lock.deref();
         repo.get_account(&account_id).map_err(|e| e.into())
     }
 
     fn get_latest_transaction(&self, account_id: model::AccountId) -> jsonrpc_core::Result<model::TransactionId> {
         let lock = self.repo.read().unwrap();
-        let repo: &Repository = lock.deref();
+        let repo: &dyn Repository = lock.deref();
         let account = repo.get_account(&account_id).map_err(|e| e.into())?;
         Ok(account.latest_transaction.clone())
     }
 
     fn receive_transactions(&self, account_id: model::AccountId, transactions: Vec<model::Transaction>) -> jsonrpc_core::Result<()> {
         let mut lock = self.repo.write().unwrap();
-        let repo: &mut Repository = lock.deref_mut();
+        let repo: &mut dyn Repository = lock.deref_mut();
         let transaction_refs: Vec<&model::Transaction> = transactions.iter().map(|tx| tx).collect();
         receive_transactions(repo, &account_id, &transaction_refs).map_err(|e| e.into())
     }
 
     fn get_child_transactions(&self, account_id: model::AccountId, base: model::TransactionId) -> jsonrpc_core::Result<Vec<model::Transaction>> {
         let lock = self.repo.read().unwrap();
-        let repo: &Repository = lock.deref();
+        let repo: &dyn Repository = lock.deref();
         get_child_transactions(repo, &account_id, &base).map_err(|e| e.into())
     }
 }

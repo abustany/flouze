@@ -17,13 +17,13 @@ pub trait Repository {
 }
 
 pub struct TransactionChain<'a> {
-    repo: &'a Repository,
+    repo: &'a dyn Repository,
     account_id: model::AccountId,
     id: model::TransactionId,
 }
 
 impl<'a> TransactionChain<'a> {
-    fn new(repo: &'a Repository, account_id: &model::AccountId, id: &model::TransactionId) -> TransactionChain<'a> {
+    fn new(repo: &'a dyn Repository, account_id: &model::AccountId, id: &model::TransactionId) -> TransactionChain<'a> {
         TransactionChain{
             repo: repo,
             account_id: account_id.to_owned(),
@@ -51,7 +51,7 @@ impl<'a> Iterator for TransactionChain<'a> {
     }
 }
 
-pub fn get_transaction_chain<'a>(repo: &'a Repository, account: &model::Account) -> TransactionChain<'a> {
+pub fn get_transaction_chain<'a>(repo: &'a dyn Repository, account: &model::Account) -> TransactionChain<'a> {
     TransactionChain::new(repo, &account.uuid, &account.latest_transaction)
 }
 
@@ -83,7 +83,7 @@ fn update_balance(balance: &mut HashMap<model::PersonId, i64>, payed_by: &[model
     }
 }
 
-fn get_first_non_deleted_ancestor(repo: &Repository, account: &model::Account, deleted: model::Transaction) -> errors::Result<model::Transaction> {
+fn get_first_non_deleted_ancestor(repo: &dyn Repository, account: &model::Account, deleted: model::Transaction) -> errors::Result<model::Transaction> {
     let mut cur = deleted;
 
     loop {
@@ -101,7 +101,7 @@ fn get_first_non_deleted_ancestor(repo: &Repository, account: &model::Account, d
     Ok(cur)
 }
 
-pub fn get_balance(repo: &Repository, account: &model::Account) -> errors::Result<HashMap<model::PersonId, i64>> {
+pub fn get_balance(repo: &dyn Repository, account: &model::Account) -> errors::Result<HashMap<model::PersonId, i64>> {
     let mut balance: HashMap<model::PersonId, i64> = account.members.iter().map(|m| (m.uuid.clone(), 0)).collect();
     let chain = get_transaction_chain(repo, account);
 
@@ -124,7 +124,7 @@ pub fn get_balance(repo: &Repository, account: &model::Account) -> errors::Resul
     Ok(balance)
 }
 
-pub fn receive_transactions(repo: &mut Repository, account_id: &model::AccountId, transactions: &[&model::Transaction]) -> errors::Result<()> {
+pub fn receive_transactions(repo: &mut dyn Repository, account_id: &model::AccountId, transactions: &[&model::Transaction]) -> errors::Result<()> {
     let account = repo.get_account(account_id)?;
 
     if transactions.is_empty() {
@@ -148,7 +148,7 @@ pub fn receive_transactions(repo: &mut Repository, account_id: &model::AccountId
     Ok(())
 }
 
-pub fn get_child_transactions(repo: &Repository, account_id: &model::AccountId, base: &model::TransactionId) -> errors::Result<Vec<model::Transaction>> {
+pub fn get_child_transactions(repo: &dyn Repository, account_id: &model::AccountId, base: &model::TransactionId) -> errors::Result<Vec<model::Transaction>> {
     // Check that the base transaction ID is valid, else we'll get a
     // NoSuchTransaction error.
     if !base.is_empty() {
@@ -276,7 +276,7 @@ pub mod tests {
         }
     }
 
-    pub fn test_account_crud(repo: &mut Repository) {
+    pub fn test_account_crud(repo: &mut dyn Repository) {
         let account = make_test_account();
 
         expect_no_such_account(repo.get_account(&account.uuid));
@@ -299,7 +299,7 @@ pub mod tests {
         expect_no_such_account(repo.get_account(&account.uuid));
     }
 
-    pub fn test_transaction_insert(repo: &mut Repository) {
+    pub fn test_transaction_insert(repo: &mut dyn Repository) {
         let account = make_test_account();
         repo.add_account(&account).unwrap();
 
@@ -318,7 +318,7 @@ pub mod tests {
         assert_eq!(fetched2, fetched);
     }
 
-    pub fn test_transaction_chain(repo: &mut Repository) {
+    pub fn test_transaction_chain(repo: &mut dyn Repository) {
         let mut account = make_test_account();
         repo.add_account(&account).unwrap();
 
@@ -365,7 +365,7 @@ pub mod tests {
         assert_eq!(check_chain_consistency(&vec!(&tx1, &tx3)), false);
     }
 
-    pub fn test_balance(repo: &mut Repository) {
+    pub fn test_balance(repo: &mut dyn Repository) {
         let mut account = make_test_account();
         let tx1 = make_test_transaction_1(&account);
         let tx2 = make_test_transaction_2(&account, &tx1.uuid);
