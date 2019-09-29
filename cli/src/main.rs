@@ -11,7 +11,7 @@ extern crate uuid;
 
 extern crate flouze;
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use rand::Rng;
@@ -23,6 +23,7 @@ use uuid::Uuid;
 use flouze::jsonrpcremote::{Client, Server};
 use flouze::model;
 use flouze::remote::Remote;
+use flouze::repository;
 use flouze::repository::{get_transaction_chain, Repository};
 use flouze::sledrepository::SledRepository;
 use flouze::sync;
@@ -128,6 +129,13 @@ enum Command {
         account_name: String,
         /// Address of the remote peer in the form IP:PORT
         remote_address: String,
+    },
+
+    #[structopt(name = "balance")]
+    /// Display the balance of a local account
+    Balance {
+        /// Name of the account
+        account_name: String,
     },
 
     #[structopt(name = "add-remote-account")]
@@ -417,6 +425,37 @@ fn run() -> Result<()> {
             let mut remote = Client::new(&http_address)?;
             sync::sync(&mut store, &mut remote, &account.uuid)?;
             remote.shutdown()?;
+
+            Ok(())
+        }
+        Command::Balance { account_name } => {
+            let store = SledRepository::new(&opt.file)?;
+            let account = find_account_by_label(&store, &account_name)?;
+
+            if account.is_none() {
+                bail!("No such account in the file");
+            }
+
+            let account = account.unwrap();
+            let persons: HashMap<&model::PersonId, &str> = account
+                .members
+                .iter()
+                .map(|p| (&p.uuid, p.name.as_str()))
+                .collect();
+            let balance = repository::get_balance(&store, &account)?;
+            let named_balance: BTreeMap<String, i64> = balance
+                .iter()
+                .map(|(person_id, amount)| {
+                    (
+                        persons.get(&person_id).unwrap_or(&"??").to_string(),
+                        *amount,
+                    )
+                })
+                .collect();
+
+            for (person, amount) in named_balance {
+                println!("{}: {}", person, amount);
+            }
 
             Ok(())
         }
