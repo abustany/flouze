@@ -5,7 +5,7 @@ FROM centos:7.6.1810
 RUN \
   curl -o /etc/yum.repos.d/git.repo https://copr.fedorainfracloud.org/coprs/g/git-maint/git/repo/epel-7/group_git-maint-git-epel-7.repo && \
   yum upgrade -y libstdc++ && \
-  yum install -y unzip java-1.8.0-openjdk-devel python gcc git which libstdc++.i686 openssl-devel
+  yum install -y unzip java-1.8.0-openjdk-devel python gcc clang make git which libstdc++.i686 openssl-devel
 
 RUN useradd -m ci
 USER ci
