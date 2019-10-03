@@ -4,7 +4,8 @@ FROM centos:7.6.1810
 # Flutter currently need a recent version of Git (https://github.com/flutter/flutter/issues/21626)
 RUN \
   curl -o /etc/yum.repos.d/git.repo https://copr.fedorainfracloud.org/coprs/g/git-maint/git/repo/epel-7/group_git-maint-git-epel-7.repo && \
-  yum install -y unzip java-1.8.0-openjdk-devel python gcc git which libstdc++-4.8.5-36.el7.i686 openssl-devel
+  yum upgrade -y libstdc++ && \
+  yum install -y unzip java-1.8.0-openjdk-devel python gcc git which libstdc++.i686 openssl-devel
 
 RUN useradd -m ci
 USER ci
