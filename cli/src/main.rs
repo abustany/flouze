@@ -138,6 +138,13 @@ enum Command {
         account_name: String,
     },
 
+    #[structopt(name = "settle")]
+    /// Display the list of transfers to do to settle the debts
+    Settle {
+        /// Name of the account
+        account_name: String,
+    },
+
     #[structopt(name = "add-remote-account")]
     /// Create a new account on a remote server
     AddRemoteAccount {
@@ -455,6 +462,33 @@ fn run() -> Result<()> {
 
             for (person, amount) in named_balance {
                 println!("{}: {}", person, amount);
+            }
+
+            Ok(())
+        }
+        Command::Settle { account_name } => {
+            let store = SledRepository::new(&opt.file)?;
+            let account = find_account_by_label(&store, &account_name)?;
+
+            if account.is_none() {
+                bail!("No such account in the file");
+            }
+
+            let account = account.unwrap();
+            let persons: HashMap<&model::PersonId, &str> = account
+                .members
+                .iter()
+                .map(|p| (&p.uuid, p.name.as_str()))
+                .collect();
+            let balance = repository::get_balance(&store, &account)?;
+
+            for transfer in repository::get_transfers(&balance) {
+                let debitor = persons.get(&transfer.debitor).unwrap_or(&"??");
+                let creditor = persons.get(&transfer.creditor).unwrap_or(&"??");
+                println!(
+                    "{} should transfer {} to {}",
+                    debitor, transfer.amount, creditor
+                );
             }
 
             Ok(())
