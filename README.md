@@ -41,12 +41,11 @@ The features currently being developed include:
 
 ## Compatibility
 
-Rust and Flutter should allow targeting both Android and iOS as mobile platforms.
-I currently only develop for Android, but the platform specific layer binding
-Flutter to Rust (because of the [lack of FFI](https://github.com/flutter/flutter/issues/7053))
-is really thin and should be trivial to port to Objective-C or Swift. There's
-also a very basic CLI tool for interacting with Flouze accounts, that one should
-work on all desktop platforms.
+Rust and Flutter allow targeting both Android and iOS as mobile platforms.  I
+currently only develop for Android, and try to make things work for iOS once
+every now and then, but given I have no Apple Developer Account this does not
+mean much. There's also a very basic CLI tool for interacting with Flouze
+accounts, that one should work on all desktop platforms.
 
 ## Development
 
