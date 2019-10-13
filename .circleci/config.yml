@@ -32,7 +32,7 @@ jobs:
           command: cd flouze_flutter && ./build-openssl.sh
       - run:
           name: Build JNI libs for the app
-          command: cd flouze_flutter && ./build-jni-libs.sh --release
+          command: cd flouze_flutter && ./build-android-libs.sh --release
       - run:
           name: Build the app
           command: |-

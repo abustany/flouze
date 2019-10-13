@@ -48,8 +48,8 @@ build() {
 	cargo build --target $target -p flouze-flutter --features ios $CARGO_ARGS
 
 	mkdir -p android/src/main/jniLibs/$jni_dir
-	cp ../target/$target/$LIB_DIR/libflouze_flutter.so android/src/main/jniLibs/$jni_dir/libflouze_flutter_ffi.so
-	"$tool_prefix-strip" android/src/main/jniLibs/$jni_dir/libflouze_flutter_ffi.so
+	cp ../target/$target/$LIB_DIR/libflouze_flutter.so android/src/main/jniLibs/$jni_dir/
+	"$tool_prefix-strip" android/src/main/jniLibs/$jni_dir/libflouze_flutter.so
 }
 
 build aarch64-linux-android  aarch64-linux-android    arm64-v8a

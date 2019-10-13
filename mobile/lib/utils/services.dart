@@ -19,9 +19,6 @@ Future<SledRepository> getRepository() async {
     return _repository;
   }
 
-  print('Loading Flouze library');
-  await FlouzeFlutter.init();
-
   Directory appDocDir = await getApplicationDocumentsDirectory();
   final String dbPath = path.join(appDocDir.path, 'flouze.db');
 
@@ -33,7 +30,7 @@ Future<SledRepository> getRepository() async {
 
 void closeRepository() async {
   if (_repository != null) {
-    _repository.close();
+    _repository.destroy();
   }
 }
 

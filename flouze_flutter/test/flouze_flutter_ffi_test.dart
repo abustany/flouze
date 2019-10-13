@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:flouze_flutter/flouze_flutter_ffi.dart';
+import 'package:flouze_flutter/flouze_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:fixnum/fixnum.dart';
 

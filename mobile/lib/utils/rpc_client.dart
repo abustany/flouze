@@ -8,7 +8,7 @@ Future<JsonRpcClient> getJsonRpcClient() async {
   if (_cachedClient == null) {
     _cachedClient = rootBundle.loadString('assets/sync_server_uri.txt')
       .then((serverUri) => serverUri.trim())
-      .then((serverUri) => JsonRpcClient.create(serverUri));
+      .then((serverUri) => JsonRpcClient.withUrl(serverUri));
   }
 
   return _cachedClient;
