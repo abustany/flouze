@@ -28,6 +28,13 @@ jobs:
             cargo build --release -p flouze-cli
             cp target/release/flouze-cli artifacts/flouze-cli-${RELEASE_NAME}-linux-x86_64
       - run:
+          name: Run flouze-flutter tests
+          command: |-
+            set -e
+            cd flouze_flutter
+            cargo build --release --features ios
+            LD_LIBRARY_PATH=$(pwd)/../target/release flutter test test/flouze_flutter_ffi_test.dart
+      - run:
           name: Build OpenSSL for Android
           command: cd flouze_flutter && ./build-openssl.sh
       - run:
