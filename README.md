@@ -1,7 +1,6 @@
 # Flouze, an app to keep track of expenses among friends
 
 [![CircleCI](https://circleci.com/gh/abustany/flouze.svg?style=svg)](https://circleci.com/gh/abustany/flouze)
-[![Build Status](https://travis-ci.com/abustany/flouze.svg?branch=master)](https://travis-ci.com/abustany/flouze)
 
 [Download prebuilt binaries here!](https://flouze.bustany.org)
 
@@ -41,11 +40,10 @@ The features currently being developed include:
 
 ## Compatibility
 
-Rust and Flutter allow targeting both Android and iOS as mobile platforms.  I
-currently only develop for Android, and try to make things work for iOS once
-every now and then, but given I have no Apple Developer Account this does not
-mean much. There's also a very basic CLI tool for interacting with Flouze
-accounts, that one should work on all desktop platforms.
+Rust and Flutter theoretically allow targeting both Android and iOS as mobile
+platforms. I currently only develop for Android. There's also a very basic CLI
+tool for interacting with Flouze accounts, that one should work on all desktop
+platforms.
 
 ## Development
 
