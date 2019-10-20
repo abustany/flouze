@@ -1,7 +1,9 @@
 ///
 //  Generated code. Do not modify.
-///
-// ignore_for_file: non_constant_identifier_names,library_prefixes
+//  source: bindings.proto
+//
+// @dart = 2.3
+// ignore_for_file: camel_case_types,non_constant_identifier_names,library_prefixes,unused_import,unused_shown_name,return_of_invalid_type
 
 const AccountList$json = const {
   '1': 'AccountList',
@@ -20,7 +22,7 @@ const TransactionList$json = const {
 const Balance$json = const {
   '1': 'Balance',
   '2': const [
-    const {'1': 'entries', '3': 1, '4': 3, '5': 11, '6': '.flouze.flutter.Balance.Entry', '10': 'entries'},
+    const {'1': 'entries', '3': 1, '4': 3, '5': 11, '6': '.flouze_flutter.Balance.Entry', '10': 'entries'},
   ],
   '3': const [Balance_Entry$json],
 };

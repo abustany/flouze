@@ -10,11 +10,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  protobuf: "^0.10.0"
+  protobuf: "^1.0.0"
 
 dev_dependencies:
-  protoc_plugin: ^0.10.0
-  test: "^1.6.3"
+  protoc_plugin: "^19.0.1"
+  test: "1.6.3"
   uuid: "^2.0.1"
   flutter_test:
     sdk: flutter
