@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flouze_flutter/bindings.pb.dart';
 import 'package:rxdart/rxdart.dart';
 
 import 'package:flouze_flutter/flouze_flutter.dart' as Flouze;
@@ -17,10 +18,11 @@ class TransactionsBloc {
     _transactionsController.add(TransactionsLoadingState());
     Services.getRepository()
         .then((repo) => Future.wait([repo.listTransactions(_account.uuid), repo.getBalance(_account.uuid)]))
-        .then((ctx) {
+        .then((ctx) async {
           final List<Flouze.Transaction> transactions = ctx[0];
           final Map<List<int>, int> balance = ctx[1];
-          _transactionsController.add(TransactionsLoadedState(flattenHistory(transactions), balance));
+          final transfers = await Flouze.Balance.getTransfers(balance);
+          _transactionsController.add(TransactionsLoadedState(flattenHistory(transactions), balance, transfers));
         })
         .catchError((e) => _transactionsController.add(TransactionsLoadErrorState(e.toString())));
   }
@@ -37,7 +39,7 @@ class TransactionsBloc {
     final List<int> previousLatestTransaction = _account.latestTransaction;
     _account.latestTransaction = transaction.uuid;
 
-    _transactionsController.add(TransactionsLoadedState(flattenHistory([transaction, ...state.transactions]), state.balance));
+    _transactionsController.add(TransactionsLoadedState(flattenHistory([transaction, ...state.transactions]), state.balance, state.transfers));
     Services.getRepository()
         .then((repo) { repo.addTransaction(_account.uuid, transaction); })
         .then((_) => loadTransactions()) // reload the transactions to upload the balance too
@@ -69,10 +71,11 @@ class TransactionsState {}
 class TransactionsLoadingState extends TransactionsState {}
 
 class TransactionsLoadedState extends TransactionsState {
-  TransactionsLoadedState(this.transactions, this.balance)
+  TransactionsLoadedState(this.transactions, this.balance, this.transfers)
     : totalAmount = transactions.isEmpty ? 0 : transactions.map((t) => t.amount).reduce((a, b) => a + b);
   final List<Flouze.Transaction> transactions;
   final Map<List<int>, int> balance;
+  final List<Transfer> transfers;
   final int totalAmount;
 }
 

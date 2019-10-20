@@ -338,6 +338,7 @@ class AccountPageState extends State<AccountPage> with SingleTickerProviderState
           key: Key('reports'),
           members: account.members,
           balance: state.balance,
+          transfers: state.transfers,
       );
 
   Widget _buildReportsError(TransactionsErrorState state) => Center(child: Text(state.error));

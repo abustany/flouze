@@ -379,6 +379,21 @@ class FlouzeLocalizations {
       args: [date, who],
     );
 
+  // Report
+  String get howToSettle => Intl.message(
+    'How to settle',
+    name: 'howToSettle',
+    desc: 'Title of the settle section',
+  );
+
+  String xOwesY(String debitor, String creditor) =>
+      Intl.message(
+        '$debitor owes $creditor',
+        name: 'xOwesY',
+        desc: 'Left column of the transfers table',
+        args: [debitor, creditor],
+      );
+
   // General strings
 
   String get confirmDialogCancelButton => Intl.message(
