@@ -3,6 +3,7 @@ extern crate flouze;
 extern crate jni;
 extern crate prost;
 
+use std::collections::HashMap;
 use std::os::raw::c_void;
 
 use flouze::jsonrpcremote::Client;
@@ -164,6 +165,30 @@ unsafe fn get_balance(repo: *mut c_void, account_id: &[u8]) -> FFIResult<Vec<u8>
     let mut buf = Vec::new();
     buf.reserve(balance.encoded_len());
     balance.encode(&mut buf).unwrap();
+    Ok(buf)
+}
+
+unsafe fn get_transfers(balance_data: &[u8]) -> FFIResult<Vec<u8>> {
+    let balance = Balance::decode(balance_data)?;
+    let balance_hash: HashMap<model::PersonId, i64> = balance
+        .entries
+        .into_iter()
+        .map(|e| (e.person, e.balance))
+        .collect();
+    let transfer_entries: Vec<Transfer> = flouze::repository::get_transfers(&balance_hash)
+        .into_iter()
+        .map(|t| Transfer {
+            debitor: t.debitor,
+            creditor: t.creditor,
+            amount: t.amount,
+        })
+        .collect();
+    let transfers = Transfers {
+        transfers: transfer_entries,
+    };
+    let mut buf = Vec::new();
+    buf.reserve(transfers.encoded_len());
+    transfers.encode(&mut buf).unwrap();
     Ok(buf)
 }
 

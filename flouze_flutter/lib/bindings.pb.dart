@@ -128,3 +128,79 @@ class Balance extends $pb.GeneratedMessage {
   $core.List<Balance_Entry> get entries => $_getList(0);
 }
 
+class Transfer extends $pb.GeneratedMessage {
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo('Transfer', package: const $pb.PackageName('flouze_flutter'), createEmptyInstance: create)
+    ..a<$core.List<$core.int>>(1, 'debitor', $pb.PbFieldType.OY)
+    ..a<$core.List<$core.int>>(2, 'creditor', $pb.PbFieldType.OY)
+    ..aInt64(3, 'amount')
+    ..hasRequiredFields = false
+  ;
+
+  Transfer._() : super();
+  factory Transfer() => create();
+  factory Transfer.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Transfer.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  Transfer clone() => Transfer()..mergeFromMessage(this);
+  Transfer copyWith(void Function(Transfer) updates) => super.copyWith((message) => updates(message as Transfer));
+  $pb.BuilderInfo get info_ => _i;
+  @$core.pragma('dart2js:noInline')
+  static Transfer create() => Transfer._();
+  Transfer createEmptyInstance() => create();
+  static $pb.PbList<Transfer> createRepeated() => $pb.PbList<Transfer>();
+  @$core.pragma('dart2js:noInline')
+  static Transfer getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Transfer>(create);
+  static Transfer _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.List<$core.int> get debitor => $_getN(0);
+  @$pb.TagNumber(1)
+  set debitor($core.List<$core.int> v) { $_setBytes(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasDebitor() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDebitor() => clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.List<$core.int> get creditor => $_getN(1);
+  @$pb.TagNumber(2)
+  set creditor($core.List<$core.int> v) { $_setBytes(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasCreditor() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearCreditor() => clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get amount => $_getI64(2);
+  @$pb.TagNumber(3)
+  set amount($fixnum.Int64 v) { $_setInt64(2, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasAmount() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearAmount() => clearField(3);
+}
+
+class Transfers extends $pb.GeneratedMessage {
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo('Transfers', package: const $pb.PackageName('flouze_flutter'), createEmptyInstance: create)
+    ..pc<Transfer>(1, 'transfers', $pb.PbFieldType.PM, subBuilder: Transfer.create)
+    ..hasRequiredFields = false
+  ;
+
+  Transfers._() : super();
+  factory Transfers() => create();
+  factory Transfers.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Transfers.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  Transfers clone() => Transfers()..mergeFromMessage(this);
+  Transfers copyWith(void Function(Transfers) updates) => super.copyWith((message) => updates(message as Transfers));
+  $pb.BuilderInfo get info_ => _i;
+  @$core.pragma('dart2js:noInline')
+  static Transfers create() => Transfers._();
+  Transfers createEmptyInstance() => create();
+  static $pb.PbList<Transfers> createRepeated() => $pb.PbList<Transfers>();
+  @$core.pragma('dart2js:noInline')
+  static Transfers getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Transfers>(create);
+  static Transfers _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.List<Transfer> get transfers => $_getList(0);
+}
+

@@ -20,3 +20,13 @@ message Balance {
 
 	repeated Balance.Entry entries = 1;
 }
+
+message Transfer {
+	bytes debitor = 1;
+	bytes creditor = 2;
+	int64 amount = 3;
+}
+
+message Transfers {
+	repeated Transfer transfers = 1;
+}

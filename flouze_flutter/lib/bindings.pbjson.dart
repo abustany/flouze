@@ -35,3 +35,19 @@ const Balance_Entry$json = const {
   ],
 };
 
+const Transfer$json = const {
+  '1': 'Transfer',
+  '2': const [
+    const {'1': 'debitor', '3': 1, '4': 1, '5': 12, '10': 'debitor'},
+    const {'1': 'creditor', '3': 2, '4': 1, '5': 12, '10': 'creditor'},
+    const {'1': 'amount', '3': 3, '4': 1, '5': 3, '10': 'amount'},
+  ],
+};
+
+const Transfers$json = const {
+  '1': 'Transfers',
+  '2': const [
+    const {'1': 'transfers', '3': 1, '4': 3, '5': 11, '6': '.flouze_flutter.Transfer', '10': 'transfers'},
+  ],
+};
+

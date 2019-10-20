@@ -153,6 +153,23 @@ pub extern "C" fn flouze_sled_repository_get_balance(
 }
 
 #[no_mangle]
+pub extern "C" fn flouze_balance_get_transfers(
+    balance: *const u8,
+    balance_len: usize,
+    transfers: *mut *mut u8,
+    transfers_len: *mut usize,
+    error: *mut *mut c_char,
+) {
+    let balance = unsafe { std::slice::from_raw_parts(balance, balance_len) };
+    let res = unsafe { get_transfers(&balance) };
+    forward_error(&res, error);
+
+    if let Ok(data) = res {
+        vec_to_c(data, transfers, transfers_len);
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn flouze_json_rpc_client_create(
     url: *const c_char,
     error: *mut *mut c_char,
