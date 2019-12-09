@@ -1,5 +1,7 @@
 #!/bin/sh
 
+PACKAGE=org.bustany.flouze
+
 set -e
 
 cd $(dirname $0)
@@ -11,10 +13,14 @@ cargo build -p flouze-cli
 # forwarding.
 adb root
 
+if adb shell pm list packages $PACKAGE | grep $PACKAGE; then
+	adb shell pm uninstall $PACKAGE
+fi
+
 # First test will create an account, populate and upload it to the test server
 flutter -d android drive test_driver/create_populate_share.dart
 
 # Clear app data
-adb shell pm clear org.bustany.flouze
+adb shell pm clear $PACKAGE
 
 flutter -d android drive --no-build test_driver/clone.dart
