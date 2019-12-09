@@ -24,8 +24,18 @@ typedef flouze_sync_sync_t = ffi.Void Function(
     ffi.Pointer<ffi.Pointer<Utf8>> error);
 
 class _SyncBindings {
-  void Function(ffi.Pointer<NativeSledRepository>, ffi.Pointer<NativeJsonRpcClient>, ffi.Pointer<Byte>, int, ffi.Pointer<ffi.Pointer<Utf8>>) cloneRemote;
-  void Function(ffi.Pointer<NativeSledRepository>, ffi.Pointer<NativeJsonRpcClient>, ffi.Pointer<Byte>, int, ffi.Pointer<ffi.Pointer<Utf8>>) sync;
+  void Function(
+      ffi.Pointer<NativeSledRepository>,
+      ffi.Pointer<NativeJsonRpcClient>,
+      ffi.Pointer<Byte>,
+      int,
+      ffi.Pointer<ffi.Pointer<Utf8>>) cloneRemote;
+  void Function(
+      ffi.Pointer<NativeSledRepository>,
+      ffi.Pointer<NativeJsonRpcClient>,
+      ffi.Pointer<Byte>,
+      int,
+      ffi.Pointer<ffi.Pointer<Utf8>>) sync;
 
   _SyncBindings() {
     cloneRemote = flouzeLibrary
@@ -63,23 +73,28 @@ class _SyncMainParams extends Call {}
 
 class _SyncCloneRemote extends Call {
   _SyncCloneRemote(this.repo, this.jsonRpcClient, this.accountId);
-  final ffi.Pointer repo;
-  final ffi.Pointer jsonRpcClient;
+
+  final int repo;
+  final int jsonRpcClient;
   final Uint8List accountId;
 }
 
 class _SyncSync extends Call {
   _SyncSync(this.repo, this.jsonRpcClient, this.accountId);
-  final ffi.Pointer repo;
-  final ffi.Pointer jsonRpcClient;
+
+  final int repo;
+  final int jsonRpcClient;
   final Uint8List accountId;
 }
 
 Sync _cachedInstance;
+
 Sync get _instance => _cachedInstance ??= Sync();
 
 class Sync extends IsolateProxy {
-  Sync() : super(() => IsolateProxy.spawnInIsolate(_SyncMainParams(), _isolateMain));
+  Sync()
+      : super(
+            () => IsolateProxy.spawnInIsolate(_SyncMainParams(), _isolateMain));
 
   static void _isolateMain(dynamic params) {
     IsolateProxy.handleCalls(
@@ -90,31 +105,51 @@ class Sync extends IsolateProxy {
   }
 
   static dynamic _handleCall(dynamic instance, Call call) {
-    switch(call.runtimeType) {
+    switch (call.runtimeType) {
       case DestroyCall:
         return null; // nothing to free
       case _SyncCloneRemote:
         final cloneCall = (call as _SyncCloneRemote);
-        return _SyncHelpers.cloneRemote(cloneCall.repo, cloneCall.jsonRpcClient, cloneCall.accountId);
+        final repoPtr =
+            ffi.Pointer<NativeSledRepository>.fromAddress(cloneCall.repo);
+        final jsonRpcClientPtr = ffi.Pointer<NativeJsonRpcClient>.fromAddress(
+            cloneCall.jsonRpcClient);
+        return _SyncHelpers.cloneRemote(
+            repoPtr, jsonRpcClientPtr, cloneCall.accountId);
       case _SyncSync:
         final syncCall = (call as _SyncSync);
-        return _SyncHelpers.sync(syncCall.repo, syncCall.jsonRpcClient, syncCall.accountId);
+        final repoPtr =
+            ffi.Pointer<NativeSledRepository>.fromAddress(syncCall.repo);
+        final jsonRpcClientPtr = ffi.Pointer<NativeJsonRpcClient>.fromAddress(
+            syncCall.jsonRpcClient);
+        return _SyncHelpers.sync(repoPtr, jsonRpcClientPtr, syncCall.accountId);
       default:
         throw Exception("Unknown call type ${call.runtimeType.toString()}");
     }
   }
 
-  Future<void> _cloneRemote(SledRepository repo, JsonRpcClient client, List<int> accountId) async =>
-      call(_SyncCloneRemote(await repo.getNativePointer(), await client.getNativePointer(), Uint8List.fromList(accountId))).then((_) {
+  Future<void> _cloneRemote(SledRepository repo, JsonRpcClient client,
+          List<int> accountId) async =>
+      call(_SyncCloneRemote(
+              (await repo.getNativePointer()).address,
+              (await client.getNativePointer()).address,
+              Uint8List.fromList(accountId)))
+          .then((_) {
         Events.post(Events.ACCOUNT_LIST_CHANGED);
       });
 
-  static Future<void> cloneRemote(SledRepository repo, JsonRpcClient client, List<int> accountId) async =>
-    _instance._cloneRemote(repo, client, accountId);
+  static Future<void> cloneRemote(SledRepository repo, JsonRpcClient client,
+          List<int> accountId) async =>
+      _instance._cloneRemote(repo, client, accountId);
 
-  Future<void> _sync(SledRepository repo, JsonRpcClient client, List<int> accountId) async =>
-      call(_SyncSync(await repo.getNativePointer(), await client.getNativePointer(), Uint8List.fromList(accountId)));
+  Future<void> _sync(SledRepository repo, JsonRpcClient client,
+          List<int> accountId) async =>
+      call(_SyncSync(
+          (await repo.getNativePointer()).address,
+          (await client.getNativePointer()).address,
+          Uint8List.fromList(accountId)));
 
-  static Future<void> sync(SledRepository repo, JsonRpcClient client, List<int> accountId) async =>
+  static Future<void> sync(SledRepository repo, JsonRpcClient client,
+          List<int> accountId) async =>
       _instance._sync(repo, client, accountId);
 }
