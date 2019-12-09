@@ -28,7 +28,7 @@ Future<SledRepository> getRepository() async {
   return _repository;
 }
 
-void closeRepository() async {
+void closeRepository() {
   if (_repository != null) {
     _repository.destroy();
   }
