@@ -60,4 +60,4 @@ Future<String> _shareServerUri() {
 }
 
 Future<String> shareAccountUri(List<int> accountId) async =>
-    "${await _shareServerUri()}/mobile/clone?accountId=${UUID.toString(accountId)}";
+    "${await _shareServerUri()}/clone?accountId=${UUID.toString(accountId)}";
