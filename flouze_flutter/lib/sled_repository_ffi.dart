@@ -380,4 +380,6 @@ class SledRepository extends IsolateProxy {
   Future<ffi.Pointer<NativeSledRepository>> getNativePointer() =>
       call(_SledRepositoryGetNativePointer()).then(
           (address) => ffi.Pointer<NativeSledRepository>.fromAddress(address));
+
+  Future<void> flush() => call(_SledRepositoryFlush());
 }

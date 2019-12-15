@@ -51,7 +51,7 @@ class AccountListBloc {
     // leave behind a stray account config, not a huge deal.
     AccountConfigStore.saveAccountConfig(account.uuid, accountConfig)
       .then((_) => Services.getRepository())
-      .then((repo) => repo.addAccount(account))
+      .then((repo) => repo.addAccount(account).then((_) => repo.flush()))
       .catchError((e) {
         _accountsController.add(AccountListSaveErrorState(e.toString()));
         loadAccounts();

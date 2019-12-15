@@ -41,7 +41,7 @@ class TransactionsBloc {
 
     _transactionsController.add(TransactionsLoadedState(flattenHistory([transaction, ...state.transactions]), state.balance, state.transfers));
     Services.getRepository()
-        .then((repo) { repo.addTransaction(_account.uuid, transaction); })
+        .then((repo) { repo.addTransaction(_account.uuid, transaction).then((_) => repo.flush()); })
         .then((_) => loadTransactions()) // reload the transactions to upload the balance too
         .catchError((e) {
           _account.latestTransaction = previousLatestTransaction;
@@ -52,7 +52,7 @@ class TransactionsBloc {
 
   void deleteAccount() {
     Services.getRepository()
-        .then((repo) { repo.deleteAccount(_account.uuid); })
+        .then((repo) { repo.deleteAccount(_account.uuid).then((_) => repo.flush()); })
         .then((_) { _transactionsController.add(TransactionsAccountDeletedState()); })
         .catchError((e) {
           _transactionsController.add(TransactionsErrorState(e.toString()));

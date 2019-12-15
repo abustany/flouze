@@ -64,7 +64,7 @@ class AccountCloneBloc {
       final Flouze.SledRepository repository = ctx[1];
       final Flouze.JsonRpcClient client = ctx[2];
 
-      return Flouze.Sync.cloneRemote(repository, client, remoteAccount.uuid);
+      return Flouze.Sync.cloneRemote(repository, client, remoteAccount.uuid).then((_) => repository.flush());
     })
     .then((_) => _accountsController.add(AccountCloneDoneState()))
     .catchError((e) => _accountsController.add(AccountCloneErrorState(AccountCloneError.ImportError, e.toString())));

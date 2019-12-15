@@ -98,7 +98,7 @@ class AccountSyncBloc {
             final Flouze.JsonRpcClient client = ctx[0];
             final Flouze.SledRepository repository = ctx[1];
 
-            return Flouze.Sync.sync(repository, client, account.uuid);
+            return Flouze.Sync.sync(repository, client, account.uuid).then((_) => repository.flush());
         }).then((_) => newConfig);
       })
       .then((newConfig) {
