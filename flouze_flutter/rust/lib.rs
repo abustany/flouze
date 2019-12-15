@@ -168,6 +168,12 @@ unsafe fn get_balance(repo: *mut c_void, account_id: &[u8]) -> FFIResult<Vec<u8>
     Ok(buf)
 }
 
+unsafe fn repository_flush(repo: *mut c_void) -> FFIResult<()> {
+    let repo = &mut *(repo as *mut SledRepository);
+    repo.flush()?;
+    Ok(())
+}
+
 unsafe fn get_transfers(balance_data: &[u8]) -> FFIResult<Vec<u8>> {
     let balance = Balance::decode(balance_data)?;
     let balance_hash: HashMap<model::PersonId, i64> = balance

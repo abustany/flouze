@@ -153,6 +153,15 @@ pub extern "C" fn flouze_sled_repository_get_balance(
 }
 
 #[no_mangle]
+pub extern "C" fn flouze_sled_repository_flush(
+    repo: *mut c_void,
+    error: *mut *mut c_char,
+) {
+    let res = unsafe { repository_flush(repo) };
+    forward_error(&res, error);
+}
+
+#[no_mangle]
 pub extern "C" fn flouze_balance_get_transfers(
     balance: *const u8,
     balance_len: usize,

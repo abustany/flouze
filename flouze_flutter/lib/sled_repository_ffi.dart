@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:ffi' as ffi;
-import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'bindings.pb.dart';
@@ -55,6 +54,8 @@ typedef flouze_sled_repository_get_balance_t = ffi.Void Function(
     ffi.Pointer<ffi.Pointer<Byte>> balance,
     ffi.Pointer<ffi.IntPtr> balanceLen,
     ffi.Pointer<ffi.Pointer<Utf8>> error);
+typedef flouze_sled_repository_flush_t = ffi.Void Function(
+    ffi.Pointer<NativeSledRepository>, ffi.Pointer<ffi.Pointer<Utf8>> error);
 
 class _SledRepositoryBindings {
   ffi.Void Function(ffi.Pointer<NativeSledRepository>) destroy;
@@ -87,6 +88,8 @@ class _SledRepositoryBindings {
       ffi.Pointer<ffi.Pointer<Byte>>,
       ffi.Pointer<ffi.IntPtr>,
       ffi.Pointer<ffi.Pointer<Utf8>>) getBalance;
+  ffi.Void Function(
+      ffi.Pointer<NativeSledRepository>, ffi.Pointer<ffi.Pointer<Utf8>>) flush;
 
   _SledRepositoryBindings() {
     destroy = flouzeLibrary
@@ -132,6 +135,11 @@ class _SledRepositoryBindings {
     getBalance = flouzeLibrary
         .lookup<ffi.NativeFunction<flouze_sled_repository_get_balance_t>>(
             "flouze_sled_repository_get_balance")
+        .asFunction();
+
+    flush = flouzeLibrary
+        .lookup<ffi.NativeFunction<flouze_sled_repository_flush_t>>(
+            "flouze_sled_repository_flush")
         .asFunction();
   }
 }
@@ -228,6 +236,10 @@ class _SledRepositoryHelpers {
 
     return res.bytes ?? Uint8List(0);
   }
+
+  static void flush(ffi.Pointer<NativeSledRepository> ptr) {
+    withError((errPtr) => _sledRepositoryBindings.flush(ptr, errPtr));
+  }
 }
 
 class _SledRepositoryMainParams extends Call {
@@ -267,6 +279,10 @@ class _SledRepositoryGetBalance extends Call {
   _SledRepositoryGetBalance(this.accountId);
 
   final Uint8List accountId;
+}
+
+class _SledRepositoryFlush extends Call {
+  _SledRepositoryFlush();
 }
 
 class _SledRepositoryGetNativePointer extends Call {}
@@ -320,6 +336,8 @@ class SledRepository extends IsolateProxy {
             ptr, (call as _SledRepositoryGetBalance).accountId);
       case _SledRepositoryGetNativePointer:
         return ptr.address;
+      case _SledRepositoryFlush:
+        return _SledRepositoryHelpers.flush(ptr);
       default:
         throw Exception("Unknown call type ${call.runtimeType.toString()}");
     }

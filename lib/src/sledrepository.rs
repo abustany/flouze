@@ -144,6 +144,11 @@ impl Repository for SledRepository {
             None => Err(errors::ErrorKind::NoSuchTransaction(transaction_id.clone()).into()),
         }
     }
+
+    fn flush(&mut self) -> errors::Result<()> {
+        self.db.flush()?;
+        Ok(())
+    }
 }
 
 fn account_key(id: &[u8]) -> Vec<u8> {

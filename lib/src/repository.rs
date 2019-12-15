@@ -34,6 +34,7 @@ pub trait Repository {
         account_uuid: &model::AccountId,
         transaction_id: &model::TransactionId,
     ) -> errors::Result<()>;
+    fn flush(&mut self) -> errors::Result<()>;
 }
 
 pub struct TransactionChain<'a> {
