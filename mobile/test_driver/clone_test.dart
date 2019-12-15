@@ -23,6 +23,7 @@ void main() {
 
       // Connects to the app
       driver = await FlutterDriver.connect();
+      unpauseIsolates(driver);
       txcheck = TransactionCheck(driver);
     });
 

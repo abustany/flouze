@@ -184,3 +184,22 @@ Future<List<Flouze.Transaction>> listServerTransactions(String accountName) {
     }).toList();
   });
 }
+
+// Workaround for https://github.com/flutter/flutter/issues/24703
+Future<void> unpauseIsolates(FlutterDriver driver) async {
+  (await driver.serviceClient.getVM()).isolates.forEach((isolateRef) async {
+    final isolate = await isolateRef.load();
+    if (isolate.isPaused) {
+      isolate.resume();
+    }
+  });
+
+  driver.serviceClient.onIsolateRunnable
+      .asBroadcastStream()
+      .listen((isolateRef) async {
+    final isolate = await isolateRef.load();
+    if (isolate.isPaused) {
+      isolate.resume();
+    }
+  });
+}
