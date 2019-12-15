@@ -10,6 +10,7 @@ void main() {
   group('Create, populate and share an account', () {
     FlutterDriver driver;
     TransactionCheck txcheck;
+    void Function() unpauseIsolateCleanup;
 
     setUpAll(() async {
       await startFlouzeServer(deleteDataFirst: true);
@@ -17,11 +18,12 @@ void main() {
 
       // Connects to the app
       driver = await FlutterDriver.connect();
-      unpauseIsolates(driver);
+      unpauseIsolateCleanup = await unpauseIsolates(driver);
       txcheck = TransactionCheck(driver);
     });
 
     tearDownAll(() async {
+      unpauseIsolateCleanup();
       await stopFlouzeServer();
       await disableReversePortForwarding();
 
@@ -193,24 +195,30 @@ void main() {
       // Return to the account list page, where we started
       await pressBackButton();
     });
+    /*
   });
 
   group('Create and delete an account', () {
     FlutterDriver driver;
+    void Function() unpauseIsolateCleanup;
 
     setUpAll(() async {
       await enableReversePortForwarding();
 
       // Connects to the app
       driver = await FlutterDriver.connect();
+      unpauseIsolateCleanup = await unpauseIsolates(driver);
     });
 
     tearDownAll(() async {
+      unpauseIsolateCleanup();
+
       if (driver != null) {
         // Closes the connection
         driver.close();
       }
     });
+   */
 
     test('create an account', () async {
       await driver.waitForAbsent(find.byValueKey('account-list-loading'));

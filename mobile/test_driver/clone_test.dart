@@ -11,6 +11,7 @@ void main() {
     FlutterDriver driver;
     TransactionCheck txcheck;
     String accountId;
+    void Function() unpauseIsolateCleanup;
 
     setUpAll(() async {
       final accounts = await listServerAccounts();
@@ -23,7 +24,7 @@ void main() {
 
       // Connects to the app
       driver = await FlutterDriver.connect();
-      unpauseIsolates(driver);
+      unpauseIsolateCleanup = await unpauseIsolates(driver);
       txcheck = TransactionCheck(driver);
     });
 
@@ -63,6 +64,7 @@ void main() {
     });
 
     tearDownAll(() async {
+      unpauseIsolateCleanup();
       await stopFlouzeServer();
       await disableReversePortForwarding();
 
