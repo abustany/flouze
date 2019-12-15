@@ -18,9 +18,9 @@ if adb shell pm list packages $PACKAGE | grep $PACKAGE; then
 fi
 
 # First test will create an account, populate and upload it to the test server
-flutter -d android drive test_driver/create_populate_share.dart
+flutter -d AOSP drive test_driver/create_populate_share.dart
 
 # Clear app data
 adb shell pm clear $PACKAGE
 
-flutter -d android drive --no-build test_driver/clone.dart
+flutter -d AOSP drive --no-build test_driver/clone.dart
