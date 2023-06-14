@@ -367,7 +367,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "sled",
- "tokio",
+ "tokio 1.18.5",
  "uuid",
 ]
 
@@ -589,7 +589,7 @@ dependencies = [
  "net2",
  "rustc_version",
  "time",
- "tokio",
+ "tokio 0.1.22",
  "tokio-buf",
  "tokio-executor",
  "tokio-io",
@@ -766,7 +766,7 @@ dependencies = [
  "lazy_static",
  "log",
  "num_cpus",
- "tokio",
+ "tokio 0.1.22",
  "tokio-codec",
  "unicase",
 ]
@@ -1063,6 +1063,12 @@ checksum = "9c3659d1ee90221741f65dd128d9998311b0e40c5d3c23a62445938214abce4f"
 dependencies = [
  "fixedbitset",
 ]
+
+[[package]]
+name = "pin-project-lite"
+version = "0.2.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0a7ae3ac2f1173085d398531c705756c94a4c56843785df85a60c1a0afac116"
 
 [[package]]
 name = "pkg-config"
@@ -1684,6 +1690,15 @@ dependencies = [
  "tokio-timer",
  "tokio-udp",
  "tokio-uds",
+]
+
+[[package]]
+name = "tokio"
+version = "1.18.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e050c618355082ae5a89ec63bbf897225d5ffe84c7c4e036874e4d185a5044e"
+dependencies = [
+ "pin-project-lite",
 ]
 
 [[package]]
